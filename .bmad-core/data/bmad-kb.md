@@ -737,6 +737,53 @@ For full details, see `CONTRIBUTING.md`. Key points:
 - **Dev Agents Must Be Lean**: Minimize dependencies, save context for code
 - **Natural Language First**: Everything in markdown, no code in core
 - **Core vs Expansion Packs**: Core for universal needs, packs for specialized domains
+
+## Commit Message Quick Reference
+
+**When asked to create commit messages, ALWAYS follow these standards:**
+
+**Structure**: `<type>[scope]: <description>` (≤50 chars)
+**Types**: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+**Scopes**: (api), (ui), (auth), (db), (config), (deps)
+**Description**: Imperative mood, lowercase, no period
+
+**CRITICAL VALIDATION**: Count characters before presenting:
+- `feat(auth): add password reset` = 32 chars ✅
+- `feat(standards): add commit support` = 37 chars ✅  
+- `feat(standards): add commit message support to all agents` = 55 chars ❌
+
+**Examples**:
+- `feat(auth): add password reset functionality`
+- `fix(api): resolve race condition in user registration`  
+- `docs: update commit message guidelines`
+- `refactor(ui): restructure component hierarchy`
+
+**For complex changes**, add body (72 chars per line):
+```
+feat(api): add user profile management
+
+- Add profile update endpoint
+- Implement avatar upload functionality
+- Add input validation for profile fields
+
+Closes #123
+```
+
+**Breaking changes** use `!` or `BREAKING CHANGE:` footer:
+```
+feat(api)!: change authentication endpoint
+
+BREAKING CHANGE: /auth/login now requires email instead of username
+```
+
+**Key Usage Patterns**:
+- Direct request: "Create a commit message for [description]"
+- Command: `*commit [description]` (BMad Orchestrator)
+- Task: `*task create-commit-message` (any agent)
+
+**Full documentation**: Reference `docs/architecture/coding-standards.md` or use `*task create-doc commit-message-tmpl.yaml`
+
+**CRITICAL**: Always validate subject line ≤ 50 characters and body lines ≤ 72 characters before presenting to user.
 - **Design Philosophy**: "Dev agents code, planning agents plan"
 
 ## Expansion Packs

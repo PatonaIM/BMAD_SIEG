@@ -210,6 +210,136 @@ export class FeatureResponseDto {
 }
 ```
 
+## Commit Message Standards
+
+### Format Structure (Conventional Commits)
+
+All commit messages must follow this structure:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Character Limits (50/72 Rule)
+
+- **Subject line**: 50 characters maximum (including type and scope)
+- **Body lines**: 72 characters maximum per line
+- **Why**: Ensures readability in git logs, GitHub UI, and terminal displays
+
+### Required Types
+
+- `feat`: New feature for the user
+- `fix`: Bug fix for the user
+- `docs`: Documentation changes
+- `style`: Code formatting, missing semicolons, etc. (no production code change)
+- `refactor`: Code refactoring (no functional changes)
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Build process, dependency updates, tooling changes
+- `perf`: Performance improvements
+- `ci`: Continuous integration changes
+- `build`: Build system or external dependencies
+- `revert`: Reverts a previous commit
+
+### Optional Scope
+
+Use scope to specify the area of change:
+- `(api)`: Backend API changes
+- `(ui)`: Frontend/UI changes
+- `(auth)`: Authentication related
+- `(db)`: Database changes
+- `(config)`: Configuration changes
+- `(deps)`: Dependency updates
+
+### Description Guidelines
+
+- Use imperative mood ("add" not "added" or "adds")
+- Start with lowercase letter
+- No period at the end
+- Be specific but concise
+- Focus on WHAT and WHY, not HOW
+
+### Body Guidelines (Optional)
+
+- Separate from subject with blank line
+- Wrap at 72 characters
+- Explain motivation for the change
+- Include any breaking changes
+- Reference issues/tickets
+
+### Footer Guidelines (Optional)
+
+- `BREAKING CHANGE:` for breaking changes
+- `Fixes #123` or `Closes #456` for issue references
+- `Reviewed-by:` for code reviews
+- `Co-authored-by:` for pair programming
+
+### Examples
+
+**Simple commit:**
+```
+feat(auth): add password reset functionality
+```
+
+**With body:**
+```
+fix(api): resolve race condition in user registration
+
+Introduce request ID and reference to latest request to dismiss
+incoming responses other than from latest request. This prevents
+duplicate user creation when users double-click the register button.
+
+Fixes #234
+```
+
+**Breaking change:**
+```
+feat(api)!: change user authentication endpoint
+
+BREAKING CHANGE: /auth/login now requires email instead of username.
+Update all client applications to use email field for authentication.
+
+Closes #456
+```
+
+**Multiple lines with scope:**
+```
+refactor(ui): restructure component hierarchy
+
+- Move shared components to common directory
+- Update import paths throughout application
+- Add component documentation
+- Improve component reusability
+
+No functional changes to user interface.
+```
+
+### Anti-patterns to Avoid
+
+❌ **Don't:**
+- `Updated stuff`
+- `Fixed bug`
+- `feat: Added new feature for users to be able to login`
+- `WIP` or `temp commit`
+- Mixing multiple unrelated changes
+
+✅ **Do:**
+- `fix(auth): handle invalid token error`
+- `feat(ui): add dark mode toggle`
+- `docs: update API authentication guide`
+- `refactor(db): optimize user query performance`
+
+### Automation Integration
+
+These standards enable:
+- Automatic changelog generation
+- Semantic version bumping
+- Release note creation
+- Commit message validation in CI/CD
+
 ## Frontend Standards (React + TypeScript)
 
 ### Component Structure

@@ -1,0 +1,84 @@
+name: CI
+
+# Disabled - Template repository doesn't need CI
+# Uncomment and modify for your project
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x]
+        python-version: [3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        pip install -r requirements.txt
+
+    - name: Lint JavaScript/TypeScript
+      run: |
+        npm run lint
+        npm run lint:fix
+
+    - name: Lint Python
+      run: |
+        pylint src/
+        black --check src/
+
+    - name: Run tests
+      run: |
+        npm test
+        python -m pytest
+
+    - name: Build
+      run: |
+        npm run build
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run security audit
+      run: |
+        npm audit --audit-level moderate
+        pip install safety
+        safety check
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ github.repository }}:${{ github.sha }} .
+        docker build -t ${{ github.repository }}:latest .
+
+    - name: Test Docker image
+      run: |
+        docker run --rm ${{ github.repository }}:${{ github.sha }} npm test

@@ -1,0 +1,130 @@
+{
+  "tools": {
+    "git": {
+      "name": "Git",
+      "required": true,
+      "config": {
+        "user.name": "Developer",
+        "user.email": "developer@example.com",
+        "init.defaultBranch": "main",
+        "pull.rebase": "false",
+        "core.autocrlf": "true",
+        "core.safecrlf": "true"
+      }
+    },
+    "vscode": {
+      "name": "Visual Studio Code",
+      "required": true,
+      "extensions": [
+        "ms-python.python",
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-playwright.playwright",
+        "ms-azuretools.vscode-docker",
+        "bradlc.vscode-tailwindcss",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        "mhutchie.git-graph"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true
+        },
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 1000
+      }
+    },
+    "docker": {
+      "name": "Docker Desktop",
+      "required": true,
+      "config": {
+        "enableKubernetes": false,
+        "enableComposeV2": true
+      }
+    },
+    "nodejs": {
+      "name": "Node.js",
+      "required": true,
+      "version": "18.x",
+      "packages": [
+        "npm",
+        "yarn",
+        "pnpm"
+      ]
+    },
+    "python": {
+      "name": "Python",
+      "required": true,
+      "version": "3.11",
+      "packages": [
+        "pip",
+        "pipenv",
+        "virtualenv"
+      ]
+    },
+    "playwright": {
+      "name": "Playwright",
+      "required": true,
+      "browsers": ["chromium", "firefox", "webkit"]
+    },
+    "postman": {
+      "name": "Postman",
+      "required": false
+    },
+    "code_quality": {
+      "eslint": {
+        "name": "ESLint",
+        "required": true,
+        "config": {
+          "extends": ["@typescript-eslint/recommended", "prettier"],
+          "parser": "@typescript-eslint/parser",
+          "plugins": ["@typescript-eslint"],
+          "rules": {
+            "no-console": "warn",
+            "no-unused-vars": "error"
+          }
+        }
+      },
+      "prettier": {
+        "name": "Prettier",
+        "required": true,
+        "config": {
+          "semi": true,
+          "trailingComma": "es5",
+          "singleQuote": true,
+          "printWidth": 80,
+          "tabWidth": 2
+        }
+      },
+      "pylint": {
+        "name": "Pylint",
+        "required": true
+      },
+      "black": {
+        "name": "Black",
+        "required": true,
+        "config": {
+          "line-length": 88,
+          "target-version": ["py311"]
+        }
+      }
+    }
+  },
+  "platforms": {
+    "windows": {
+      "package_managers": ["chocolatey", "winget"],
+      "preferred": "chocolatey"
+    },
+    "macos": {
+      "package_managers": ["homebrew"],
+      "preferred": "homebrew"
+    },
+    "linux": {
+      "package_managers": ["apt", "yum", "dnf", "snap"],
+      "preferred": "apt"
+    }
+  }
+}

@@ -974,5 +974,4 @@ The specification integrates Material-UI 3 Expressive Design with Teamified-spec
 
 This specification is ready for technical implementation and will create a polished, professional candidate assessment platform that balances AI innovation with user-centered design principles.
 
-![alt text](JvyIVXJj.jpg)e
-![alt text](JvyIVXJj.jpg)
+![Style Reference](style-guide/assets/style-reference.jpg)

@@ -22,6 +22,7 @@ Teamified Candidates Portal addresses this through an intelligent AI-driven plat
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2025-10-27 | 1.0 | Initial PRD creation from Project Brief | PM Agent |
+| 2025-10-28 | 1.1 | Updated speech services from Azure to OpenAI (Whisper + TTS) with provider abstraction for future migration | Winston (Architect) |
 
 ## Requirements
 
@@ -214,7 +215,7 @@ Focus on testing the integration points with AI services rather than AI behavior
 - **UI Component Library**: Material-UI (MUI) or Chakra UI for rapid development with accessible components
 - **Real-time Audio**: WebRTC for audio streaming, MediaRecorder API for audio capture
 - **Audio Visualization**: Web Audio API for real-time voice level visualization
-- **Speech Recognition**: Browser SpeechRecognition API as fallback, Azure Speech SDK for primary
+- **Speech Recognition**: Browser SpeechRecognition API as fallback, backend-processed OpenAI Whisper for primary
 - **Rich Text Editor**: For recruiter feedback editing and AI response display formatting
 - **Data Visualization**: Chart.js or Recharts for skill boundary maps and scoring visualizations
 
@@ -235,10 +236,11 @@ Focus on testing the integration points with AI services rather than AI behavior
 
 **AI Services**:
 - **Primary LLM**: OpenAI GPT-4 for interview conversations and assessment reasoning
-- **Speech-to-Text**: Azure Speech Services (Cognitive Services) for candidate audio transcription
-- **Text-to-Speech**: Azure Speech Services with neural voices for natural AI responses
-- **Voice Analysis**: Azure Speech Services for prosody analysis (speech patterns, hesitation, confidence)
+- **Speech-to-Text**: OpenAI Whisper API for candidate audio transcription (backend-processed for security)
+- **Text-to-Speech**: OpenAI TTS API with neural voices for natural AI responses
+- **Voice Analysis**: Audio metadata analysis via OpenAI Whisper (confidence scores, timing patterns)
 - **Resume Parsing**: OpenAI GPT-4 with structured output for skill extraction
+- **Provider Abstraction**: Clean interfaces enabling future migration to Azure/GCP speech services without code changes
 - **Prompt Management**: Version-controlled prompt templates, A/B testing capability for optimization
 - **Cost Management**: Token counting for LLM, audio minute tracking for speech services, response caching, usage monitoring dashboards
 - **Fallback Strategy**: Graceful degradation to text-only mode if speech services fail or rate limits hit
@@ -270,11 +272,11 @@ Focus on testing the integration points with AI services rather than AI behavior
 
 The following areas represent significant technical complexity and should be prioritized for architectural deep-dive and potential proof-of-concept work:
 
-**1. Azure Speech Services Integration**
+**1. OpenAI Speech Services Integration (Whisper STT + TTS API)**
 - **Risk Level:** High
 - **Complexity:** Real-time speech-to-text and text-to-speech with low latency requirements (<1 second)
-- **Challenges:** Audio quality variations, accent handling, technical terminology pronunciation, cost optimization
-- **Mitigation:** Early prototype, comprehensive fallback to text-only mode, audio quality monitoring
+- **Challenges:** Audio quality variations, accent handling, technical terminology pronunciation, 2-3s processing latency vs real-time streaming, cost optimization
+- **Mitigation:** Backend audio processing for security, provider abstraction layer for future Azure/GCP migration, comprehensive fallback to text-only mode, audio quality monitoring
 
 **2. WebRTC Real-Time Audio Streaming**
 - **Risk Level:** Medium-High
@@ -479,24 +481,24 @@ Implement RESTful APIs for ATS/HRIS integration, webhooks, deployment infrastruc
 
 ## Epic 1.5: Speech-to-Speech AI Interview Capability
 
-**Epic Goal:** Transform the text-based interview system into a natural voice-driven experience by integrating Azure Speech Services for speech-to-text and text-to-speech capabilities. By epic completion, candidates can speak their answers naturally while the AI responds with voice, creating an engaging conversational interview. The system maintains hybrid mode support (speak answers, type code) and gracefully degrades to text-only if speech services fail. This epic delivers the "wow factor" that differentiates Teamified from competitors.
+**Epic Goal:** Transform the text-based interview system into a natural voice-driven experience by integrating OpenAI speech services (Whisper STT + TTS API) for speech-to-text and text-to-speech capabilities. By epic completion, candidates can speak their answers naturally while the AI responds with voice, creating an engaging conversational interview. The system maintains hybrid mode support (speak answers, type code) and gracefully degrades to text-only if speech services fail. The backend processes all audio to secure API keys and enable future provider migration. This epic delivers the "wow factor" that differentiates Teamified from competitors.
 
-### Story 1.5.1: Azure Speech Services Integration
+### Story 1.5.1: OpenAI Speech Services Integration (Backend-Processed)
 
 **As a** developer,  
-**I want** Azure Speech Services integrated for speech-to-text and text-to-speech processing,  
-**so that** the system can capture candidate speech and generate AI voice responses.
+**I want** OpenAI Whisper (STT) and TTS API integrated with provider abstraction layer,  
+**so that** the system can capture candidate speech, generate AI voice responses, and support future migration to Azure/GCP alternatives.
 
 **Acceptance Criteria:**
 
-1. Azure Speech Services account provisioned with API keys configured in environment variables
-2. Azure Speech SDK installed and configured in backend (Python SDK)
-3. Speech-to-text service integrated with support for continuous recognition
-4. Text-to-speech service integrated with neural voice selection (natural sounding)
-5. Voice selection configured (professional, neutral tone appropriate for interviews)
-6. Audio format handling implemented (support for common formats: WAV, MP3, WebM)
-7. Error handling for Azure API failures with fallback to text-only mode
-8. Cost tracking implemented for speech service usage (audio minutes consumed)
+1. OpenAI API keys configured in environment variables (backend only, never exposed to frontend)
+2. Provider abstraction layer implemented with `SpeechProvider` interface for future Azure/GCP support
+3. OpenAI Whisper API integrated for speech-to-text with support for audio file uploads
+4. OpenAI TTS API integrated with neural voice selection (`alloy` voice for professional tone)
+5. Backend audio processing pipeline ensures API key security and consistent audio quality
+6. Audio format handling implemented (support for common formats: WAV, MP3, WebM, Opus)
+7. Error handling for OpenAI API failures with fallback to text-only mode
+8. Cost tracking implemented for speech service usage ($0.006/min STT, $0.015/1K chars TTS)
 
 ### Story 1.5.2: Real-Time Audio Capture - Frontend
 
@@ -524,13 +526,13 @@ Implement RESTful APIs for ATS/HRIS integration, webhooks, deployment infrastruc
 **Acceptance Criteria:**
 
 1. Backend endpoint accepts audio stream chunks (`POST /api/v1/interviews/{id}/audio`)
-2. Azure Speech Services processes audio and returns transcribed text
-3. Speech processing completes within 1 second of audio completion (per NFR16)
+2. OpenAI Whisper API processes audio and returns transcribed text
+3. Speech processing completes within 2-3 seconds of audio completion (OpenAI API latency)
 4. Transcribed text stored in interview_messages table with audio metadata
-5. Partial transcription support (live updates as candidate speaks)
-6. Confidence scores captured for each transcription segment
-7. Language detection and validation (English for MVP)
-8. Error handling gracefully manages poor audio quality or silence
+5. Audio metadata includes Whisper confidence scores and processing timestamps
+6. Language detection and validation (English for MVP)
+7. Error handling gracefully manages poor audio quality or silence
+8. Future: Real-time streaming can be added via Azure/GCP when latency becomes critical
 
 ### Story 1.5.4: Text-to-Speech AI Response Generation
 
@@ -540,13 +542,13 @@ Implement RESTful APIs for ATS/HRIS integration, webhooks, deployment infrastruc
 
 **Acceptance Criteria:**
 
-1. AI-generated questions converted to speech using Azure Text-to-Speech
-2. Neural voice used for natural, engaging speech quality
-3. Speech generation completes within 1 second (per NFR17)
-4. Audio file (or stream) returned to frontend for playback
-5. Speech rate and prosody optimized for interview context (clear, professional pace)
-6. Technical terms and acronyms pronounced correctly (React, API, JavaScript)
-7. Audio caching implemented for repeated phrases to reduce costs
+1. AI-generated questions converted to speech using OpenAI TTS API
+2. Neural voice (`alloy`) used for natural, engaging speech quality
+3. Speech generation completes within 2-3 seconds (OpenAI API processing time)
+4. Audio file (MP3) returned to frontend for playback
+5. Speech rate optimized for interview context (clear, professional pace)
+6. Technical terms and acronyms pronounced correctly by default (React, API, JavaScript)
+7. Audio caching implemented for repeated phrases to reduce costs ($0.015/1K chars)
 8. Backend endpoint serves generated audio (`GET /api/v1/interviews/{id}/audio/{message_id}`)
 
 ### Story 1.5.5: Voice-Based Interview UI Enhancement
@@ -600,22 +602,22 @@ Implement RESTful APIs for ATS/HRIS integration, webhooks, deployment infrastruc
 7. Real-time metrics monitor latency and audio quality
 8. Fallback to HTTP-based audio transfer if WebRTC fails
 
-### Story 1.5.8: Voice Pattern Analysis for Integrity Monitoring
+### Story 1.5.8: Audio Metadata Analysis for Integrity Monitoring
 
 **As a** developer,  
-**I want** to capture speech patterns for integrity analysis,  
+**I want** to capture audio metadata and timing patterns for integrity analysis,  
 **so that** the system can detect hesitation, confidence levels, and potential cheating indicators.
 
 **Acceptance Criteria:**
 
-1. Azure Speech Services prosody analysis integrated (pitch, pace, volume variations)
-2. Hesitation detection implemented (pauses, filler words, repeated starts)
-3. Vocal confidence metrics captured (steady vs uncertain speech patterns)
-4. Response timing tracked (time from question completion to speech start)
-5. Speech pattern data stored in JSONB column for later analysis
-6. Unusual patterns flagged (reading from script detection, multiple speakers)
-7. Metrics available for Epic 3 integrity monitoring features
-8. Privacy-conscious: audio files can be deleted post-transcription per GDPR
+1. Audio metadata captured from Whisper API (confidence scores, word-level timestamps)
+2. Response timing tracked (time from question completion to speech start)
+3. Audio duration and processing metrics stored for pattern analysis
+4. Speech pattern data stored in JSONB column for later integrity analysis (Epic 3)
+5. Unusual patterns flagged (suspiciously fast responses, unusual pauses)
+6. Metrics available for Epic 3 integrity monitoring features
+7. Privacy-conscious: audio files can be deleted post-transcription per GDPR
+8. Future: Advanced prosody analysis (pitch, pace) can be added via Azure/GCP if needed
 
 ### Story 1.5.9: Graceful Degradation & Fallback Handling
 
@@ -626,7 +628,7 @@ Implement RESTful APIs for ATS/HRIS integration, webhooks, deployment infrastruc
 **Acceptance Criteria:**
 
 1. Microphone access denial gracefully switches to text-only mode
-2. Azure Speech Services failures trigger automatic text fallback
+2. OpenAI API failures trigger automatic text fallback
 3. Poor audio quality detection prompts candidate to switch to text
 4. Network latency issues handled without interview disruption
 5. Clear messaging explains fallback reasons to candidate
@@ -666,15 +668,16 @@ Implement RESTful APIs for ATS/HRIS integration, webhooks, deployment infrastruc
 #### Recommendations for Architect:
 
 **Priority Areas for Deep-Dive:**
-1. Azure Speech Services integration architecture (Epic 1.5)
-2. WebRTC audio streaming implementation design
+1. OpenAI Speech Services integration architecture (Whisper + TTS with provider abstraction)
+2. WebRTC audio streaming implementation design (or HTTP-based audio transfer as alternative)
 3. LangChain conversation memory management at scale
 4. Database schema design with JSONB structure for AI outputs
 5. Cost monitoring and optimization strategies
+6. Provider abstraction layer design for future Azure/GCP migration
 
 **Ready for Immediate Action:**
 - Epic 1 architecture and story refinement can begin immediately
-- Epic 1.5 requires architectural proof-of-concept for Azure Speech + WebRTC
+- Epic 1.5 requires architectural proof-of-concept for OpenAI Speech + backend audio processing
 - Clear technical boundaries enable parallel architecture work
 
 ### Validation Status: ✅ READY FOR ARCHITECTURE PHASE
@@ -700,11 +703,12 @@ Review this PRD and create comprehensive technical architecture including:
 - Detailed system architecture diagram showing all components and integrations
 - Database schema design with all tables, relationships, and indexes
 - API contract specifications for all endpoints
-- Azure Speech Services integration architecture
-- WebRTC audio streaming implementation design
+- OpenAI Speech Services integration architecture (Whisper + TTS)
+- Provider abstraction layer for future Azure/GCP migration
+- Audio processing pipeline (backend-processed for security)
 - Security architecture and data flow diagrams
 - Deployment architecture for development, staging, and production environments
-- Cost estimation for OpenAI and Azure services at pilot scale (500 interviews/month)
+- Cost estimation for OpenAI services at pilot scale (500 interviews/month)
 
 **Command to initiate:** Load PRD and begin architecture mode using this document as input foundation.
 

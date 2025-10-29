@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import InterviewStartPage from '../pages/InterviewStartPage';
+import InterviewPage from '../pages/InterviewPage';
 import HealthCheckPage from '../pages/HealthCheckPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -23,6 +24,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InterviewStartPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/interview/:sessionId',
+    element: (
+      <ProtectedRoute>
+        <InterviewPage />
       </ProtectedRoute>
     ),
   },

@@ -27,11 +27,10 @@ This is a monorepo containing both frontend and backend applications:
 ├── frontend/              # React TypeScript frontend
 │   ├── src/               # Source code
 │   └── tests/             # Frontend tests
-├── docs/                  # Project documentation
-│   ├── architecture/      # Technical architecture
-│   ├── prd/              # Product requirements
-│   └── stories/          # User stories
-└── template-setup/        # Development setup scripts
+└── docs/                  # Project documentation
+    ├── architecture/      # Technical architecture
+    ├── prd/              # Product requirements
+    └── stories/          # User stories
 ```
 
 ## 📋 Prerequisites
@@ -284,50 +283,20 @@ Built by the Teamified development team.
 
 ---
 
-**For detailed setup instructions**, see [template-setup/README.md](./template-setup/README.md)
+**For detailed setup instructions**, see [SETUP.md](./SETUP.md)
+
 **For development questions**, refer to the architecture documentation in `docs/architecture/`
-- Node.js/npm with Yarn and pnpm
-- Python 3.11 with pip, virtualenv, pipenv
-- Playwright for end-to-end testing
-- Postman for API development
+## 📖 Documentation
 
-### Code Quality
-- ESLint and Prettier for JavaScript/TypeScript
-- Pylint and Black for Python
-- Pre-configured settings and rules
-
-### CI/CD
-- GitHub Actions workflows
-- Multi-platform testing
-- Docker build and deployment
-
-### Documentation
-- Comprehensive setup guides
-- Coding standards
-- Style guides
-- Project templates
-
-## 🎯 Next Steps
-
-1. **Customize the template** for your project needs
-2. **Update the documentation** in the `docs/` folder
-3. **Configure your CI/CD** workflows
-4. **Start developing!**
-
-## 📖 Detailed Documentation
-
-For complete setup instructions and configuration details, see:
-- [Setup Instructions](template-setup/README.md)
-- [Coding Standards](docs/architecture/coding-standards.md)
-- [Style Guide](docs/style-guide/)
+- [Development Setup](SETUP.md) - Quick start guide
+- [Coding Standards](docs/architecture/coding-standards.md) - Code style and best practices
+- [Style Guide](docs/style-guide/) - UI/UX design system
+- [PRD](docs/prd.md) - Product requirements
+- [Architecture](docs/architecture/) - Technical design documents
 
 ## 🤝 Contributing
 
-This template is designed to be customized for your team's needs. Feel free to:
-- Add your own development tools
-- Customize the setup scripts
-- Update the documentation
-- Share improvements with the team
+See [Coding Standards](docs/architecture/coding-standards.md) for development guidelines.
 
 ---
 

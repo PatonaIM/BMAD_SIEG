@@ -1,0 +1,47 @@
+# ===========================================
+# Backend - Python/FastAPI
+# ===========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+*.egg-info/
+.installed.cfg
+*.egg
+dist/
+build/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+
+# Cache
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Alembic
+# Note: Keep migrations/ tracked, ignore only temp files
+alembic/versions/__pycache__/
+
+# Logs (backend-specific)
+pip-log.txt

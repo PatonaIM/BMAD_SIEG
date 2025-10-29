@@ -47,6 +47,16 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
 
+    # Progressive Assessment Thresholds
+    warmup_min_questions: int = 2
+    warmup_confidence_threshold: float = 0.7
+    standard_min_questions: int = 4
+    standard_accuracy_threshold: float = 0.8
+    boundary_confidence_threshold: float = 0.5
+    
+    # Progressive Assessment AI Timeouts (seconds)
+    progressive_assessment_timeout: int = 30  # Timeout per AI call
+
     @property
     def database_url(self) -> str:
         """Construct async PostgreSQL URL from components."""

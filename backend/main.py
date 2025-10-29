@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.core.database import init_db, close_db, engine
+from app.api.v1 import auth, interviews
 
 # Configure structured logging
 structlog.configure(
@@ -69,6 +70,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routers
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(interviews.router, prefix="/api/v1")
 
 
 @app.get("/health", response_model=dict[str, Any])

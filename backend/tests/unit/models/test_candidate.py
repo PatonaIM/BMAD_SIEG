@@ -18,7 +18,7 @@ async def test_candidate_creation(test_db):
     )
 
     test_db.add(candidate)
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(candidate)
 
     assert candidate.id is not None
@@ -40,7 +40,7 @@ async def test_candidate_default_values(test_db):
     )
 
     test_db.add(candidate)
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(candidate)
 
     assert candidate.status == "active"
@@ -59,7 +59,7 @@ async def test_candidate_repr(test_db):
     )
 
     test_db.add(candidate)
-    await test_db.commit()
+    await test_db.flush()
 
     repr_str = repr(candidate)
     assert "Candidate" in repr_str

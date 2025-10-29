@@ -18,7 +18,7 @@ async def test_interview_creation(test_db):
         password_hash="hashed"
     )
     test_db.add(candidate)
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(candidate)
 
     # Create interview
@@ -29,7 +29,7 @@ async def test_interview_creation(test_db):
     )
 
     test_db.add(interview)
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(interview)
 
     assert interview.id is not None
@@ -58,7 +58,7 @@ async def test_interview_with_relationships(test_db):
         status="in_progress"
     )
     test_db.add(interview)
-    await test_db.commit()
+    await test_db.flush()
 
     # Access relationship
     await test_db.refresh(interview, ["candidate"])
@@ -82,13 +82,13 @@ async def test_interview_status_transitions(test_db):
         status="scheduled"
     )
     test_db.add(interview)
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(interview)
 
     # Update status
     interview.status = "in_progress"
     interview.started_at = datetime.utcnow()
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(interview)
 
     assert interview.status == "in_progress"

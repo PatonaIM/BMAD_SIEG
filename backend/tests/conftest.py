@@ -11,6 +11,16 @@ from sqlalchemy.pool import NullPool
 from app.core.config import settings
 from app.core.database import Base
 
+# Import all models so Base.metadata knows about them
+from app.models import (  # noqa: F401
+    AssessmentResult,
+    Candidate,
+    Interview,
+    InterviewMessage,
+    InterviewSession,
+    Resume,
+)
+
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -51,6 +61,55 @@ async def test_db(test_engine) -> AsyncGenerator[AsyncSession, None]:
         expire_on_commit=False,
     )
 
-    async with async_session() as session:
+    async with async_session() as session, session.begin():
         yield session
-        await session.rollback()  # Rollback any changes after test
+        # Rollback will happen automatically when exiting the context
+
+
+@pytest.fixture
+async def test_candidate(test_db: AsyncSession):
+    """Create a test candidate for authentication tests."""
+    from uuid import uuid4
+
+    from app.core.security import hash_password
+
+    # Use a unique email for each test
+    candidate = Candidate(
+        id=uuid4(),
+        email=f"test-{uuid4()}@example.com",
+        full_name="Test User",
+        password_hash=hash_password("TestPassword123!"),
+        status="active"
+    )
+    test_db.add(candidate)
+    await test_db.flush()
+    await test_db.refresh(candidate)
+
+    # Store the original email for tests that need a known value
+    candidate._test_password = "TestPassword123!"
+    return candidate
+
+
+@pytest.fixture
+async def test_client(test_db: AsyncSession):
+    """Create a test client with database dependency override."""
+    from httpx import ASGITransport, AsyncClient
+
+    from app.core.database import get_db
+    from main import app
+
+    # Override the get_db dependency to use our test database session
+    async def override_get_db():
+        yield test_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    # Create the test client
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test"
+    ) as client:
+        yield client
+
+    # Clean up the override
+    app.dependency_overrides.clear()

@@ -26,7 +26,7 @@ async def test_create_candidate_and_query(test_db):
         password_hash="hashed"
     )
     test_db.add(candidate)
-    await test_db.commit()
+    await test_db.flush()
 
     # Query by email
     stmt = select(Candidate).where(Candidate.email == "query@example.com")
@@ -87,17 +87,13 @@ async def test_interview_with_session_and_messages(test_db):
         response_time_seconds=45
     )
     test_db.add_all([message1, message2])
-    await test_db.commit()
+    await test_db.flush()
 
-    # Query back
-    stmt = select(Interview).where(Interview.id == interview.id)
-    result = await test_db.execute(stmt)
-    found_interview = result.scalar_one()
-
-    await test_db.refresh(found_interview, ["session", "messages"])
-    assert found_interview.session is not None
-    assert len(found_interview.messages) == 2
-    assert found_interview.messages[0].sequence_number == 1
+    # Query back and refresh relationships
+    await test_db.refresh(interview, ["session", "messages"])
+    assert interview.session is not None
+    assert len(interview.messages) == 2
+    assert interview.messages[0].sequence_number == 1
 
 
 @pytest.mark.asyncio
@@ -134,7 +130,7 @@ async def test_jsonb_field_operations(test_db):
         }
     )
     test_db.add(session)
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(session)
 
     # Verify JSONB data persisted correctly
@@ -160,13 +156,13 @@ async def test_cascading_delete(test_db):
         status="scheduled"
     )
     test_db.add(interview)
-    await test_db.commit()
+    await test_db.flush()
 
     interview_id = interview.id
 
     # Delete candidate (should cascade to interview)
     await test_db.delete(candidate)
-    await test_db.commit()
+    await test_db.flush()
 
     # Verify interview was deleted
     stmt = select(Interview).where(Interview.id == interview_id)
@@ -194,7 +190,7 @@ async def test_decimal_precision(test_db):
         cost_usd=Decimal("12.3456")
     )
     test_db.add(interview)
-    await test_db.commit()
+    await test_db.flush()
     await test_db.refresh(interview)
 
     assert interview.cost_usd == Decimal("12.3456")

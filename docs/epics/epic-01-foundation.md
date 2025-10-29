@@ -45,8 +45,8 @@
 **Acceptance Criteria:**
 
 1. Simple candidate authentication implemented (email-based, JWT tokens)
-2. Candidate registration endpoint created (`POST /api/v1/candidates/register`)
-3. Candidate login endpoint created (`POST /api/v1/candidates/login`) returning JWT token
+2. Candidate registration endpoint created (`POST /api/v1/auth/register`)
+3. Candidate login endpoint created (`POST /api/v1/auth/login`) returning JWT token
 4. JWT middleware validates tokens on protected routes
 5. Interview session creation endpoint (`POST /api/v1/interviews/start`) creates new session record
 6. Session state persisted in database with candidate association

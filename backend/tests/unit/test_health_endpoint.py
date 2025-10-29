@@ -3,26 +3,30 @@ Unit tests for health check endpoint
 """
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
 from main import app
 
 
 @pytest.fixture
-def client():
-    """Create test client"""
-    return TestClient(app)
+async def client():
+    """Create async test client"""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
 
 
-def test_health_endpoint_returns_200(client):
+@pytest.mark.asyncio
+async def test_health_endpoint_returns_200(client):
     """Test that health endpoint returns 200 status code"""
-    response = client.get("/health")
+    response = await client.get("/health")
     assert response.status_code == 200
 
 
-def test_health_endpoint_response_structure(client):
+@pytest.mark.asyncio
+async def test_health_endpoint_response_structure(client):
     """Test that health endpoint returns correct JSON structure"""
-    response = client.get("/health")
+    response = await client.get("/health")
     data = response.json()
 
     # Check that required fields exist
@@ -31,25 +35,28 @@ def test_health_endpoint_response_structure(client):
     assert "timestamp" in data
 
 
-def test_health_endpoint_status_value(client):
+@pytest.mark.asyncio
+async def test_health_endpoint_status_value(client):
     """Test that health endpoint returns 'healthy' status"""
-    response = client.get("/health")
+    response = await client.get("/health")
     data = response.json()
 
     assert data["status"] == "healthy"
 
 
-def test_health_endpoint_version_value(client):
+@pytest.mark.asyncio
+async def test_health_endpoint_version_value(client):
     """Test that health endpoint returns correct version"""
-    response = client.get("/health")
+    response = await client.get("/health")
     data = response.json()
 
     assert data["version"] == "1.0.0"
 
 
-def test_health_endpoint_timestamp_format(client):
+@pytest.mark.asyncio
+async def test_health_endpoint_timestamp_format(client):
     """Test that health endpoint timestamp is in ISO format"""
-    response = client.get("/health")
+    response = await client.get("/health")
     data = response.json()
 
     # Check that timestamp ends with 'Z' (UTC timezone indicator)

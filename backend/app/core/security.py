@@ -63,7 +63,7 @@ def create_access_token(user_id: UUID, expires_delta: timedelta | None = None) -
 
     encoded_jwt = jwt.encode(
         to_encode,
-        settings.jwt_secret,
+        settings.jwt_secret.get_secret_value(),
         algorithm=settings.jwt_algorithm
     )
     return encoded_jwt
@@ -85,7 +85,7 @@ def verify_token(token: str) -> UUID:
     try:
         payload = jwt.decode(
             token,
-            settings.jwt_secret,
+            settings.jwt_secret.get_secret_value(),
             algorithms=[settings.jwt_algorithm]
         )
         user_id_str: str = payload.get("sub")

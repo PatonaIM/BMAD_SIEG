@@ -51,7 +51,7 @@ def test_create_access_token_generates_valid_jwt():
     # Verify token can be decoded
     payload = jwt.decode(
         token,
-        settings.jwt_secret,
+        settings.jwt_secret.get_secret_value(),
         algorithms=[settings.jwt_algorithm]
     )
 
@@ -69,7 +69,7 @@ def test_create_access_token_with_custom_expiry():
 
     payload = jwt.decode(
         token,
-        settings.jwt_secret,
+        settings.jwt_secret.get_secret_value(),
         algorithms=[settings.jwt_algorithm]
     )
 
@@ -115,7 +115,7 @@ def test_verify_token_with_missing_subject():
     # Create token without 'sub' field
     token = jwt.encode(
         {"exp": datetime.utcnow().timestamp() + 3600},
-        settings.jwt_secret,
+        settings.jwt_secret.get_secret_value(),
         algorithm=settings.jwt_algorithm
     )
 

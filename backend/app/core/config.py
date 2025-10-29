@@ -1,5 +1,6 @@
 """Application configuration using Pydantic settings."""
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,12 +28,17 @@ class Settings(BaseSettings):
     test_db_port: int = 5432
     test_db_name: str
 
-    # OpenAI API (for later stories)
-    openai_api_key: str
+    # OpenAI API Configuration
+    openai_api_key: SecretStr
     openai_model: str = "gpt-4o-mini"
+    openai_max_tokens: int = 1000
+    openai_temperature: float = 0.7
+
+    # Development Settings
+    use_mock_ai: bool = False
 
     # Authentication
-    jwt_secret: str
+    jwt_secret: SecretStr
     jwt_algorithm: str = "HS256"
     jwt_expiry_hours: int = 24
 

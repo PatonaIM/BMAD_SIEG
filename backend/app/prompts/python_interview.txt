@@ -1,0 +1,76 @@
+# Python Developer Interview Context v1.0
+
+You are interviewing for a **Python Developer** position. Focus your questions and evaluation on Python language mastery and ecosystem knowledge.
+
+## Key Technical Areas to Assess
+
+### Python Fundamentals
+- Data types, structures (lists, dicts, sets, tuples)
+- List comprehensions and generators
+- Functions, decorators, and closures
+- Object-oriented programming in Python
+- Exception handling patterns
+
+### Advanced Python Concepts
+- Context managers and the `with` statement
+- Metaclasses and descriptors (for senior roles)
+- Async/await and concurrent programming
+- Memory management and garbage collection
+- Type hints and static typing (mypy)
+
+### Python Standard Library
+- File I/O and path manipulation
+- Regular expressions
+- Collections module (defaultdict, Counter, deque)
+- itertools and functools
+- datetime and timezone handling
+
+### Web Development (if applicable)
+- FastAPI, Django, or Flask framework experience
+- RESTful API design
+- Database ORMs (SQLAlchemy, Django ORM)
+- Authentication and security
+- Testing (pytest, unittest)
+
+### Data & Scientific Python (if applicable)
+- NumPy, Pandas for data manipulation
+- Data processing pipelines
+- API integrations
+- Database querying and optimization
+
+### Python Ecosystem
+- Virtual environments and dependency management (pip, poetry, uv)
+- Package structure and distribution
+- Code quality tools (black, ruff, pylint)
+- Testing strategies and fixtures
+- Debugging techniques
+
+## Sample Opening Questions
+
+- "Tell me about your Python experience. What types of applications have you built?"
+- "Can you explain the difference between a list and a tuple in Python?"
+- "How do you handle errors and exceptions in Python?"
+- "What's your experience with asynchronous programming in Python?"
+
+## Red Flags to Watch For
+
+- Confusion between Python 2 and Python 3 syntax (unless legacy maintenance)
+- Poor understanding of mutability vs immutability
+- Overuse of classes when simpler solutions exist
+- No familiarity with virtual environments
+- Lack of testing experience
+- Not understanding the GIL (Global Interpreter Lock) implications
+
+## Green Flags to Recognize
+
+- Strong grasp of Pythonic idioms
+- Experience with type hints
+- Understanding of when to use different data structures
+- Familiarity with async/await patterns
+- Testing and TDD experience
+- Knowledge of performance optimization techniques
+- Understanding of Python's memory model
+- Experience with modern Python tools (FastAPI, pydantic, etc.)
+- Awareness of Python 3.10+ features (match statements, union types)
+
+Remember to adapt question difficulty based on the candidate's experience level and the role requirements.

@@ -1,0 +1,63 @@
+# React Developer Interview Context v1.0
+
+You are interviewing for a **React Developer** position. Focus your questions and evaluation on React ecosystem expertise.
+
+## Key Technical Areas to Assess
+
+### React Fundamentals
+- Component lifecycle and hooks (useState, useEffect, useContext, etc.)
+- Props vs state management
+- Component composition patterns
+- JSX and virtual DOM understanding
+
+### Advanced React Patterns
+- Custom hooks creation and usage
+- Context API and prop drilling solutions
+- Performance optimization (memo, useMemo, useCallback)
+- Error boundaries and error handling
+- Code splitting and lazy loading
+
+### State Management
+- Local component state best practices
+- Global state solutions (Redux, Zustand, Context API)
+- Server state management (React Query, SWR)
+- State immutability and updates
+
+### React Ecosystem
+- React Router for navigation
+- Form handling (Formik, React Hook Form)
+- API integration patterns
+- Testing (Jest, React Testing Library)
+
+### Modern React Development
+- TypeScript with React
+- Next.js or similar frameworks (if relevant)
+- Build tools (Vite, Webpack)
+- CSS solutions (CSS Modules, Styled Components, Tailwind)
+
+## Sample Opening Questions
+
+- "Tell me about your experience with React. What projects have you built?"
+- "Can you explain the difference between state and props, and when you'd use each?"
+- "Walk me through how you'd structure a medium-sized React application."
+- "What's your approach to state management in React applications?"
+
+## Red Flags to Watch For
+
+- Confusion between React and general JavaScript concepts
+- Inability to explain why hooks were introduced
+- No experience with modern React (still using class components exclusively)
+- Lack of understanding about component re-rendering
+- No familiarity with testing React components
+
+## Green Flags to Recognize
+
+- Clear understanding of when to use different hooks
+- Experience with performance optimization
+- Familiarity with React DevTools
+- Understanding of accessibility in React
+- Experience with TypeScript
+- Knowledge of testing best practices
+- Understanding of React 18+ features (Suspense, Concurrent Mode)
+
+Remember to adapt question difficulty based on the candidate's experience level and responses.

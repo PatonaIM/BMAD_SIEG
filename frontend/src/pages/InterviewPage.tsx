@@ -1,8 +1,9 @@
-import { Box, Container } from '@mui/material';
+import { Box, Container, CircularProgress, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useInterviewStore } from '../features/interview/store/interviewStore';
 import { useSendMessage } from '../features/interview/hooks/useSendMessage';
+import { useInterviewMessages } from '../features/interview/hooks/useInterview';
 import InterviewProgress from '../features/interview/components/InterviewProgress';
 import InterviewChat from '../features/interview/components/InterviewChat';
 import ChatInput from '../features/interview/components/ChatInput';
@@ -28,15 +29,14 @@ export default function InterviewPage() {
     sessionId: sessionId || '',
   });
 
-  // Initialize session on mount
+  // Fetch interview messages on mount
+  const { isLoading, isError, error } = useInterviewMessages(sessionId);
+
+  // Initialize session ID in store (only once when sessionId changes)
   useEffect(() => {
     if (sessionId) {
       setSessionId(sessionId);
       setStatus('in_progress');
-      
-      // TODO: In Story 1.7, fetch initial interview state from API
-      // For now, we'll start with an initial AI greeting
-      // This would normally come from the backend
     }
   }, [sessionId, setSessionId, setStatus]);
 
@@ -70,6 +70,52 @@ export default function InterviewPage() {
               No session ID provided. Please return to the interview start page.
             </Box>
           </Box>
+        </Box>
+      </Container>
+    );
+  }
+
+  // Show loading state while fetching messages
+  if (isLoading) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            gap: 2,
+          }}
+        >
+          <CircularProgress />
+          <Typography>Loading interview...</Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  // Show error state if fetch failed
+  if (isError) {
+    return (
+      <Container maxWidth="lg">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            gap: 2,
+          }}
+        >
+          <Typography color="error" variant="h6">
+            Failed to load interview
+          </Typography>
+          <Typography color="text.secondary">
+            {error?.message || 'Unknown error occurred'}
+          </Typography>
         </Box>
       </Container>
     );

@@ -39,6 +39,12 @@ export const useInterviewStore = create<InterviewStore>()(
           'addMessage'
         ),
 
+      setMessages: (messages: Message[]) =>
+        set({ messages }, false, 'setMessages'),
+
+      clearMessages: () =>
+        set({ messages: [] }, false, 'clearMessages'),
+
       setAiTyping: (isTyping: boolean) =>
         set({ isAiTyping: isTyping }, false, 'setAiTyping'),
 

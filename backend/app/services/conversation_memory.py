@@ -1,255 +1,324 @@
-"""Conversation memory management using LangChain."""
-
-from datetime import datetime
-from typing import Any
+"""Conversation memory management for LangChain integration."""
+from typing import Any, Dict, List, Optional
 
 import structlog
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+import tiktoken
+from langchain_classic.memory import ConversationBufferMemory
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-logger = structlog.get_logger()
+from app.core.config import settings
+from app.core.exceptions import ContextWindowExceededException
+
+logger = structlog.get_logger().bind(service="conversation_memory")
+
+# Token limits for models (80% of actual limits for safety margin)
+MODEL_TOKEN_LIMITS = {
+    "gpt-4o-mini": 102_400,  # 80% of 128K
+    "gpt-4": 102_400,        # 80% of 128K
+    "gpt-3.5-turbo": 12_800  # 80% of 16K
+}
+
+MAX_MESSAGES_AFTER_TRUNCATION = 10
 
 
 class ConversationMemoryManager:
     """
-    Manages conversation memory for interview sessions.
-
+    Manages LangChain conversation memory serialization and token counting.
+    
     Features:
-    - Stores complete conversation history
-    - Serializes to/from JSON for database persistence
-    - Truncates history to prevent context length errors
-    - Integrates with InterviewSession.conversation_memory JSONB field
-
-    JSONB Schema:
-    {
-        "messages": [
-            {"role": "system", "content": "You are an AI interviewer..."},
-            {"role": "assistant", "content": "Tell me about your React experience..."},
-            {"role": "user", "content": "I have 3 years experience..."}
-        ],
-        "memory_metadata": {
-            "created_at": "2025-10-29T12:00:00Z",
-            "last_updated": "2025-10-29T12:05:00Z",
-            "message_count": 5,
-            "truncation_count": 0
-        }
-    }
-
+    - Serialize/deserialize LangChain ConversationBufferMemory to/from JSON
+    - Token counting using tiktoken
+    - Automatic conversation truncation when approaching context limits
+    - Session state validation with defensive defaults
+    
     Usage:
-        # Initialize new conversation
-        memory_manager = ConversationMemoryManager()
-
-        # Save exchange
-        memory_manager.save_context(
-            inputs={"user": "Tell me about React hooks"},
-            outputs={"assistant": "React hooks are..."}
-        )
-
-        # Serialize for database
-        json_data = memory_manager.serialize_to_json()
-
-        # Later: deserialize from database
-        memory_manager = ConversationMemoryManager.deserialize_from_json(json_data)
+        manager = ConversationMemoryManager()
+        
+        # Serialize memory to store in database
+        memory_dict = manager.serialize_memory(langchain_memory)
+        
+        # Deserialize memory from database
+        langchain_memory = manager.deserialize_memory(memory_dict)
+        
+        # Check if truncation needed
+        if manager.should_truncate(memory_dict):
+            memory_dict = manager.truncate_memory(memory_dict)
     """
 
-    def __init__(self, messages: list[BaseMessage] = None):
+    def __init__(self, model_name: Optional[str] = None):
         """
         Initialize conversation memory manager.
-
+        
         Args:
-            messages: Existing list of messages or None for new conversation
+            model_name: OpenAI model name (defaults to settings.openai_model)
         """
-        self.messages = messages or []
-        self.created_at = datetime.utcnow()
-        self.last_updated = datetime.utcnow()
-        self.truncation_count = 0
+        self.model_name = model_name or settings.openai_model
+        self.token_limit = MODEL_TOKEN_LIMITS.get(self.model_name, 102_400)
+        
+        try:
+            self.encoding = tiktoken.encoding_for_model(self.model_name)
+        except KeyError:
+            # Fallback to cl100k_base for unknown models
+            logger.warning(
+                "model_not_found_using_fallback",
+                model=self.model_name
+            )
+            self.encoding = tiktoken.get_encoding("cl100k_base")
 
-        logger.info(
-            "conversation_memory_initialized",
-            created_at=self.created_at.isoformat(),
-        )
-
-    def save_context(self, inputs: dict[str, Any], outputs: dict[str, Any]) -> None:
+    def serialize_memory(self, memory: ConversationBufferMemory) -> Dict[str, Any]:
         """
-        Save a conversation exchange to memory.
-
+        Serialize LangChain memory to JSON-compatible dictionary.
+        
         Args:
-            inputs: User input dict (e.g., {"user": "message"})
-            outputs: AI output dict (e.g., {"assistant": "response"})
-        """
-        # Add user message
-        if "user" in inputs:
-            self.messages.append(HumanMessage(content=inputs["user"]))
-
-        # Add assistant message
-        if "assistant" in outputs:
-            self.messages.append(AIMessage(content=outputs["assistant"]))
-
-        self.last_updated = datetime.utcnow()
-
-        logger.debug(
-            "context_saved",
-            message_count=len(self.messages),
-            last_updated=self.last_updated.isoformat(),
-        )
-
-    def load_memory_variables(self) -> dict[str, Any]:
-        """
-        Load memory variables for passing to LLM.
-
+            memory: LangChain ConversationBufferMemory instance
+            
         Returns:
-            Dict containing chat history
+            Dictionary with messages and metadata
         """
-        return {"chat_history": self.messages}
+        try:
+            # Extract message history
+            messages = []
+            for message in memory.chat_memory.messages:
+                if isinstance(message, SystemMessage):
+                    messages.append({"role": "system", "content": message.content})
+                elif isinstance(message, HumanMessage):
+                    messages.append({"role": "user", "content": message.content})
+                elif isinstance(message, AIMessage):
+                    messages.append({"role": "assistant", "content": message.content})
+            
+            # Count tokens
+            token_count = self._count_tokens(messages)
+            
+            serialized = {
+                "messages": messages,
+                "metadata": {
+                    "token_count": token_count,
+                    "message_count": len(messages),
+                    "model": self.model_name
+                }
+            }
+            
+            logger.info(
+                "memory_serialized",
+                message_count=len(messages),
+                token_count=token_count
+            )
+            
+            return serialized
+            
+        except Exception as e:
+            logger.error("memory_serialization_failed", error=str(e))
+            raise
 
-    def get_messages(self) -> list[dict[str, str]]:
+    def deserialize_memory(
+        self,
+        data: Optional[Dict[str, Any]]
+    ) -> ConversationBufferMemory:
         """
-        Get all messages in standard format.
-
+        Reconstruct LangChain memory from stored JSON.
+        
+        Args:
+            data: Dictionary with messages and metadata (or None for new session)
+            
         Returns:
-            List of message dicts with 'role' and 'content'
+            ConversationBufferMemory with restored history
         """
-        messages = []
-        for msg in self.messages:
-            role = self._get_message_role(msg)
-            messages.append({
-                "role": role,
-                "content": msg.content,
-            })
-        return messages
+        memory = ConversationBufferMemory(return_messages=True)
+        
+        # Handle empty/new sessions
+        if not data or "messages" not in data:
+            logger.info("deserializing_empty_memory")
+            return memory
+        
+        try:
+            # Restore messages
+            messages = data.get("messages", [])
+            for msg in messages:
+                role = msg.get("role")
+                content = msg.get("content", "")
+                
+                if role == "system":
+                    memory.chat_memory.add_message(SystemMessage(content=content))
+                elif role == "user":
+                    memory.chat_memory.add_message(HumanMessage(content=content))
+                elif role == "assistant":
+                    memory.chat_memory.add_message(AIMessage(content=content))
+            
+            token_count = data.get("metadata", {}).get("token_count", 0)
+            logger.info(
+                "memory_deserialized",
+                message_count=len(messages),
+                token_count=token_count
+            )
+            
+            return memory
+            
+        except Exception as e:
+            logger.error(
+                "memory_deserialization_failed",
+                error=str(e),
+                falling_back_to_empty=True
+            )
+            # Return empty memory on corruption (defensive coding)
+            return ConversationBufferMemory(return_messages=True)
 
-    def serialize_to_json(self) -> dict[str, Any]:
+    def _count_tokens(self, messages: List[Dict[str, str]]) -> int:
         """
-        Serialize conversation memory to JSON for database storage.
-
+        Count tokens in message list using tiktoken.
+        
+        Args:
+            messages: List of message dictionaries with role and content
+            
         Returns:
-            Dict suitable for JSONB storage in InterviewSession.conversation_memory
+            Total token count
         """
-        messages = self.get_messages()
+        total_tokens = 0
+        
+        for message in messages:
+            # Tokens per message: role (4) + content + formatting (3)
+            role_tokens = len(self.encoding.encode(message.get("role", "")))
+            content_tokens = len(self.encoding.encode(message.get("content", "")))
+            total_tokens += role_tokens + content_tokens + 7  # Formatting overhead
+        
+        # Add 3 tokens for the assistant reply primer
+        total_tokens += 3
+        
+        return total_tokens
 
-        json_data = {
-            "messages": messages,
-            "memory_metadata": {
-                "created_at": self.created_at.isoformat(),
-                "last_updated": self.last_updated.isoformat(),
-                "message_count": len(messages),
-                "truncation_count": self.truncation_count,
-            },
+    def should_truncate(self, memory_data: Dict[str, Any]) -> bool:
+        """
+        Check if conversation should be truncated.
+        
+        Args:
+            memory_data: Serialized memory dictionary
+            
+        Returns:
+            True if token count exceeds 80% of limit
+        """
+        token_count = memory_data.get("metadata", {}).get("token_count", 0)
+        return token_count > self.token_limit
+
+    def truncate_memory(
+        self,
+        memory_data: Dict[str, Any],
+        keep_last_n: int = MAX_MESSAGES_AFTER_TRUNCATION
+    ) -> Dict[str, Any]:
+        """
+        Truncate conversation history to prevent context overflow.
+        
+        Keeps system prompt + last N messages.
+        
+        Args:
+            memory_data: Serialized memory dictionary
+            keep_last_n: Number of recent messages to keep
+            
+        Returns:
+            Truncated memory dictionary
+        """
+        messages = memory_data.get("messages", [])
+        
+        if len(messages) <= keep_last_n:
+            return memory_data
+        
+        # Separate system messages from conversation
+        system_messages = [m for m in messages if m.get("role") == "system"]
+        conversation_messages = [m for m in messages if m.get("role") != "system"]
+        
+        # Keep system messages + last N conversation messages
+        truncated_messages = system_messages + conversation_messages[-keep_last_n:]
+        
+        # Recalculate token count
+        token_count = self._count_tokens(truncated_messages)
+        
+        truncated_data = {
+            "messages": truncated_messages,
+            "metadata": {
+                "token_count": token_count,
+                "message_count": len(truncated_messages),
+                "model": self.model_name,
+                "truncated": True,
+                "original_message_count": len(messages)
+            }
         }
-
-        logger.debug(
-            "memory_serialized",
-            message_count=len(messages),
-            truncation_count=self.truncation_count,
-        )
-
-        return json_data
-
-    @classmethod
-    def deserialize_from_json(cls, data: dict[str, Any]) -> "ConversationMemoryManager":
-        """
-        Deserialize conversation memory from database JSON.
-
-        Args:
-            data: JSON data from InterviewSession.conversation_memory
-
-        Returns:
-            ConversationMemoryManager instance with restored conversation
-        """
-        messages_data = data.get("messages", [])
-        messages = []
-
-        # Restore messages
-        for msg in messages_data:
-            role = msg["role"]
-            content = msg["content"]
-
-            # Reconstruct message based on role
-            if role == "system":
-                messages.append(SystemMessage(content=content))
-            elif role == "user":
-                messages.append(HumanMessage(content=content))
-            elif role == "assistant":
-                messages.append(AIMessage(content=content))
-
-        # Create manager instance
-        manager = cls(messages=messages)
-
-        # Restore metadata
-        metadata = data.get("memory_metadata", {})
-        if "created_at" in metadata:
-            manager.created_at = datetime.fromisoformat(metadata["created_at"])
-        if "last_updated" in metadata:
-            manager.last_updated = datetime.fromisoformat(metadata["last_updated"])
-        if "truncation_count" in metadata:
-            manager.truncation_count = metadata["truncation_count"]
-
-        logger.info(
-            "memory_deserialized",
-            message_count=len(messages),
-            truncation_count=manager.truncation_count,
-        )
-
-        return manager
-
-    def truncate_history(self, keep_last_n: int = 5) -> None:
-        """
-        Truncate conversation history to prevent context length errors.
-
-        Keeps system prompt (first message) + last N user/assistant exchanges.
-        This prevents hitting model context limits while maintaining recent context.
-
-        Args:
-            keep_last_n: Number of recent exchanges to keep (default: 5)
-        """
-        if len(self.messages) <= (keep_last_n * 2 + 1):
-            # No truncation needed
-            return
-
-        # Keep system message (if present) + last N exchanges
-        system_messages = []
-        if self.messages and isinstance(self.messages[0], SystemMessage):
-            system_messages = [self.messages[0]]
-            remaining = self.messages[1:]
-        else:
-            remaining = self.messages
-
-        # Keep last N exchanges (N user + N assistant messages)
-        recent_messages = remaining[-(keep_last_n * 2):]
-
-        # Rebuild message list
-        self.messages = system_messages + recent_messages
-
-        self.truncation_count += 1
-        self.last_updated = datetime.utcnow()
-
+        
         logger.warning(
-            "conversation_truncated",
-            kept_messages=len(self.messages),
-            truncation_count=self.truncation_count,
+            "memory_truncated",
+            original_count=len(messages),
+            truncated_count=len(truncated_messages),
+            tokens_after_truncation=token_count
         )
+        
+        return truncated_data
 
-    def clear(self) -> None:
-        """Clear all conversation memory."""
-        self.messages = []
-        self.last_updated = datetime.utcnow()
-
-        logger.info("conversation_memory_cleared")
-
-    def _get_message_role(self, message: BaseMessage) -> str:
+    def validate_session_state(
+        self,
+        session_state: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
-        Get role string from LangChain message object.
-
+        Validate and provide defaults for session state fields.
+        
+        Defensive coding to handle missing or corrupted state.
+        
         Args:
-            message: LangChain message object
-
+            session_state: Session state dictionary (may be incomplete)
+            
         Returns:
-            str: 'system', 'user', or 'assistant'
+            Validated session state with defaults
         """
-        if isinstance(message, SystemMessage):
-            return "system"
-        elif isinstance(message, HumanMessage):
-            return "user"
-        elif isinstance(message, AIMessage):
-            return "assistant"
-        else:
-            return "user"  # Default to user for unknown types
+        defaults = {
+            "current_difficulty_level": "warmup",
+            "questions_asked_count": 0,
+            "skill_boundaries_identified": {},
+            "progression_state": {
+                "response_scores": [],
+                "avg_score_by_level": {},
+                "concepts_demonstrated": [],
+                "level_transitions": []
+            }
+        }
+        
+        # Merge with defaults (session_state takes precedence)
+        validated = {**defaults, **session_state}
+        
+        logger.debug(
+            "session_state_validated",
+            has_boundaries=bool(validated["skill_boundaries_identified"]),
+            questions_asked=validated["questions_asked_count"]
+        )
+        
+        return validated
+
+    def add_system_message(
+        self,
+        memory_data: Dict[str, Any],
+        system_prompt: str
+    ) -> Dict[str, Any]:
+        """
+        Add or update system message at the beginning of conversation.
+        
+        Args:
+            memory_data: Serialized memory dictionary
+            system_prompt: System prompt text
+            
+        Returns:
+            Updated memory dictionary
+        """
+        messages = memory_data.get("messages", [])
+        
+        # Remove existing system messages
+        messages = [m for m in messages if m.get("role") != "system"]
+        
+        # Add new system message at the beginning
+        messages.insert(0, {"role": "system", "content": system_prompt})
+        
+        # Update token count
+        token_count = self._count_tokens(messages)
+        
+        return {
+            "messages": messages,
+            "metadata": {
+                "token_count": token_count,
+                "message_count": len(messages),
+                "model": self.model_name
+            }
+        }

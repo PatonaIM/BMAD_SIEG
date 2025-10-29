@@ -27,6 +27,8 @@ export interface InterviewState {
 export interface InterviewActions {
   setSessionId: (sessionId: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  setMessages: (messages: Message[]) => void;
+  clearMessages: () => void;
   setAiTyping: (isTyping: boolean) => void;
   updateProgress: (current: number, total: number) => void;
   setStatus: (status: InterviewStatus) => void;

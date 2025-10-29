@@ -8,13 +8,21 @@ dependencies = [
     "uvicorn[standard]>=0.24",
     "sqlalchemy>=2.0",
     "asyncpg>=0.29",
+    "alembic>=1.12",
+    "greenlet>=3.0",
     "pydantic>=2.5",
     "pydantic-settings>=2.1",
+    "email-validator>=2.1",
     "python-jose[cryptography]",
     "passlib[bcrypt]",
     "python-multipart",
     "httpx>=0.25",
     "structlog>=23.2",
+    "langchain>=0.1.0",
+    "langchain-community>=0.0.20",
+    "langchain-openai>=0.0.5",
+    "openai>=1.0.0",
+    "tiktoken>=0.5.0",
 ]
 
 [project.optional-dependencies]

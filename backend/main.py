@@ -9,11 +9,18 @@ from typing import Any, AsyncIterator
 
 import structlog
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.core.database import init_db, close_db, engine
+from app.core.exceptions import (
+    InterviewNotFoundException,
+    InterviewCompletedException,
+    OpenAIRateLimitException,
+    ContextWindowExceededException,
+)
 from app.api.v1 import auth, interviews
 
 # Configure structured logging
@@ -74,6 +81,101 @@ app.add_middleware(
 # Include API routers
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(interviews.router, prefix="/api/v1")
+
+
+# Error handlers for custom exceptions
+@app.exception_handler(InterviewNotFoundException)
+async def interview_not_found_handler(request: Request, exc: InterviewNotFoundException):
+    """Handle interview not found errors"""
+    logger.warning(
+        "interview_not_found",
+        path=request.url.path,
+        error=str(exc)
+    )
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Interview not found",
+            "code": "INTERVIEW_NOT_FOUND",
+            "detail": str(exc)
+        }
+    )
+
+
+@app.exception_handler(InterviewCompletedException)
+async def interview_completed_handler(request: Request, exc: InterviewCompletedException):
+    """Handle attempts to interact with completed interviews"""
+    logger.warning(
+        "interview_completed",
+        path=request.url.path,
+        error=str(exc)
+    )
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Interview already completed",
+            "code": "INTERVIEW_COMPLETED",
+            "detail": str(exc)
+        }
+    )
+
+
+@app.exception_handler(OpenAIRateLimitException)
+async def openai_rate_limit_handler(request: Request, exc: OpenAIRateLimitException):
+    """Handle OpenAI API rate limit errors"""
+    logger.error(
+        "openai_rate_limit_exceeded",
+        path=request.url.path,
+        error=str(exc)
+    )
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "AI service temporarily unavailable",
+            "code": "RATE_LIMIT_EXCEEDED",
+            "detail": "Please try again in a moment"
+        },
+        headers={"Retry-After": "60"}
+    )
+
+
+@app.exception_handler(ContextWindowExceededException)
+async def context_window_exceeded_handler(request: Request, exc: ContextWindowExceededException):
+    """Handle conversation context overflow errors"""
+    logger.warning(
+        "context_window_exceeded",
+        path=request.url.path,
+        error=str(exc)
+    )
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Conversation too long",
+            "code": "CONTEXT_WINDOW_EXCEEDED",
+            "detail": str(exc)
+        }
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle all uncaught exceptions"""
+    logger.error(
+        "unhandled_exception",
+        path=request.url.path,
+        method=request.method,
+        error=str(exc),
+        error_type=type(exc).__name__,
+        exc_info=True
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "code": "INTERNAL_SERVER_ERROR",
+            "detail": "An unexpected error occurred. Please try again later."
+        }
+    )
 
 
 @app.get("/health", response_model=dict[str, Any])

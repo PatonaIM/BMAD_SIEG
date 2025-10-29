@@ -1,5 +1,6 @@
 """Repository for InterviewSession data access."""
-from typing import Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -36,16 +37,70 @@ class InterviewSessionRepository(BaseRepository[InterviewSession]):
         )
         return result.scalar_one_or_none()
 
-    async def update_session_state(self, session: InterviewSession) -> InterviewSession:
+    async def update_session_state(
+        self,
+        session: InterviewSession,
+        conversation_memory: Optional[Dict[str, Any]] = None,
+        skill_boundaries: Optional[Dict[str, Any]] = None,
+        progression_state: Optional[Dict[str, Any]] = None
+    ) -> InterviewSession:
         """
-        Update session state in database.
+        Update session state fields.
 
         Args:
-            session: InterviewSession with updated state
+            session: InterviewSession to update
+            conversation_memory: Updated conversation memory JSONB
+            skill_boundaries: Updated skill boundaries JSONB
+            progression_state: Updated progression state JSONB
 
         Returns:
             Updated InterviewSession
         """
+        if conversation_memory is not None:
+            session.conversation_memory = conversation_memory
+        
+        if skill_boundaries is not None:
+            session.skill_boundaries_identified = skill_boundaries
+        
+        if progression_state is not None:
+            session.progression_state = progression_state
+        
+        session.last_activity_at = datetime.utcnow()
+        
         await self.db.flush()
         await self.db.refresh(session)
         return session
+
+    async def update_last_activity(
+        self,
+        session_id: UUID,
+        timestamp: Optional[datetime] = None
+    ) -> None:
+        """
+        Update last activity timestamp.
+
+        Args:
+            session_id: UUID of the session
+            timestamp: Timestamp to set (defaults to now)
+        """
+        session = await self.get_by_id(session_id)
+        if session:
+            session.last_activity_at = timestamp or datetime.utcnow()
+            await self.db.flush()
+
+    async def increment_question_count(self, session_id: UUID) -> int:
+        """
+        Increment questions asked count.
+
+        Args:
+            session_id: UUID of the session
+
+        Returns:
+            Updated question count
+        """
+        session = await self.get_by_id(session_id)
+        if session:
+            session.questions_asked_count += 1
+            await self.db.flush()
+            return session.questions_asked_count
+        return 0

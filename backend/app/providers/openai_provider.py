@@ -315,3 +315,80 @@ class OpenAIProvider(AIProvider):
                 langchain_messages.append(HumanMessage(content=content))
 
         return langchain_messages
+
+    async def generate_contextual_question(
+        self,
+        conversation_history: list[dict[str, str]],
+        system_prompt: str,
+        difficulty_level: str,
+        role_type: str,
+        **kwargs
+    ) -> tuple[str, int]:
+        """
+        Generate contextually relevant interview question.
+        
+        Uses conversation history and difficulty level to generate
+        appropriate follow-up questions.
+
+        Args:
+            conversation_history: List of previous messages
+            system_prompt: System prompt template
+            difficulty_level: Current difficulty (warmup/standard/advanced)
+            role_type: Interview role type
+            **kwargs: Override parameters (temperature, max_tokens)
+
+        Returns:
+            Tuple of (question_text, tokens_used)
+
+        Raises:
+            OpenAIProviderError: If generation fails
+            RateLimitExceededError: If rate limited
+            ContextLengthExceededError: If context too large
+        """
+        # Format system prompt with context
+        formatted_system_prompt = system_prompt.format(
+            role_type=role_type,
+            difficulty_level=difficulty_level
+        )
+        
+        # Build messages array
+        messages = [
+            {"role": "system", "content": formatted_system_prompt}
+        ]
+        
+        # Add conversation history
+        messages.extend(conversation_history)
+        
+        # Set generation parameters
+        temperature = kwargs.get("temperature", 0.7)
+        max_tokens = kwargs.get("max_tokens", 300)
+        
+        logger.info(
+            "generating_contextual_question",
+            model=self.model,
+            difficulty_level=difficulty_level,
+            role_type=role_type,
+            message_count=len(messages)
+        )
+        
+        # Generate question
+        question_text = await self.generate_completion(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        
+        # Count tokens used (approximate)
+        total_text = formatted_system_prompt + "".join(
+            msg["content"] for msg in conversation_history
+        ) + question_text
+        tokens_used = await self.count_tokens(total_text)
+        
+        logger.info(
+            "contextual_question_generated",
+            model=self.model,
+            question_length=len(question_text),
+            tokens_used=tokens_used
+        )
+        
+        return question_text, tokens_used

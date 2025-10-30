@@ -132,7 +132,7 @@ workflow:
         Reference: .bmad-core/data/bmad-kb.md#IDE Development Workflow
 
   flow_diagram: |
-    ```mermaid
+    \`\`\`mermaid
     graph TD
         A[Start: Service Enhancement] --> B[analyst: analyze existing service]
         B --> C[pm: prd.md]
@@ -170,7 +170,7 @@ workflow:
         style K fill:#F0E68C
         style N fill:#F0E68C
         style S fill:#F0E68C
-    ```
+    \`\`\`
 
   decision_guidance:
     when_to_use:

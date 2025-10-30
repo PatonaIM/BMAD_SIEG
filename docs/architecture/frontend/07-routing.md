@@ -2,7 +2,7 @@
 
 ## 7.1 Route Configuration
 
-```typescript
+\`\`\`typescript
 // src/routes/routes.config.ts
 export const ROUTES = {
   HOME: '/',
@@ -37,11 +37,11 @@ export const ROUTES = {
   
   NOT_FOUND: '/404',
 } as const;
-```
+\`\`\`
 
 ## 7.2 Protected Route Component
 
-```typescript
+\`\`\`typescript
 // src/components/shared/ProtectedRoute/ProtectedRoute.tsx
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -70,11 +70,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   return <>{children}</>;
 };
-```
+\`\`\`
 
 ## 7.3 Router Setup
 
-```typescript
+\`\`\`typescript
 // src/routes/index.tsx
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
@@ -156,6 +156,6 @@ const router = createBrowserRouter([
 export const AppRouter: React.FC = () => {
   return <RouterProvider router={router} />;
 };
-```
+\`\`\`
 
 ---

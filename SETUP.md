@@ -7,39 +7,39 @@ Quick guide to set up the Teamified Candidates Portal locally.
 Install these tools before starting:
 
 1. **Python 3.11.9** via pyenv:
-   ```bash
+   \`\`\`bash
    # Install pyenv (if not installed)
    # macOS: brew install pyenv
    # Linux: curl https://pyenv.run | bash
    
    pyenv install 3.11.9
    pyenv local 3.11.9
-   ```
+   \`\`\`
 
 2. **UV Package Manager**:
-   ```bash
+   \`\`\`bash
    # macOS/Linux
    curl -LsSf https://astral.sh/uv/install.sh | sh
    
    # Or via pip
    pip install uv
-   ```
+   \`\`\`
 
 3. **Node.js 18+** (currently using v24.6.0):
-   ```bash
+   \`\`\`bash
    # macOS: brew install node
    # Or download from: https://nodejs.org/
-   ```
+   \`\`\`
 
 4. **PostgreSQL** (for local development):
-   ```bash
+   \`\`\`bash
    # macOS: brew install postgresql@15
    # Linux: apt-get install postgresql-15
-   ```
+   \`\`\`
 
 ## Backend Setup
 
-```bash
+\`\`\`bash
 cd backend
 
 # Create virtual environment
@@ -62,14 +62,14 @@ alembic upgrade head
 
 # Start the backend server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+\`\`\`
 
 Backend will be available at: http://localhost:8000
 API docs at: http://localhost:8000/docs
 
 ## Frontend Setup
 
-```bash
+\`\`\`bash
 cd frontend
 
 # Install dependencies
@@ -81,23 +81,23 @@ cp .env.example .env.development
 
 # Start the development server
 npm run dev
-```
+\`\`\`
 
 Frontend will be available at: http://localhost:5173
 
 ## Running Tests
 
 ### Backend Tests
-```bash
+\`\`\`bash
 cd backend
 pytest
-```
+\`\`\`
 
 ### Frontend Tests
-```bash
+\`\`\`bash
 cd frontend
 npm test
-```
+\`\`\`
 
 ## IDE Setup (Optional)
 
@@ -108,12 +108,12 @@ npm test
 - Playwright Test (ms-playwright.playwright)
 
 Install with:
-```bash
+\`\`\`bash
 code --install-extension ms-python.python
 code --install-extension dbaeumer.vscode-eslint
 code --install-extension esbenp.prettier-vscode
 code --install-extension ms-playwright.playwright
-```
+\`\`\`
 
 ## Troubleshooting
 

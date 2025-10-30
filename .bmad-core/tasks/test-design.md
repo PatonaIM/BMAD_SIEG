@@ -6,13 +6,13 @@ Create comprehensive test scenarios with appropriate test level recommendations 
 
 ## Inputs
 
-```yaml
+\`\`\`yaml
 required:
   - story_id: '{epic}.{story}' # e.g., "1.3"
   - story_path: '{devStoryLocation}/{epic}.{story}.*.md' # Path from core-config.yaml
   - story_title: '{title}' # If missing, derive from story file H1
   - story_slug: '{slug}' # If missing, derive from title (lowercase, hyphenated)
-```
+\`\`\`
 
 ## Purpose
 
@@ -20,11 +20,11 @@ Design a complete test strategy that identifies what to test, at which level (un
 
 ## Dependencies
 
-```yaml
+\`\`\`yaml
 data:
   - test-levels-framework.md # Unit/Integration/E2E decision criteria
   - test-priorities-matrix.md # P0/P1/P2/P3 classification system
-```
+\`\`\`
 
 ## Process
 
@@ -62,7 +62,7 @@ Quick priority assignment:
 
 For each identified test need, create:
 
-```yaml
+\`\`\`yaml
 test_scenario:
   id: '{epic}.{story}-{LEVEL}-{SEQ}'
   requirement: 'AC reference'
@@ -71,7 +71,7 @@ test_scenario:
   description: 'What is being tested'
   justification: 'Why this level was chosen'
   mitigates_risks: ['RISK-001'] # If risk profile exists
-```
+\`\`\`
 
 ### 5. Validate Coverage
 
@@ -88,7 +88,7 @@ Ensure:
 
 **Save to:** `qa.qaLocation/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md`
 
-```markdown
+\`\`\`markdown
 # Test Design: Story {epic}.{story}
 
 Date: {date}
@@ -127,13 +127,13 @@ Designer: Quinn (Test Architect)
 3. P0 E2E tests
 4. P1 tests in order
 5. P2+ as time permits
-```
+\`\`\`
 
 ### Output 2: Gate YAML Block
 
 Generate for inclusion in quality gate:
 
-```yaml
+\`\`\`yaml
 test_design:
   scenarios_total: X
   by_level:
@@ -145,16 +145,16 @@ test_design:
     p1: B
     p2: C
   coverage_gaps: [] # List any ACs without tests
-```
+\`\`\`
 
 ### Output 3: Trace References
 
 Print for use by trace-requirements task:
 
-```text
+\`\`\`text
 Test design matrix: qa.qaLocation/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 P0 tests identified: {count}
-```
+\`\`\`
 
 ## Quality Checklist
 

@@ -2,7 +2,7 @@
 
 ## PostgreSQL DDL (Data Definition Language)
 
-```sql
+\`\`\`sql
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -174,33 +174,33 @@ CREATE TRIGGER update_candidates_updated_at
 BEFORE UPDATE ON candidates
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
-```
+\`\`\`
 
 ---
 
 ## Alembic Migration Strategy
 
 **Initial Migration (v1):**
-```bash
+\`\`\`bash
 # Generate migration
 alembic revision --autogenerate -m "Initial schema with all tables"
 
 # Apply migration
 alembic upgrade head
-```
+\`\`\`
 
 **Future Migrations (Example):**
-```bash
+\`\`\`bash
 # Add new column
 alembic revision -m "Add interview_type to interviews"
 alembic upgrade head
 
 # Rollback
 alembic downgrade -1
-```
+\`\`\`
 
 **Migration File Structure:**
-```
+\`\`\`
 backend/
 └── alembic/
     ├── versions/
@@ -209,13 +209,13 @@ backend/
     │   └── ...
     ├── env.py
     └── script.py.mako
-```
+\`\`\`
 
 ---
 
 ## Database Seeding (Development)
 
-```python
+\`\`\`python
 # backend/scripts/seed_dev_data.py
 
 async def seed_development_data():
@@ -239,7 +239,6 @@ async def seed_development_data():
     
     # Add sample interview with messages
     # ...
-```
+\`\`\`
 
 ---
-

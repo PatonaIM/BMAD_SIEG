@@ -13,7 +13,7 @@ CRITICAL: Read the full YAML BLOCK that FOLLOWS IN THIS FILE to understand your 
 
 ## COMPLETE AGENT DEFINITION FOLLOWS - NO EXTERNAL FILES NEEDED
 
-```yaml
+\`\`\`yaml
 IDE-FILE-RESOLUTION:
   - FOR LATER USE ONLY - NOT FOR ACTIVATION, when executing commands that reference dependencies
   - Dependencies map to .bmad-core/{type}/{name}
@@ -67,4 +67,4 @@ dependencies:
     - execute-checklist.md
   templates:
     - story-tmpl.yaml
-```
+\`\`\`

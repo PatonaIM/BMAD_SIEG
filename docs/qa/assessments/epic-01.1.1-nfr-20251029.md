@@ -279,7 +279,7 @@ All deferments align with epic planning and do not constitute technical debt.
 
 ## Gate NFR Block (Ready to Paste)
 
-```yaml
+\`\`\`yaml
 nfr_validation:
   _assessed: [security, performance, reliability, maintainability]
   security:
@@ -294,7 +294,7 @@ nfr_validation:
   maintainability:
     status: PASS
     notes: 'Test coverage 100% of implemented features (11 tests), clean structure, comprehensive docs'
-```
+\`\`\`
 
 ---
 
@@ -387,11 +387,11 @@ nfr_validation:
 ## Output Lines for Integration
 
 **Story Reference Line:**
-```
+\`\`\`
 NFR assessment: docs/qa/assessments/epic-01.1.1-nfr-20251029.md
-```
+\`\`\`
 
 **Gate Integration Instruction:**
-```
+\`\`\`
 Gate NFR block ready → paste into docs/qa/gates/epic-01.1.1-{slug}.yml under nfr_validation
-```
+\`\`\`

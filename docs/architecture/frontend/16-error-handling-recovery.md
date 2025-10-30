@@ -2,7 +2,7 @@
 
 ## 16.1 Error Boundary Implementation
 
-```typescript
+\`\`\`typescript
 // src/components/shared/ErrorBoundary/ErrorBoundary.tsx
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button } from '@mui/material';
@@ -64,12 +64,12 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-```
+\`\`\`
 
 ## 16.2 Graceful Degradation Strategies
 
 **Audio Failure Fallback:**
-```typescript
+\`\`\`typescript
 // src/features/interview/components/InterviewSession.tsx
 const [audioMode, setAudioMode] = useState<'speech' | 'text'>('speech');
 const [audioError, setAudioError] = useState<string | null>(null);
@@ -93,10 +93,10 @@ return (
     )}
   </>
 );
-```
+\`\`\`
 
 **Network Failure Recovery:**
-```typescript
+\`\`\`typescript
 // src/hooks/useOfflineDetection.ts
 import { useState, useEffect } from 'react';
 
@@ -118,6 +118,6 @@ export const useOfflineDetection = () => {
 
   return isOnline;
 };
-```
+\`\`\`
 
 ---

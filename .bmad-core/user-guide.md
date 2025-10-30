@@ -14,7 +14,7 @@ If the diagrams below don't render, install Markdown All in One along with the M
 
 Before development begins, BMad follows a structured planning workflow that's ideally done in web UI for cost efficiency:
 
-```mermaid
+\`\`\`mermaid
 graph TD
     A["Start: Project Idea"] --> B{"Optional: Analyst Research"}
     B -->|Yes| C["Analyst: Brainstorming (Optional)"]
@@ -71,7 +71,7 @@ graph TD
     style N fill:#1a73e8,color:#fff
     style O fill:#f9ab00,color:#fff
     style P fill:#34a853,color:#fff
-```
+\`\`\`
 
 #### Web UI to IDE Transition
 
@@ -84,20 +84,20 @@ graph TD
 
 #### Planning Artifacts (Standard Paths)
 
-```text
+\`\`\`text
 PRD              → docs/prd.md
 Architecture     → docs/architecture.md
 Sharded Epics    → docs/epics/
 Sharded Stories  → docs/stories/
 QA Assessments   → docs/qa/assessments/
 QA Gates         → docs/qa/gates/
-```
+\`\`\`
 
 ### The Core Development Cycle (IDE)
 
 Once planning is complete and documents are sharded, BMad follows a structured development workflow:
 
-```mermaid
+\`\`\`mermaid
 graph TD
     A["Development Phase Start"] --> B["SM: Reviews Previous Story Dev/QA Notes"]
     B --> B2["SM: Drafts Next Story from Sharded Epic + Architecture"]
@@ -158,7 +158,7 @@ graph TD
     style N fill:#d32f2f,color:#fff
     style Y fill:#e3f2fd,color:#000
     style Z fill:#ffd54f,color:#000
-```
+\`\`\`
 
 ## Prerequisites
 
@@ -182,10 +182,10 @@ If you want to do the planning on the web with Claude (Sonnet 4 or Opus), Gemini
 
 ### IDE Project Setup
 
-```bash
+\`\`\`bash
 # Interactive installation (recommended)
 npx bmad-method install
-```
+\`\`\`
 
 ### Codex (CLI & Web)
 
@@ -233,7 +233,7 @@ This agent should NOT be used within the IDE, it is a heavyweight, special-purpo
 
 Each agent has a YAML section that defines its dependencies:
 
-```yaml
+\`\`\`yaml
 dependencies:
   templates:
     - prd-template.md
@@ -243,7 +243,7 @@ dependencies:
     - shard-doc.md
   data:
     - bmad-kb.md
-```
+\`\`\`
 
 **Key Points:**
 
@@ -255,7 +255,7 @@ dependencies:
 
 **In IDE:**
 
-```bash
+\`\`\`bash
 # Some IDEs, like Cursor or Windsurf for example, utilize manual rules so interaction is done with the '@' symbol
 @pm Create a PRD for a task management app
 @architect Design the system architecture
@@ -264,7 +264,7 @@ dependencies:
 # Some IDEs, like Claude Code, use slash commands instead
 /pm Create user stories
 /dev Fix the login bug
-```
+\`\`\`
 
 #### Interactive Modes
 
@@ -289,26 +289,26 @@ The QA agent in BMad is not just a "senior developer reviewer" - it's a **Test A
 
 #### Quick Start (Essential Commands)
 
-```bash
+\`\`\`bash
 @qa *risk {story}       # Assess risks before development
 @qa *design {story}     # Create test strategy
 @qa *trace {story}      # Verify test coverage during dev
 @qa *nfr {story}        # Check quality attributes
 @qa *review {story}     # Full assessment → writes gate
-```
+\`\`\`
 
 #### Command Aliases (Test Architect)
 
 The documentation uses short forms for convenience. Both styles are valid:
 
-```text
+\`\`\`text
 *risk    → *risk-profile
 *design  → *test-design
 *nfr     → *nfr-assess
 *trace   → *trace-requirements (or just *trace)
 *review  → *review
 *gate    → *gate
-```
+\`\`\`
 
 ### Core Capabilities
 
@@ -337,7 +337,7 @@ Creates comprehensive test strategies including:
 
 **Example output:**
 
-```yaml
+\`\`\`yaml
 test_summary:
   total: 24
   by_level:
@@ -348,7 +348,7 @@ test_summary:
     P0: 8 # Must have - linked to critical risks
     P1: 10 # Should have - medium risks
     P2: 6 # Nice to have - low risks
-```
+\`\`\`
 
 #### 3. Requirements Tracing (`*trace`)
 
@@ -413,7 +413,7 @@ The Test Architect provides value throughout the entire development lifecycle. H
 
 #### Example Commands
 
-```bash
+\`\`\`bash
 # Planning Stage - Run these BEFORE development starts
 @qa *risk {draft-story}     # What could go wrong?
 @qa *design {draft-story}   # What tests should we write?
@@ -427,7 +427,7 @@ The Test Architect provides value throughout the entire development lifecycle. H
 
 # Post-Review - Run after addressing issues
 @qa *gate {story}           # Update gate status
-```
+\`\`\`
 
 ### Quality Standards Enforced
 
@@ -482,14 +482,14 @@ Quinn enforces these test quality principles:
 
 Quick reference for where Test Architect outputs are stored:
 
-```text
+\`\`\`text
 *risk-profile  → docs/qa/assessments/{epic}.{story}-risk-{YYYYMMDD}.md
 *test-design   → docs/qa/assessments/{epic}.{story}-test-design-{YYYYMMDD}.md
 *trace         → docs/qa/assessments/{epic}.{story}-trace-{YYYYMMDD}.md
 *nfr-assess    → docs/qa/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
 *review        → QA Results section in story + gate file reference
 *gate          → docs/qa/gates/{epic}.{story}-{slug}.yml
-```
+\`\`\`
 
 ## Technical Preferences System
 
@@ -507,12 +507,12 @@ The `bmad-core/core-config.yaml` file is a critical config that enables BMad to 
 
 Define which files the dev agent should always load:
 
-```yaml
+\`\`\`yaml
 devLoadAlwaysFiles:
   - docs/architecture/coding-standards.md
   - docs/architecture/tech-stack.md
   - docs/architecture/project-structure.md
-```
+\`\`\`
 
 You will want to verify from sharding your architecture that these documents exist, that they are as lean as possible, and contain exactly the information you want your dev agent to ALWAYS load into its context. These are the rules the agent will follow.
 

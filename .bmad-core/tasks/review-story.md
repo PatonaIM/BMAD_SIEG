@@ -6,13 +6,13 @@ Perform a comprehensive test architecture review with quality gate decision. Thi
 
 ## Inputs
 
-```yaml
+\`\`\`yaml
 required:
   - story_id: '{epic}.{story}' # e.g., "1.3"
   - story_path: '{devStoryLocation}/{epic}.{story}.*.md' # Path from core-config.yaml
   - story_title: '{title}' # If missing, derive from story file H1
   - story_slug: '{slug}' # If missing, derive from title (lowercase, hyphenated)
-```
+\`\`\`
 
 ## Prerequisites
 
@@ -118,7 +118,7 @@ required:
 
 After review and any refactoring, append your results to the story file in the QA Results section:
 
-```markdown
+\`\`\`markdown
 ## QA Results
 
 ### Review Date: [Date]
@@ -179,7 +179,7 @@ NFR assessment: qa.qaLocation/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
 
 [✓ Ready for Done] / [✗ Changes Required - See unchecked items above]
 (Story owner decides final status)
-```
+\`\`\`
 
 ## Output 2: Create Quality Gate File
 
@@ -191,7 +191,7 @@ NFR assessment: qa.qaLocation/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
 
 Gate file structure:
 
-```yaml
+\`\`\`yaml
 schema: 1
 story: '{epic}.{story}'
 story_title: '{story title}'
@@ -235,7 +235,7 @@ recommendations:
   future: # Can be addressed later
     - action: 'Consider caching'
       refs: ['services/data.ts']
-```
+\`\`\`
 
 ### Gate Decision Criteria
 
@@ -271,10 +271,10 @@ Detailed criteria:
 
 ### Quality Score Calculation
 
-```text
+\`\`\`text
 quality_score = 100 - (20 × number of FAILs) - (10 × number of CONCERNS)
 Bounded between 0 and 100
-```
+\`\`\`
 
 If `technical-preferences.md` defines custom weights, use those instead.
 

@@ -2,7 +2,7 @@
 
 ## 8.1 MUI Theme Configuration
 
-```typescript
+\`\`\`typescript
 // src/theme/theme.ts (from design system)
 import { createTheme } from '@mui/material/styles';
 
@@ -55,12 +55,12 @@ export const teamifiedTheme = createTheme({
     borderRadius: 8,
   },
 });
-```
+\`\`\`
 
 ## 8.2 Styling Patterns
 
 **Using sx Prop (Recommended for inline styling):**
-```typescript
+\`\`\`typescript
 <Box
   sx={{
     display: 'flex',
@@ -76,10 +76,10 @@ export const teamifiedTheme = createTheme({
     Title
   </Typography>
 </Box>
-```
+\`\`\`
 
 **Using Styled Components (For reusable styled elements):**
-```typescript
+\`\`\`typescript
 import { styled } from '@mui/material/styles';
 import { Box } from '@mui/material';
 
@@ -95,11 +95,11 @@ const StyledCard = styled(Box)(({ theme }) => ({
     boxShadow: theme.shadows[2],
   },
 }));
-```
+\`\`\`
 
 ## 8.3 CSS Custom Properties
 
-```css
+\`\`\`css
 /* src/styles/variables.css */
 :root {
   /* Colors from MUI theme */
@@ -128,6 +128,6 @@ const StyledCard = styled(Box)(({ theme }) => ({
   --z-index-modal: 1300;
   --z-index-tooltip: 1500;
 }
-```
+\`\`\`
 
 ---

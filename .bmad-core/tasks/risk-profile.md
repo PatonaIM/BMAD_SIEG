@@ -6,13 +6,13 @@ Generate a comprehensive risk assessment matrix for a story implementation using
 
 ## Inputs
 
-```yaml
+\`\`\`yaml
 required:
   - story_id: '{epic}.{story}' # e.g., "1.3"
   - story_path: 'docs/stories/{epic}.{story}.*.md'
   - story_title: '{title}' # If missing, derive from story file H1
   - story_slug: '{slug}' # If missing, derive from title (lowercase, hyphenated)
-```
+\`\`\`
 
 ## Purpose
 
@@ -79,7 +79,7 @@ Identify, assess, and prioritize risks in the story implementation. Provide risk
 
 For each category, identify specific risks:
 
-```yaml
+\`\`\`yaml
 risk:
   id: 'SEC-001' # Use prefixes: SEC, PERF, DATA, BUS, OPS, TECH
   category: security
@@ -89,7 +89,7 @@ risk:
     - 'UserRegistrationForm'
     - 'ProfileUpdateForm'
   detection_method: 'Code review revealed missing validation'
-```
+\`\`\`
 
 ### 2. Risk Assessment
 
@@ -119,7 +119,7 @@ Evaluate each risk using probability × impact:
 
 Create risk matrix:
 
-```markdown
+\`\`\`markdown
 ## Risk Matrix
 
 | Risk ID  | Description             | Probability | Impact     | Score | Priority |
@@ -127,13 +127,13 @@ Create risk matrix:
 | SEC-001  | XSS vulnerability       | High (3)    | High (3)   | 9     | Critical |
 | PERF-001 | Slow query on dashboard | Medium (2)  | Medium (2) | 4     | Medium   |
 | DATA-001 | Backup failure          | Low (1)     | High (3)   | 3     | Low      |
-```
+\`\`\`
 
 ### 4. Risk Mitigation Strategies
 
 For each identified risk, provide mitigation:
 
-```yaml
+\`\`\`yaml
 mitigation:
   risk_id: 'SEC-001'
   strategy: 'preventive' # preventive|detective|corrective
@@ -149,7 +149,7 @@ mitigation:
   residual_risk: 'Low - Some zero-day vulnerabilities may remain'
   owner: 'dev'
   timeline: 'Before deployment'
-```
+\`\`\`
 
 ## Outputs
 
@@ -163,7 +163,7 @@ Generate for pasting into gate file under `risk_summary`:
 - Sort risks by score (desc) when emitting highest and any tabular lists
 - If no risks: totals all zeros, omit highest, keep recommendations arrays empty
 
-```yaml
+\`\`\`yaml
 # risk_summary (paste into gate file):
 risk_summary:
   totals:
@@ -180,13 +180,13 @@ risk_summary:
       - 'Add input sanitization & CSP'
     monitor:
       - 'Add security alerts for auth endpoints'
-```
+\`\`\`
 
 ### Output 2: Markdown Report
 
 **Save to:** `qa.qaLocation/assessments/{epic}.{story}-risk-{YYYYMMDD}.md`
 
-```markdown
+\`\`\`markdown
 # Risk Profile: Story {epic}.{story}
 
 Date: {date}
@@ -286,13 +286,13 @@ Review and update risk profile when:
 - Security vulnerabilities discovered
 - Performance issues reported
 - Regulatory requirements change
-```
+\`\`\`
 
 ## Risk Scoring Algorithm
 
 Calculate overall story risk score:
 
-```text
+\`\`\`text
 Base Score = 100
 For each risk:
   - Critical (9): Deduct 20 points
@@ -302,7 +302,7 @@ For each risk:
 
 Minimum score = 0 (extremely risky)
 Maximum score = 100 (minimal risk)
-```
+\`\`\`
 
 ## Risk-Based Recommendations
 
@@ -341,9 +341,9 @@ Based on risk profile, recommend:
 
 **Print this line for review task to quote:**
 
-```text
+\`\`\`text
 Risk profile: qa.qaLocation/assessments/{epic}.{story}-risk-{YYYYMMDD}.md
-```
+\`\`\`
 
 ## Key Principles
 

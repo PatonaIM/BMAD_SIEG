@@ -217,13 +217,13 @@
 - No test verifies actual HTTP communication between services
 
 **Recommended Action:**
-```yaml
+\`\`\`yaml
 test_type: integration
 description: 'E2E test that starts both services and verifies health check flow'
 approach: 'Use pytest with actual uvicorn server + Playwright/Cypress for frontend'
 priority: medium
 reason: 'Later stories (1.2+) will add integration tests for database workflows'
-```
+\`\`\`
 
 ### 2. No Structural Validation Tests
 **Severity:** LOW  
@@ -235,13 +235,13 @@ reason: 'Later stories (1.2+) will add integration tests for database workflows'
 - No test validates all required config files exist
 
 **Recommended Action:**
-```yaml
+\`\`\`yaml
 test_type: smoke
 description: 'Structural validation test checking directories and config files'
 approach: 'Python script or pytest that validates directory tree'
 priority: low
 reason: 'Structure is stable after initial setup; breaking it would be obvious'
-```
+\`\`\`
 
 ### 3. Partial Dependency Verification
 **Severity:** LOW  
@@ -253,13 +253,13 @@ reason: 'Structure is stable after initial setup; breaking it would be obvious'
 - No explicit version check tests
 
 **Recommended Action:**
-```yaml
+\`\`\`yaml
 test_type: smoke
 description: 'Dependency version check test'
 approach: 'Test that imports key dependencies and checks version attributes'
 priority: low
 reason: 'CI/CD pipeline will catch dependency issues; manual review sufficient for now'
-```
+\`\`\`
 
 ---
 
@@ -334,32 +334,32 @@ reason: 'CI/CD pipeline will catch dependency issues; manual review sufficient f
 ### Future Enhancements (Story 1.2+)
 
 1. **Add Integration Test Suite**
-   ```yaml
+   \`\`\`yaml
    when: Story 1.2 (Database Integration)
    tests:
      - 'Backend + PostgreSQL connection test'
      - 'Frontend + Backend health check (actual HTTP)'
      - 'CORS validation with real requests'
    tools: 'pytest-asyncio, Playwright or Cypress'
-   ```
+   \`\`\`
 
 2. **Add E2E Smoke Tests**
-   ```yaml
+   \`\`\`yaml
    when: Story 1.3+ (Authentication)
    tests:
      - 'Full user signup -> login -> dashboard flow'
      - 'Interview creation -> execution -> results flow'
    tools: 'Playwright with real browser automation'
-   ```
+   \`\`\`
 
 3. **Add Performance Baseline**
-   ```yaml
+   \`\`\`yaml
    when: Story 1.5+ (Core features complete)
    tests:
      - 'Health endpoint response time < 50ms'
      - 'Frontend initial load < 2s'
    tools: 'k6 or Lighthouse CI'
-   ```
+   \`\`\`
 
 ---
 
@@ -474,18 +474,18 @@ reason: 'CI/CD pipeline will catch dependency issues; manual review sufficient f
 ## Appendix: Test Execution Evidence
 
 ### Backend Tests
-```bash
+\`\`\`bash
 Command: pytest tests/unit/
 Result: 5/5 passing
 Coverage: main.py health endpoint at 100%
-```
+\`\`\`
 
 ### Frontend Tests
-```bash
+\`\`\`bash
 Command: npm run test
 Result: 6/6 passing
 Coverage: HealthCheckPage.tsx at ~100%
-```
+\`\`\`
 
 ### Manual Verification Checklist
 - [x] Backend runs on port 8000

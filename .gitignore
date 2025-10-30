@@ -60,3 +60,20 @@ logs/
 # Setup logs
 setup.log
 setup-*.log
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Node modules
+node_modules/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.tsbuildinfo
+next-env.d.ts

@@ -202,7 +202,7 @@ sections:
       - `refactor(ui): restructure components`
       
       **For complex changes**:
-      ```
+      \`\`\`
       feat(api): add user profile management
       
       - Add profile endpoints
@@ -210,7 +210,7 @@ sections:
       - Add input validation
       
       Closes #123
-      ```
+      \`\`\`
       
       **Breaking changes**: Use `!` or `BREAKING CHANGE:` footer
 

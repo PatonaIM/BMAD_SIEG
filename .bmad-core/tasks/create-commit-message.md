@@ -11,13 +11,13 @@ Generate properly formatted commit messages that follow project standards for co
 All commit messages must follow the standards defined in `docs/architecture/coding-standards.md`:
 
 ### Format Structure
-```
+\`\`\`
 <type>[optional scope]: <description>
 
 [optional body]
 
 [optional footer(s)]
-```
+\`\`\`
 
 ### Character Limits (50/72 Rule)
 - **Subject line**: 50 characters maximum (including type and scope)
@@ -67,7 +67,7 @@ This task can be invoked by:
 
 **MANDATORY**: Before presenting any commit message, validate:
 
-```
+\`\`\`
 Subject Line Check:
 - Count total characters including type, scope, colon, space
 - Example: "feat(auth): add reset" = 23 chars ✅
@@ -77,19 +77,19 @@ Body Line Check:
 - Each line must be ≤72 characters
 - Use line breaks for longer explanations
 - Wrap at word boundaries
-```
+\`\`\`
 
 **If validation fails**: Revise and recount before presenting to user.
 
 ## Examples
 
 ### Simple Commit
-```
+\`\`\`
 feat(auth): add password reset functionality
-```
+\`\`\`
 
 ### With Body
-```
+\`\`\`
 fix(api): resolve race condition in user registration
 
 Introduce request ID and reference to latest request to dismiss
@@ -97,17 +97,17 @@ incoming responses other than from latest request. This prevents
 duplicate user creation when users double-click the register button.
 
 Fixes #234
-```
+\`\`\`
 
 ### Breaking Change
-```
+\`\`\`
 feat(api)!: change authentication endpoint
 
 BREAKING CHANGE: /auth/login now requires email instead of username.
 Update all client applications to use email field for authentication.
 
 Closes #456
-```
+\`\`\`
 
 ## Validation Checklist
 

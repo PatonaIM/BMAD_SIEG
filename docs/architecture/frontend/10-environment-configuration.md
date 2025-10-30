@@ -2,14 +2,14 @@
 
 ## 10.1 Environment Variables
 
-```bash
+\`\`\`bash
 # .env.example
 VITE_API_BASE_URL=http://localhost:8000/api/v1
 VITE_APP_NAME=Teamified
 VITE_APP_VERSION=1.0.0
-```
+\`\`\`
 
-```typescript
+\`\`\`typescript
 // src/config/env.ts
 import { z } from 'zod';
 
@@ -29,6 +29,6 @@ const validateEnv = () => {
 };
 
 export const env = validateEnv();
-```
+\`\`\`
 
 ---

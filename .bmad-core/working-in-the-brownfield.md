@@ -62,10 +62,10 @@ Starting in an IDE with large context and good models (Its important to use qual
 
 **In Gemini Web (with your flattened-codebase.xml uploaded):**
 
-```bash
+\`\`\`bash
 @pm
 *create-brownfield-prd
-```
+\`\`\`
 
 The PM will:
 
@@ -80,10 +80,10 @@ The PM will:
 
 **Still in Gemini Web, now with PRD context:**
 
-```bash
+\`\`\`bash
 @architect
 *document-project
-```
+\`\`\`
 
 The architect will:
 
@@ -128,10 +128,10 @@ The architect will generate comprehensive documentation of everything.
 
 **1. Create Brownfield PRD**:
 
-```bash
+\`\`\`bash
 @pm
 *create-brownfield-prd
-```
+\`\`\`
 
 The PM agent will:
 
@@ -155,10 +155,10 @@ The PM agent will:
 
 **2. Create Brownfield Architecture**:
 
-```bash
+\`\`\`bash
 @architect
 *create-brownfield-architecture
-```
+\`\`\`
 
 The architect will:
 
@@ -172,10 +172,10 @@ The architect will:
 
 **For Single Epic Without Full PRD**:
 
-```bash
+\`\`\`bash
 @pm
 *create-brownfield-epic
-```
+\`\`\`
 
 Use when:
 
@@ -186,10 +186,10 @@ Use when:
 
 **For Single Story**:
 
-```bash
+\`\`\`bash
 @pm
 *create-brownfield-story
-```
+\`\`\`
 
 Use when:
 
@@ -200,10 +200,10 @@ Use when:
 
 ### Phase 3: Validate Planning Artifacts
 
-```bash
+\`\`\`bash
 @po
 *execute-checklist-po
-```
+\`\`\`
 
 The PO ensures:
 
@@ -221,15 +221,15 @@ The PO ensures:
 2. Shard your docs:
    In your IDE
 
-   ```bash
+   \`\`\`bash
    @po
    shard docs/prd.md
-   ```
+   \`\`\`
 
-   ```bash
+   \`\`\`bash
    @po
    shard docs/architecture.md
-   ```
+   \`\`\`
 
 ### Phase 5: Transition to Development
 
@@ -288,7 +288,7 @@ The Test Architect addresses unique brownfield complexities:
 
 **CRITICAL FOR BROWNFIELD - Run These First:**
 
-```bash
+\`\`\`bash
 # 1. RISK ASSESSMENT (Run IMMEDIATELY after story creation)
 @qa *risk {brownfield-story}
 # Identifies: Legacy dependencies, breaking changes, integration points
@@ -308,13 +308,13 @@ The Test Architect addresses unique brownfield complexities:
 #   - Integration test requirements
 #   - Performance benchmarks to maintain
 #   - Feature flag test scenarios
-```
+\`\`\`
 
 ##### Stage 2: During Development (Continuous Validation)
 
 **Monitor Integration Health While Coding:**
 
-```bash
+\`\`\`bash
 # 3. REQUIREMENTS TRACING (Mid-development checkpoint)
 @qa *trace {brownfield-story}
 # Maps: New requirements + existing functionality preservation
@@ -334,20 +334,20 @@ The Test Architect addresses unique brownfield complexities:
 #   - Security implications of integrations
 #   - Backward compatibility validation
 #   - Load/stress on legacy components
-```
+\`\`\`
 
 ##### Stage 3: Code Review (Deep Integration Analysis)
 
 **Comprehensive Brownfield Review:**
 
-```bash
+\`\`\`bash
 # 5. FULL REVIEW (When development complete)
 @qa *review {brownfield-story}
 # Performs: Deep analysis + active refactoring
 # Outputs:
 #   - QA Results in story file
 #   - Gate file: docs/qa/gates/{epic}.{story}-{slug}.yml
-```
+\`\`\`
 
 The review specifically analyzes:
 
@@ -360,7 +360,7 @@ The review specifically analyzes:
 
 ##### Stage 4: Post-Review (Gate Updates)
 
-```bash
+\`\`\`bash
 # 6. GATE STATUS UPDATE (After addressing issues)
 @qa *gate {brownfield-story}
 # Updates: Quality gate decision after fixes
@@ -369,7 +369,7 @@ The review specifically analyzes:
 #   - May WAIVE certain legacy code issues
 #   - Documents technical debt acceptance
 #   - Tracks migration progress
-```
+\`\`\`
 
 #### Brownfield-Specific Risk Scoring
 
@@ -527,7 +527,7 @@ Document:
 
 ### Brownfield-Specific Commands
 
-```bash
+\`\`\`bash
 # Document existing project
 @architect *document-project
 
@@ -542,13 +542,13 @@ Document:
 
 # Single story creation
 @pm *create-brownfield-story
-```
+\`\`\`
 
 ### Test Architect Commands for Brownfield
 
 Note: Short forms shown below. Full commands: `*risk-profile`, `*test-design`, `*nfr-assess`, `*trace-requirements`
 
-```bash
+\`\`\`bash
 # BEFORE DEVELOPMENT (Planning)
 @qa *risk {story}     # Assess regression & integration risks
 @qa *design {story}   # Plan regression + new feature tests
@@ -560,11 +560,11 @@ Note: Short forms shown below. Full commands: `*risk-profile`, `*test-design`, `
 # AFTER DEVELOPMENT (Review)
 @qa *review {story}   # Deep integration analysis
 @qa *gate {story}     # Update quality decision
-```
+\`\`\`
 
 ### Decision Tree
 
-```text
+\`\`\`text
 Do you have a large codebase or monorepo?
 ├─ Yes → PRD-First Approach
 │   └─ Create PRD → Document only affected areas
@@ -588,7 +588,7 @@ Does the change touch legacy code?
 │   └─ *review → Validate no breakage
 └─ No → Test Architect is RECOMMENDED
     └─ *review → Ensure quality standards
-```
+\`\`\`
 
 ## Conclusion
 

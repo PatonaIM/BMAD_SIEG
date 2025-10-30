@@ -2,7 +2,7 @@
 
 ## 5.1 Store Structure
 
-```
+\`\`\`
 src/store/
 ├── index.ts                      # Store composition and exports
 ├── globalStore.ts                # Global app state
@@ -12,11 +12,11 @@ src/store/
 
 src/features/{feature}/store/
 ├── {feature}Store.ts             # Feature-specific Zustand store
-```
+\`\`\`
 
 ## 5.2 Global Store (Zustand)
 
-```typescript
+\`\`\`typescript
 // src/store/globalStore.ts
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
@@ -105,11 +105,11 @@ export const useGlobalStore = create<GlobalState>()(
 export const selectUser = (state: GlobalState) => state.user;
 export const selectIsAuthenticated = (state: GlobalState) => state.isAuthenticated;
 export const selectNotifications = (state: GlobalState) => state.notifications;
-```
+\`\`\`
 
 ## 5.3 Feature Store Example (Interview)
 
-```typescript
+\`\`\`typescript
 // src/features/interview/store/interviewStore.ts
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -202,11 +202,11 @@ export const useInterviewStore = create<InterviewState>()(
     { name: 'InterviewStore' }
   )
 );
-```
+\`\`\`
 
 ## 5.4 Context API Example (Theme)
 
-```typescript
+\`\`\`typescript
 // src/theme/ThemeContext.tsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
@@ -242,7 +242,7 @@ export const useTheme = () => {
   }
   return context;
 };
-```
+\`\`\`
 
 ## 5.5 Usage Guidelines
 
@@ -278,4 +278,3 @@ export const useTheme = () => {
 - **Component State** (useState): Local component UI state
 
 ---
-

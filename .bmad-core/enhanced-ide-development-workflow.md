@@ -42,7 +42,7 @@ The Test Architect (Quinn) provides comprehensive quality assurance throughout t
 
 **RECOMMENDED - Set Developer Up for Success:**
 
-```bash
+\`\`\`bash
 # 1. RISK ASSESSMENT (Run FIRST for complex stories)
 @qa *risk {approved-story}
 # Identifies:
@@ -60,13 +60,13 @@ The Test Architect (Quinn) provides comprehensive quality assurance throughout t
 #   - Risk-based priorities (P0/P1/P2)
 #   - Test data requirements
 # Share with Dev: Include in story comments or attach to ticket
-```
+\`\`\`
 
 ### Stage 2: During Development (Mid-Implementation Checkpoints)
 
 **Developer Self-Service Quality Checks:**
 
-```bash
+\`\`\`bash
 # 3. REQUIREMENTS TRACING (Verify coverage mid-development)
 @qa *trace {story-in-progress}
 # Validates:
@@ -84,7 +84,7 @@ The Test Architect (Quinn) provides comprehensive quality assurance throughout t
 #   - Reliability: Error handling, recovery
 #   - Maintainability: Code quality, documentation
 # Run when: Before marking "Ready for Review"
-```
+\`\`\`
 
 ### Stage 3: Story Review (Quality Gate Assessment)
 
@@ -92,10 +92,10 @@ The Test Architect (Quinn) provides comprehensive quality assurance throughout t
 
 **Prerequisite:** All tests green locally; lint & type checks pass.
 
-```bash
+\`\`\`bash
 # 5. FULL REVIEW (Standard review process)
 @qa *review {completed-story}
-```
+\`\`\`
 
 **What Happens During Review:**
 
@@ -124,13 +124,13 @@ The Test Architect (Quinn) provides comprehensive quality assurance throughout t
 
 **Update Gate Status After Fixes:**
 
-```bash
+\`\`\`bash
 # 6. GATE UPDATE (Document final decision)
 @qa *gate {reviewed-story}
 # Updates: Quality gate with new status
 # Use when: After addressing review feedback
 # Documents: What was fixed, what was waived
-```
+\`\`\`
 
 ### Understanding Gate Decisions
 
@@ -157,7 +157,7 @@ The Test Architect uses risk scoring to prioritize testing:
 
 #### High-Risk or Brownfield Stories
 
-```bash
+\`\`\`bash
 # ALWAYS run this sequence:
 @qa *risk {story}    # First - identify dangers
 @qa *design {story}  # Second - plan defense
@@ -166,7 +166,7 @@ The Test Architect uses risk scoring to prioritize testing:
 @qa *nfr {story}     # Check performance impact
 # Finally:
 @qa *review {story}  # Deep integration analysis
-```
+\`\`\`
 
 #### Complex Integrations
 

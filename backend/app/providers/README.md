@@ -12,7 +12,7 @@ This system provides a flexible abstraction for AI providers, currently supporti
 
 ### 1. Using the Provider Factory (Recommended)
 
-```python
+\`\`\`python
 from app.providers.mock_ai_provider import get_ai_provider
 
 # Automatically uses MockAIProvider if USE_MOCK_AI=true, otherwise OpenAIProvider
@@ -30,11 +30,11 @@ print(response)
 # Count tokens
 token_count = await provider.count_tokens("Hello, how are you?")
 print(f"Token count: {token_count}")
-```
+\`\`\`
 
 ### 2. Direct Provider Usage
 
-```python
+\`\`\`python
 from app.providers.openai_provider import OpenAIProvider
 from app.providers.mock_ai_provider import MockAIProvider
 
@@ -45,11 +45,11 @@ response = await openai_provider.generate_completion(messages)
 # Use Mock (no API calls, zero cost)
 mock_provider = MockAIProvider(role_type="python")
 response = await mock_provider.generate_completion(messages)
-```
+\`\`\`
 
 ### 3. With Conversation Memory
 
-```python
+\`\`\`python
 from app.services.conversation_memory import ConversationMemoryManager
 from app.providers.mock_ai_provider import get_ai_provider
 
@@ -80,11 +80,11 @@ while True:
 # Save to database (JSON format)
 json_data = memory.serialize_to_json()
 # Store json_data in InterviewSession.conversation_memory field
-```
+\`\`\`
 
 ### 4. With Prompt Templates
 
-```python
+\`\`\`python
 from app.utils.prompt_loader import PromptTemplateManager
 from app.providers.mock_ai_provider import get_ai_provider
 
@@ -100,11 +100,11 @@ messages = [
 ]
 
 response = await provider.generate_completion(messages)
-```
+\`\`\`
 
 ### 5. Token Counting and Cost Tracking
 
-```python
+\`\`\`python
 from app.utils.token_counter import (
     count_tokens_for_messages,
     estimate_cost,
@@ -134,13 +134,13 @@ interview_cost = estimate_interview_cost(
     model="gpt-4o-mini"
 )
 print(f"Estimated interview cost: ${interview_cost}")
-```
+\`\`\`
 
 ## Configuration
 
 ### Environment Variables
 
-```bash
+\`\`\`bash
 # OpenAI API Configuration
 OPENAI_API_KEY=sk-proj-your-key-here
 OPENAI_MODEL=gpt-4o-mini
@@ -149,20 +149,20 @@ OPENAI_TEMPERATURE=0.7
 
 # Development Mode (use mock provider)
 USE_MOCK_AI=true
-```
+\`\`\`
 
 ### Switching Between Providers
 
 **Development/Testing (Free):**
-```bash
+\`\`\`bash
 export USE_MOCK_AI=true
-```
+\`\`\`
 
 **Production (Costs Money):**
-```bash
+\`\`\`bash
 export USE_MOCK_AI=false
 export OPENAI_API_KEY=sk-your-real-key
-```
+\`\`\`
 
 ## Error Handling
 
@@ -173,7 +173,7 @@ The OpenAI provider automatically handles:
 - **Context length errors**: Raises `ContextLengthExceededError` (truncate history manually)
 - **Authentication errors (401)**: No retry, raises immediately
 
-```python
+\`\`\`python
 from app.core.exceptions import (
     RateLimitExceededError,
     ContextLengthExceededError,
@@ -193,25 +193,25 @@ except ContextLengthExceededError:
 except OpenAIProviderError as e:
     # Handle other provider errors
     print(f"Provider error: {e}")
-```
+\`\`\`
 
 ## Best Practices
 
 ### 1. Use Mock Provider in Tests
-```python
+\`\`\`python
 # In tests, always use mock to avoid API costs
 provider = MockAIProvider(role_type="react")
-```
+\`\`\`
 
 ### 2. Truncate History for Long Conversations
-```python
+\`\`\`python
 # Keep only system prompt + last 5 exchanges
 if len(memory.get_messages()) > 15:
     memory.truncate_history(keep_last_n=5)
-```
+\`\`\`
 
 ### 3. Track Costs
-```python
+\`\`\`python
 # Log token usage for monitoring
 from app.utils.token_counter import count_tokens_for_messages
 
@@ -224,19 +224,19 @@ logger.info(
     cost_usd=float(cost),
     model="gpt-4o-mini"
 )
-```
+\`\`\`
 
 ### 4. Version Control Prompts
-```python
+\`\`\`python
 # Prompts are in files - version control them!
 # Modify prompts without code changes
 # backend/app/prompts/interview_system.txt
 # backend/app/prompts/react_interview.txt
-```
+\`\`\`
 
 ## Architecture
 
-```
+\`\`\`
 AIProvider (Abstract)
 ├── OpenAIProvider (Production)
 │   ├── Uses LangChain's ChatOpenAI
@@ -251,12 +251,12 @@ AIProvider (Abstract)
 get_ai_provider() factory
 ├── Checks USE_MOCK_AI setting
 └── Returns appropriate provider
-```
+\`\`\`
 
 ## Common Patterns
 
 ### Pattern 1: Complete Interview Session
-```python
+\`\`\`python
 # Setup
 memory = ConversationMemoryManager()
 provider = get_ai_provider(role_type="react")
@@ -284,10 +284,10 @@ for question_num in range(5):
 
 # Save to database
 conversation_data = memory.serialize_to_json()
-```
+\`\`\`
 
 ### Pattern 2: Load Existing Conversation
-```python
+\`\`\`python
 # Load from database
 json_data = get_from_database()  # Your DB retrieval
 
@@ -298,7 +298,7 @@ memory = ConversationMemoryManager.deserialize_from_json(json_data)
 messages = memory.get_messages()
 messages.append({"role": "user", "content": "New question"})
 response = await provider.generate_completion(messages)
-```
+\`\`\`
 
 ## Troubleshooting
 

@@ -68,7 +68,7 @@ Analyze the candidate's response and provide a structured assessment of their te
 
 Provide your analysis in the following JSON structure:
 
-```json
+\`\`\`json
 {
   "confidence_level": <float 0.0-1.0>,
   "technical_accuracy": <float 0.0-1.0>,
@@ -78,7 +78,7 @@ Provide your analysis in the following JSON structure:
   "reasoning": "<brief explanation of scores>",
   "skill_area": "<primary skill being tested, e.g., 'react_hooks', 'async_programming'>"
 }
-```
+\`\`\`
 
 ## Important Notes
 - Be objective and evidence-based in your assessment

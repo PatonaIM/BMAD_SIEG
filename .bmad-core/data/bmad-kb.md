@@ -51,14 +51,14 @@ BMad transforms you into a "Vibe CEO" - directing a team of specialized AI agent
 
 ### The Development Loop
 
-```text
+\`\`\`text
 1. SM Agent (New Chat) → Creates next story from sharded docs
 2. You → Review and approve story
 3. Dev Agent (New Chat) → Implements approved story
 4. QA Agent (New Chat) → Reviews and refactors code
 5. You → Verify completion
 6. Repeat until epic complete
-```
+\`\`\`
 
 ### Why This Works
 
@@ -86,10 +86,10 @@ BMad transforms you into a "Vibe CEO" - directing a team of specialized AI agent
 
 **Best for**: Cursor, Claude Code, Windsurf, Trae, Cline, Roo Code, Github Copilot users
 
-```bash
+\`\`\`bash
 # Interactive installation (recommended)
 npx bmad-method install
-```
+\`\`\`
 
 **Installation Steps**:
 
@@ -224,23 +224,23 @@ This configuration file acts as a map for BMad agents, telling them exactly wher
 
 **Legacy V3 Project**:
 
-```yaml
+\`\`\`yaml
 prdVersion: v3
 prdSharded: false
 architectureVersion: v3
 architectureSharded: false
-```
+\`\`\`
 
 **V4 Optimized Project**:
 
-```yaml
+\`\`\`yaml
 prdVersion: v4
 prdSharded: true
 prdShardedLocation: docs/prd
 architectureVersion: v4
 architectureSharded: true
 architectureShardedLocation: docs/architecture
-```
+\`\`\`
 
 ## Core Philosophy
 
@@ -322,13 +322,13 @@ You are the "Vibe CEO" - thinking like a CEO with unlimited resources and a sing
 
 **In Web UI**:
 
-```text
+\`\`\`text
 /pm create-doc prd
 /architect review system design
 /dev implement story 1.2
 /help - Show available commands
 /switch agent-name - Change active agent (if orchestrator available)
-```
+\`\`\`
 
 ## Team Configurations
 
@@ -455,17 +455,17 @@ This architecture enables seamless operation across environments while maintaini
 
 **For PRD Creation**:
 
-```text
+\`\`\`text
 "I want to build a [type] application that [core purpose].
 Help me brainstorm features and create a comprehensive PRD."
-```
+\`\`\`
 
 **For Architecture Design**:
 
-```text
+\`\`\`text
 "Based on this PRD, design a scalable technical architecture
 that can handle [specific requirements]."
-```
+\`\`\`
 
 ### Critical Transition: Web UI to IDE
 
@@ -652,7 +652,7 @@ Templates with Level 2 headings (`##`) can be automatically sharded:
 
 **Original PRD**:
 
-```markdown
+\`\`\`markdown
 ## Goals and Background Context
 
 ## Requirements
@@ -660,7 +660,7 @@ Templates with Level 2 headings (`##`) can be automatically sharded:
 ## User Interface Design Goals
 
 ## Success Metrics
-```
+\`\`\`
 
 **After Sharding**:
 
@@ -759,7 +759,7 @@ For full details, see `CONTRIBUTING.md`. Key points:
 - `refactor(ui): restructure component hierarchy`
 
 **For complex changes**, add body (72 chars per line):
-```
+\`\`\`
 feat(api): add user profile management
 
 - Add profile update endpoint
@@ -767,14 +767,14 @@ feat(api): add user profile management
 - Add input validation for profile fields
 
 Closes #123
-```
+\`\`\`
 
 **Breaking changes** use `!` or `BREAKING CHANGE:` footer:
-```
+\`\`\`
 feat(api)!: change authentication endpoint
 
 BREAKING CHANGE: /auth/login now requires email instead of username
-```
+\`\`\`
 
 **Key Usage Patterns**:
 - Direct request: "Create a commit message for [description]"
@@ -829,10 +829,10 @@ Expansion packs extend BMAD-METHOD™ beyond traditional software development in
 2. **Get Inspiration**: See `docs/expansion-packs.md` for detailed examples and ideas
 3. **Install via CLI**:
 
-   ```bash
+   \`\`\`bash
    npx bmad-method install
    # Select "Install expansion pack" option
-   ```
+   \`\`\`
 
 4. **Use in Your Workflow**: Installed packs integrate seamlessly with existing agents
 

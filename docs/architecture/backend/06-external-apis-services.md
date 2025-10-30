@@ -9,7 +9,7 @@
 **Authentication:** Bearer token in Authorization header
 
 **Request Format:**
-```python
+\`\`\`python
 {
     "file": <audio_file>,         # multipart/form-data
     "model": "whisper-1",
@@ -17,14 +17,14 @@
     "response_format": "json",    # json, text, srt, verbose_json, vtt
     "temperature": 0              # 0 = deterministic, 0-1 = creative
 }
-```
+\`\`\`
 
 **Response Format:**
-```json
+\`\`\`json
 {
     "text": "Transcribed text from audio"
 }
-```
+\`\`\`
 
 **Rate Limits:**
 - 50 requests per minute (RPM) for free tier
@@ -47,7 +47,7 @@
 **Authentication:** Bearer token in Authorization header
 
 **Request Format:**
-```python
+\`\`\`python
 {
     "model": "tts-1",           # tts-1 (faster) or tts-1-hd (higher quality)
     "input": "Text to speak",   # Max 4096 characters
@@ -55,7 +55,7 @@
     "response_format": "mp3",   # mp3, opus, aac, flac
     "speed": 1.0                # 0.25 to 4.0
 }
-```
+\`\`\`
 
 **Response:** Binary audio file stream
 
@@ -81,7 +81,7 @@
 **Authentication:** Bearer token in Authorization header
 
 **Request Format:**
-```python
+\`\`\`python
 {
     "model": "gpt-4o-mini",           # or "gpt-4" for production
     "messages": [
@@ -95,10 +95,10 @@
     "frequency_penalty": 0.0,
     "presence_penalty": 0.0
 }
-```
+\`\`\`
 
 **Response Format:**
-```json
+\`\`\`json
 {
     "id": "chatcmpl-abc123",
     "object": "chat.completion",
@@ -118,7 +118,7 @@
         "total_tokens": 87
     }
 }
-```
+\`\`\`
 
 **Model Specifications:**
 
@@ -166,7 +166,7 @@
 - `audio` bucket - Private, max 5MB per file, WebM/Opus/MP3 only
 
 **Upload Example:**
-```python
+\`\`\`python
 import httpx
 
 async def upload_resume(file_data: bytes, candidate_id: str, filename: str):
@@ -178,13 +178,13 @@ async def upload_resume(file_data: bytes, candidate_id: str, filename: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(url, content=file_data, headers=headers)
         return response.json()
-```
+\`\`\`
 
 **Signed URLs for Frontend Access:**
-```python
+\`\`\`python
 # Generate temporary download URL (expires in 1 hour)
 url = f"{SUPABASE_URL}/storage/v1/object/sign/resumes/{file_path}?expiresIn=3600"
-```
+\`\`\`
 
 ---
 
@@ -192,14 +192,14 @@ url = f"{SUPABASE_URL}/storage/v1/object/sign/resumes/{file_path}?expiresIn=3600
 
 **Circuit Breaker Pattern (for OpenAI APIs):**
 
-```python
+\`\`\`python
 class CircuitBreaker:
     failure_threshold = 5       # Open circuit after 5 consecutive failures
     timeout = 60                # Keep circuit open for 60 seconds
     half_open_max_calls = 3     # Allow 3 test calls when half-open
     
     states = ["CLOSED", "OPEN", "HALF_OPEN"]
-```
+\`\`\`
 
 **Retry Logic:**
 - **Transient Errors (429, 500, 503):** Exponential backoff with jitter
@@ -235,4 +235,3 @@ class CircuitBreaker:
 - Mixpanel (user behavior analysis)
 
 ---
-

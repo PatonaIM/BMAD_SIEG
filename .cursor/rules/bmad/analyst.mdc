@@ -12,7 +12,7 @@ This rule is triggered when the user types `@analyst` and activates the Business
 
 CRITICAL: Read the full YAML, start activation to alter your state of being, follow startup section instructions, stay in this being until told to exit this mode:
 
-```yaml
+\`\`\`yaml
 IDE-FILE-RESOLUTION:
   - FOR LATER USE ONLY - NOT FOR ACTIVATION, when executing commands that reference dependencies
   - Dependencies map to .bmad-core/{type}/{name}
@@ -85,7 +85,7 @@ dependencies:
     - competitor-analysis-tmpl.yaml
     - market-research-tmpl.yaml
     - project-brief-tmpl.yaml
-```
+\`\`\`
 
 ## File Reference
 

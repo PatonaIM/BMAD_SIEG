@@ -16,38 +16,38 @@
 ## 11.2 Quick Reference
 
 **Start Development:**
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 **Run Tests:**
-```bash
+\`\`\`bash
 npm run test
 npm run test:ui        # UI mode
 npm run test:coverage  # With coverage
-```
+\`\`\`
 
 **Build:**
-```bash
+\`\`\`bash
 npm run build
 npm run preview  # Preview production build
-```
+\`\`\`
 
 **Linting:**
-```bash
+\`\`\`bash
 npm run lint
 npm run lint:fix
-```
+\`\`\`
 
 **Type Checking:**
-```bash
+\`\`\`bash
 npm run type-check
-```
+\`\`\`
 
 ## 11.3 Common Patterns
 
 **Fetching Data:**
-```typescript
+\`\`\`typescript
 // Using TanStack Query hooks
 const { data, isLoading, error } = useInterviews();
 
@@ -57,31 +57,31 @@ const { data: interview } = useInterview(interviewId);
 // Mutations
 const { mutate, isPending } = useStartInterview();
 mutate(interviewId);
-```
+\`\`\`
 
 **Form Handling:**
-```typescript
+\`\`\`typescript
 const { register, handleSubmit, formState: { errors } } = useForm({
   resolver: zodResolver(schema),
 });
-```
+\`\`\`
 
 **Navigation:**
-```typescript
+\`\`\`typescript
 const navigate = useNavigate();
 navigate(ROUTES.CANDIDATE.DASHBOARD);
-```
+\`\`\`
 
 **Global State:**
-```typescript
+\`\`\`typescript
 const user = useGlobalStore(selectUser);
 const { setUser, logout } = useGlobalStore();
-```
+\`\`\`
 
 **Query Invalidation:**
-```typescript
+\`\`\`typescript
 const queryClient = useQueryClient();
 queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
-```
+\`\`\`
 
 ---

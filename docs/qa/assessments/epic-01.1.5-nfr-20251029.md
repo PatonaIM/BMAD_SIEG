@@ -78,10 +78,10 @@
 ### 3. **Hardcoded File Paths** (Reliability - CONCERNS)
 **Severity:** MEDIUM  
 **Current State:** 
-```python
+\`\`\`python
 with open("backend/app/prompts/response_analysis.txt", "r") as f:
 with open("backend/app/prompts/adaptive_question.txt", "r") as f:
-```
+\`\`\`
 
 **Impact:**
 - Fails if called from project root or non-backend directories
@@ -137,10 +137,10 @@ with open("backend/app/prompts/adaptive_question.txt", "r") as f:
 **Findings:**
 
 ✅ **Async Architecture:**
-```python
+\`\`\`python
 async def analyze_response_quality(...)
 async def generate_next_question(...)
-```
+\`\`\`
 - All AI calls use `await` properly
 - No blocking I/O operations
 - Database operations use AsyncSession (from repositories)
@@ -164,9 +164,9 @@ async def generate_next_question(...)
 - Cannot identify slow prompts without manual log analysis
 
 ⚠️ **File I/O on Every Call:**
-```python
+\`\`\`python
 with open("backend/app/prompts/response_analysis.txt", "r") as f:
-```
+\`\`\`
 - Prompt files loaded on every AI call (no caching)
 - Minor performance impact (~10ms per file read)
 
@@ -188,7 +188,7 @@ with open("backend/app/prompts/response_analysis.txt", "r") as f:
 **Findings:**
 
 ✅ **Error Handling Present:**
-```python
+\`\`\`python
 except json.JSONDecodeError as e:
     logger.error("response_analysis_json_parse_error", ...)
     return ResponseAnalysis(confidence_level=0.5, ...)  # Fallback
@@ -196,7 +196,7 @@ except json.JSONDecodeError as e:
 except Exception as e:
     logger.error("question_generation_failed", ...)
     # Return fallback generic question
-```
+\`\`\`
 
 ✅ **Graceful Degradation:**
 - AI analysis failures return moderate default values (0.5 confidence)
@@ -256,10 +256,10 @@ except Exception as e:
 - Inline comments explaining threshold logic
 
 ✅ **Configurable Thresholds:**
-```python
+\`\`\`python
 self.warmup_min_questions = settings.warmup_min_questions  # default: 2
 self.warmup_confidence_threshold = settings.warmup_confidence_threshold  # default: 0.7
-```
+\`\`\`
 - All progression thresholds configurable via environment variables
 - Defaults documented in code and config file
 
@@ -310,7 +310,7 @@ self.warmup_confidence_threshold = settings.warmup_confidence_threshold  # defau
 
 ## Quality Score Calculation
 
-```
+\`\`\`
 Base Score: 100
 
 Security:       -0   (PASS - no issues)
@@ -319,7 +319,7 @@ Reliability:    -10  (CONCERNS - hardcoded paths, no circuit breaker)
 Maintainability: -20 (FAIL - 53% coverage vs 80% target) → -10 for CONCERNS gate policy
 
 Final Score: 100 - 10 - 10 - 10 = 80/100 (CONCERNS)
-```
+\`\`\`
 
 **Gate Status Recommendation:** 🟡 **CONCERNS**
 
@@ -337,7 +337,7 @@ Final Score: 100 - 10 - 10 - 10 = 80/100 (CONCERNS)
 **Effort:** 1-2 hours  
 **Impact:** Eliminates deployment reliability risk
 
-```python
+\`\`\`python
 # Replace:
 with open("backend/app/prompts/response_analysis.txt", "r") as f:
 
@@ -347,25 +347,25 @@ prompt_path = Path(__file__).parent.parent / "prompts" / "response_analysis.txt"
 if not prompt_path.exists():
     raise FileNotFoundError(f"Prompt template not found: {prompt_path}")
 with open(prompt_path, "r") as f:
-```
+\`\`\`
 
 ### 2. Add Latency Logging
 **Effort:** 1 hour  
 **Impact:** Enables performance monitoring
 
-```python
+\`\`\`python
 import time
 start = time.time()
 analysis_json = await self.ai_provider.generate_completion(...)
 duration = time.time() - start
 logger.info("ai_analysis_latency", duration_ms=int(duration * 1000))
-```
+\`\`\`
 
 ### 3. Add Timeout Configuration
 **Effort:** 2 hours  
 **Impact:** Prevents hanging on slow AI responses
 
-```python
+\`\`\`python
 # In config.py:
 progressive_assessment_timeout: int = 30  # seconds per AI call
 
@@ -374,7 +374,7 @@ analysis_json = await asyncio.wait_for(
     self.ai_provider.generate_completion(...),
     timeout=settings.progressive_assessment_timeout
 )
-```
+\`\`\`
 
 ---
 

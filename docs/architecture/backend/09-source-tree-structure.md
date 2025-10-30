@@ -1,6 +1,6 @@
 # Source Tree Structure
 
-```
+\`\`\`
 backend/
 ├── main.py                      # FastAPI application entrypoint
 ├── requirements.txt             # UV-managed dependencies
@@ -94,7 +94,7 @@ backend/
 │   └── run_local.sh
 └── Dockerfile               # Container definition
 
-```
+\`\`\`
 
 **Key Design Decisions:**
 

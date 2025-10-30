@@ -8,7 +8,7 @@ BMad document templates are defined in YAML format to drive interactive document
 
 ## Template Structure
 
-```yaml
+\`\`\`yaml
 template:
   id: template-identifier
   name: Human Readable Template Name
@@ -28,7 +28,7 @@ sections:
     instruction: |
       Detailed instructions for the LLM on how to handle this section
     # ... additional section properties
-```
+\`\`\`
 
 ## Core Fields
 
@@ -109,31 +109,31 @@ sections:
 
 Use `{{variable_name}}` in titles, templates, and content:
 
-```yaml
+\`\`\`yaml
 title: 'Epic {{epic_number}} {{epic_title}}'
 template: 'As a {{user_type}}, I want {{action}}, so that {{benefit}}.'
-```
+\`\`\`
 
 ### Conditional Sections
 
-```yaml
+\`\`\`yaml
 - id: ui-section
   title: User Interface Design
   condition: Project has UX/UI Requirements
   instruction: Only include if project has UI components
-```
+\`\`\`
 
 ### Choice Integration
 
-```yaml
+\`\`\`yaml
 choices:
   architecture: [Monolith, Microservices, Serverless]
   testing: [Unit Only, Unit + Integration, Full Pyramid]
-```
+\`\`\`
 
 ### Mermaid Diagrams
 
-```yaml
+\`\`\`yaml
 - id: system-architecture
   title: System Architecture Diagram
   type: mermaid
@@ -146,7 +146,7 @@ choices:
     - Core services
     - Database layer
     - External integrations
-```
+\`\`\`
 
 **Supported mermaid_type values:**
 
@@ -179,7 +179,7 @@ choices:
 
 ### Agent Permissions Example
 
-```yaml
+\`\`\`yaml
 - id: story-details
   title: Story
   owner: scrum-master
@@ -198,11 +198,11 @@ choices:
       editors: [qa-agent]
       readonly: true
       instruction: Quality assurance test results
-```
+\`\`\`
 
 ### Repeatable Sections
 
-```yaml
+\`\`\`yaml
 - id: epic-details
   title: Epic {{epic_number}} {{epic_title}}
   repeatable: true
@@ -216,15 +216,15 @@ choices:
           type: numbered-list
           item_template: '{{criterion_number}}: {{criteria}}'
           repeatable: true
-```
+\`\`\`
 
 ### Examples with Code Blocks
 
-````yaml
+\`\`\``yaml
 examples:
   - 'FR6: The system must authenticate users within 2 seconds'
   - |
-    ```mermaid
+    \`\`\`mermaid
     sequenceDiagram
         participant User
         participant API
@@ -233,20 +233,20 @@ examples:
         API->>DB: Validate credentials
         DB-->>API: User data
         API-->>User: JWT token
-    ```
+    \`\`\`
   - |
     **Architecture Decision Record**
 
     **Decision**: Use PostgreSQL for primary database
     **Rationale**: ACID compliance and JSON support needed
     **Consequences**: Requires database management expertise
-````
+\`\`\``
 
 ## Section Hierarchy
 
 Templates define the complete document structure starting with the first H2 - each level in is the next H#:
 
-```yaml
+\`\`\`yaml
 sections:
   - id: overview
     title: Project Overview
@@ -260,7 +260,7 @@ sections:
             title: In Scope
           - id: out-scope
             title: Out of Scope
-```
+\`\`\`
 
 ## Processing Flow
 

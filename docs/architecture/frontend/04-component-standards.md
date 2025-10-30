@@ -2,7 +2,7 @@
 
 ## 4.1 Component Template
 
-```typescript
+\`\`\`typescript
 // src/components/ui/Button/Button.tsx
 import React from 'react';
 import { Button as MuiButton, ButtonProps as MuiButtonProps } from '@mui/material';
@@ -68,15 +68,15 @@ export const Button: React.FC<ButtonProps> = ({
 Button.displayName = 'Button';
 
 export default Button;
-```
+\`\`\`
 
-```typescript
+\`\`\`typescript
 // src/components/ui/Button/index.ts
 export { Button } from './Button';
 export type { ButtonProps } from './Button';
-```
+\`\`\`
 
-```typescript
+\`\`\`typescript
 // src/components/ui/Button/Button.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -116,7 +116,7 @@ describe('Button', () => {
     expect(screen.getByRole('button')).toBeDisabled();
   });
 });
-```
+\`\`\`
 
 ## 4.2 Naming Conventions
 

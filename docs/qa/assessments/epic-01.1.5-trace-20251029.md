@@ -106,7 +106,7 @@ The progressive assessment engine has **partial test coverage** with solid unit 
 **Risk**: HIGH - Critical async method has no test coverage
 
 **Suggested Tests:**
-```python
+\`\`\`python
 @pytest.mark.asyncio
 async def test_analyze_response_quality_expert_level(mock_ai_provider):
     """Test AI analysis returns expert proficiency for high-quality response."""
@@ -129,7 +129,7 @@ async def test_analyze_response_quality_expert_level(mock_ai_provider):
     # Then: Returns expert proficiency
     assert analysis.proficiency_signal == "expert"
     assert analysis.confidence_level >= 0.9
-```
+\`\`\`
 
 ---
 
@@ -209,7 +209,7 @@ Currently **NO direct tests** for `generate_next_question()` method.
 **Risk**: HIGH - Core feature has zero test coverage
 
 **Suggested Tests:**
-```python
+\`\`\`python
 @pytest.mark.asyncio
 async def test_generate_next_question_warmup(mock_ai_provider, sample_session):
     """Test warmup question generation."""
@@ -248,7 +248,7 @@ async def test_generate_question_avoids_boundaries(mock_ai_provider, sample_sess
     
     # Then: Should not ask about performance_optimization
     assert question["skill_area"] != "performance_optimization"
-```
+\`\`\`
 
 ---
 
@@ -416,7 +416,7 @@ async def test_generate_question_avoids_boundaries(mock_ai_provider, sample_sess
 
 ### Priority 1: Critical Async Methods (1-2 days)
 
-```python
+\`\`\`python
 # Add to test_progressive_assessment_engine.py
 
 @pytest.mark.asyncio
@@ -426,11 +426,11 @@ async def test_generate_next_question_warmup_level()
 async def test_generate_next_question_avoids_boundaries()
 async def test_generate_next_question_handles_ai_error()
 async def test_prompt_template_loading_failure()
-```
+\`\`\`
 
 ### Priority 2: Integration Tests (2-3 days)
 
-```python
+\`\`\`python
 # Implement test_progressive_interview_flow.py
 
 @pytest.mark.asyncio
@@ -438,11 +438,11 @@ async def test_complete_warmup_to_standard_flow(test_db, mock_ai)
 async def test_skill_boundary_detection_in_flow(test_db, mock_ai)
 async def test_progression_state_persistence(test_db, mock_ai)
 async def test_conversation_memory_integration(test_db, mock_ai)
-```
+\`\`\`
 
 ### Priority 3: Interview Engine Integration (1-2 days)
 
-```python
+\`\`\`python
 # Add to test_interview_engine.py
 
 @pytest.mark.asyncio
@@ -450,18 +450,18 @@ async def test_start_interview_initializes_warmup()
 async def test_process_response_updates_progression()
 async def test_get_next_question_uses_adaptive_generation()
 async def test_error_recovery_in_interview_flow()
-```
+\`\`\`
 
 ### Priority 4: Edge Cases (1 day)
 
-```python
+\`\`\`python
 # Add comprehensive edge case tests
 
 def test_empty_progression_state_handling()
 def test_malformed_jsonb_recovery()
 def test_phase_limit_enforcement()
 async def test_ai_timeout_fallback()
-```
+\`\`\`
 
 ---
 

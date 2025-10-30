@@ -32,7 +32,7 @@ Identify all testable requirements from:
 
 For each requirement, document which tests validate it. Use Given-When-Then to describe what the test validates (not how it's written):
 
-```yaml
+\`\`\`yaml
 requirement: 'AC1: User can login with valid credentials'
 test_mappings:
   - test_file: 'auth/login.test.ts'
@@ -49,7 +49,7 @@ test_mappings:
     when: 'Entering valid credentials and submitting'
     then: 'Dashboard loads with user data'
     coverage: integration
-```
+\`\`\`
 
 ### 3. Coverage Analysis
 
@@ -67,7 +67,7 @@ Evaluate coverage for each requirement:
 
 Document any gaps found:
 
-```yaml
+\`\`\`yaml
 coverage_gaps:
   - requirement: 'AC3: Password reset email sent within 60 seconds'
     gap: 'No test for email delivery timing'
@@ -82,7 +82,7 @@ coverage_gaps:
     suggested_test:
       type: performance
       description: 'Load test with 1000 concurrent connections'
-```
+\`\`\`
 
 ## Outputs
 
@@ -90,7 +90,7 @@ coverage_gaps:
 
 **Generate for pasting into gate file under `trace`:**
 
-```yaml
+\`\`\`yaml
 trace:
   totals:
     requirements: X
@@ -102,7 +102,7 @@ trace:
     - ac: 'AC3'
       reason: 'No test found for password reset timing'
   notes: 'See qa.qaLocation/assessments/{epic}.{story}-trace-{YYYYMMDD}.md'
-```
+\`\`\`
 
 ### Output 2: Traceability Report
 
@@ -110,7 +110,7 @@ trace:
 
 Create a traceability report with:
 
-```markdown
+\`\`\`markdown
 # Requirements Traceability Matrix
 
 ## Story: {epic}.{story} - {title}
@@ -172,7 +172,7 @@ Based on gaps identified, recommend:
 - **High Risk**: Requirements with no coverage
 - **Medium Risk**: Requirements with only partial coverage
 - **Low Risk**: Requirements with full unit + integration coverage
-```
+\`\`\`
 
 ## Traceability Best Practices
 
@@ -251,9 +251,9 @@ This traceability feeds into quality gates:
 
 **Print this line for review task to quote:**
 
-```text
+\`\`\`text
 Trace matrix: qa.qaLocation/assessments/{epic}.{story}-trace-{YYYYMMDD}.md
-```
+\`\`\`
 
 - Full coverage → PASS contribution
 

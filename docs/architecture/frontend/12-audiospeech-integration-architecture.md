@@ -21,7 +21,7 @@ The architecture uses OpenAI for speech processing to simplify vendor management
 
 ## 12.2 Speech-to-Text Integration (OpenAI Whisper)
 
-```typescript
+\`\`\`typescript
 // src/services/audio/speechService.ts
 import OpenAI from 'openai';
 
@@ -82,11 +82,11 @@ export class SpeechService {
 }
 
 export const speechService = new SpeechService();
-```
+\`\`\`
 
 **Backend API Endpoint:**
 
-```python
+\`\`\`python
 # backend/api/interviews.py
 from fastapi import APIRouter, UploadFile, HTTPException
 from openai import OpenAI
@@ -143,13 +143,13 @@ async def process_audio(interview_id: str, audio_file: UploadFile):
     finally:
         # Cleanup temp file
         os.unlink(tmp_path)
-```
+\`\`\`
 
 ## 12.3 Text-to-Speech Integration (OpenAI TTS)
 
 ## 12.3 Text-to-Speech Integration (OpenAI TTS)
 
-```typescript
+\`\`\`typescript
 // src/services/audio/ttsService.ts
 import OpenAI from 'openai';
 
@@ -203,11 +203,11 @@ export class TextToSpeechService {
 }
 
 export const ttsService = new TextToSpeechService();
-```
+\`\`\`
 
 **Backend Implementation:**
 
-```python
+\`\`\`python
 # backend/api/tts.py
 from openai import OpenAI
 from fastapi import APIRouter
@@ -245,11 +245,11 @@ async def generate_speech(interview_id: str, text: str, voice: str = "nova"):
     
     except Exception as e:
         raise HTTPException(500, f"TTS generation failed: {str(e)}")
-```
+\`\`\`
 
 ## 12.4 Frontend Audio Capture
 
-```typescript
+\`\`\`typescript
 // src/services/audio/audioCapture.ts
 export class AudioCaptureService {
   private mediaRecorder: MediaRecorder | null = null;
@@ -327,11 +327,11 @@ export class AudioCaptureService {
     this.audioChunks = [];
   }
 }
-```
+\`\`\`
 
 ## 12.5 Web Audio API for Visualization
 
-```typescript
+\`\`\`typescript
 // src/services/audio/audioProcessor.ts
 export class AudioProcessor {
   private audioContext: AudioContext | null = null;
@@ -417,11 +417,11 @@ export class AudioProcessor {
     this.dataArray = null;
   }
 }
-```
+\`\`\`
 
 ## 12.4 WebRTC Audio Streaming
 
-```typescript
+\`\`\`typescript
 // src/services/audio/webRTCHandler.ts
 export class WebRTCHandler {
   private peerConnection: RTCPeerConnection | null = null;
@@ -541,11 +541,11 @@ export class WebRTCHandler {
     }
   }
 }
-```
+\`\`\`
 
 ## 12.6 Audio Recording Hook
 
-```typescript
+\`\`\`typescript
 // src/features/interview/hooks/useAudioRecording.ts
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { AudioProcessor } from '@/services/audio/audioProcessor';
@@ -640,7 +640,7 @@ export const useAudioRecording = (interviewId: string) => {
     isProcessing: sendAudioMutation.isPending,
   };
 };
-```
+\`\`\`
 
 ## 12.7 Audio Quality Guidelines
 

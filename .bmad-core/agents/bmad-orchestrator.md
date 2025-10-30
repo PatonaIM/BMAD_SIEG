@@ -59,6 +59,7 @@ commands: # All commands require * prefix when used (e.g., *help, *agent pm)
   agent: Transform into a specialized agent (list if name not specified)
   chat-mode: Start conversational mode for detailed assistance
   checklist: Execute a checklist (list if name not specified)
+  commit: Create standardized commit message following Conventional Commits
   doc-out: Output full document
   kb-mode: Load full BMad knowledge base
   party-mode: Group chat with all agents
@@ -90,6 +91,7 @@ help-display-template: |
   *plan-update ........ Update workflow plan status
 
   Other Commands:
+  *commit [description] ... Create standardized commit message
   *yolo ............... Toggle skip confirmations mode
   *party-mode ......... Group chat with all agents
   *doc-out ............ Output full document
@@ -140,6 +142,7 @@ dependencies:
     - elicitation-methods.md
   tasks:
     - advanced-elicitation.md
+    - create-commit-message.md
     - create-doc.md
     - kb-mode-interaction.md
   utils:

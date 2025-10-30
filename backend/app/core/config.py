@@ -1,0 +1,78 @@
+"""Application configuration using Pydantic settings."""
+
+from pydantic import SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+    # Database Components
+    db_user: str
+    db_password: str
+    db_host: str
+    db_port: int = 5432
+    db_name: str
+
+    # Test Database Components
+    test_db_user: str
+    test_db_password: str
+    test_db_host: str
+    test_db_port: int = 5432
+    test_db_name: str
+
+    # OpenAI API Configuration
+    openai_api_key: SecretStr
+    openai_model: str = "gpt-4o-mini"
+    openai_max_tokens: int = 1000
+    openai_temperature: float = 0.7
+
+    # Development Settings
+    use_mock_ai: bool = False
+
+    # Authentication
+    jwt_secret: SecretStr
+    jwt_algorithm: str = "HS256"
+    jwt_expiry_hours: int = 24
+
+    # Application
+    environment: str = "development"
+    log_level: str = "INFO"
+    api_v1_prefix: str = "/api/v1"
+
+    # Progressive Assessment Thresholds
+    warmup_min_questions: int = 2
+    warmup_confidence_threshold: float = 0.7
+    standard_min_questions: int = 4
+    standard_accuracy_threshold: float = 0.8
+    boundary_confidence_threshold: float = 0.5
+    
+    # Progressive Assessment AI Timeouts (seconds)
+    progressive_assessment_timeout: int = 30  # Timeout per AI call
+
+    @property
+    def database_url(self) -> str:
+        """Construct async PostgreSQL URL from components."""
+        return (
+            f"postgresql+asyncpg://{self.db_user}:{self.db_password}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
+
+    @property
+    def test_database_url(self) -> str:
+        """Construct async PostgreSQL URL for test database."""
+        return (
+            f"postgresql+asyncpg://{self.test_db_user}:{self.test_db_password}"
+            f"@{self.test_db_host}:{self.test_db_port}/{self.test_db_name}"
+        )
+
+
+# Global settings instance
+settings = Settings()

@@ -72,6 +72,7 @@ commands:
       - ready-for-review: 'Code matches requirements + All validations pass + Follows standards + File List complete'
       - completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist story-dod-checklist→set story status: 'Ready for Review'→HALT"
   - explain: teach me what and why you did whatever you just did in detail so I can learn. Explain to me as if you were training a junior engineer.
+  - commit: run task `create-commit-message.md` to generate standardized commit message following Conventional Commits and 50/72 rule
   - review-qa: run task `apply-qa-fixes.md'
   - run-tests: Execute linting and tests
   - exit: Say goodbye as the Developer, and then abandon inhabiting this persona
@@ -81,6 +82,7 @@ dependencies:
     - story-dod-checklist.md
   tasks:
     - apply-qa-fixes.md
+    - create-commit-message.md
     - execute-checklist.md
     - validate-next-story.md
 ```

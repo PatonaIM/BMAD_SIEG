@@ -1,0 +1,234 @@
+# <!-- Powered by BMAD™ Core -->
+template:
+  id: commit-message-template-v1
+  name: Commit Message Standards Reference
+  version: 1.0
+  output:
+    format: markdown
+    filename: docs/architecture/commit-message-guide.md
+    title: "Commit Message Standards & Quick Reference"
+
+workflow:
+  mode: interactive
+  elicitation: advanced-elicitation
+
+sections:
+  - id: overview
+    title: Overview
+    instruction: |
+      Provide a brief introduction to commit message standards and their importance.
+      Reference the Conventional Commits specification and the 50/72 rule.
+    content: |
+      This guide establishes standardized commit message formats for consistent, 
+      automated, and readable version control history. Following these standards 
+      enables automatic changelog generation, semantic versioning, and improved 
+      team collaboration.
+
+  - id: format-structure
+    title: Format Structure
+    instruction: |
+      Present the basic Conventional Commits structure with clear examples.
+    sections:
+      - id: basic-format
+        title: Basic Format
+        type: code-block
+        language: text
+        content: |
+          <type>[optional scope]: <description>
+
+          [optional body]
+
+          [optional footer(s)]
+      - id: character-limits
+        title: Character Limits (50/72 Rule)
+        type: bullet-list
+        items:
+          - "**Subject line**: 50 characters maximum (including type and scope)"
+          - "**Body lines**: 72 characters maximum per line"
+          - "**Rationale**: Ensures readability in git logs, GitHub UI, and terminal displays"
+
+  - id: commit-types
+    title: Commit Types
+    instruction: |
+      List all standard commit types with clear definitions and use cases.
+    type: table
+    columns: [Type, Description, Use Case]
+    rows:
+      - ["feat", "New feature for the user", "Adding new functionality"]
+      - ["fix", "Bug fix for the user", "Resolving issues or bugs"]
+      - ["docs", "Documentation changes", "README, API docs, comments"]
+      - ["style", "Code formatting (no logic change)", "Prettier, semicolons, whitespace"]
+      - ["refactor", "Code restructuring (no functional changes)", "Code organization, cleanup"]
+      - ["test", "Adding/fixing tests", "Unit tests, integration tests"]
+      - ["chore", "Maintenance tasks", "Dependencies, build tools, configs"]
+      - ["perf", "Performance improvements", "Optimization, speed enhancements"]
+      - ["ci", "CI/CD changes", "GitHub Actions, pipeline configs"]
+      - ["build", "Build system changes", "Webpack, build scripts, dependencies"]
+      - ["revert", "Revert previous commit", "Undoing previous changes"]
+
+  - id: scopes
+    title: Common Scopes
+    instruction: |
+      Define optional scopes that specify the area of change.
+    type: table
+    columns: [Scope, Area, Example]
+    rows:
+      - ["(api)", "Backend API changes", "feat(api): add user profile endpoint"]
+      - ["(ui)", "Frontend/UI changes", "fix(ui): resolve button alignment issue"]
+      - ["(auth)", "Authentication related", "feat(auth): add password reset"]
+      - ["(db)", "Database changes", "refactor(db): optimize user query"]
+      - ["(config)", "Configuration changes", "chore(config): update environment vars"]
+      - ["(deps)", "Dependencies", "chore(deps): update React to v18.2.0"]
+
+  - id: examples
+    title: Examples
+    instruction: |
+      Provide comprehensive examples organized by complexity level.
+    sections:
+      - id: simple-examples
+        title: Simple Commits
+        type: code-block
+        language: text
+        content: |
+          feat(auth): add password reset feature
+          fix(api): handle null user response  
+          docs: update README installation steps
+          refactor(ui): extract reusable form component
+          test(auth): add login validation tests
+          chore(deps): update React to v18.2.0
+      - id: with-body
+        title: Commits with Body
+        type: code-block
+        language: text
+        content: |
+          feat(api): add user profile management endpoints
+
+          - Add GET /api/profile endpoint
+          - Add PUT /api/profile endpoint  
+          - Implement avatar upload functionality
+          - Add comprehensive input validation
+
+          Closes #234
+      - id: breaking-changes
+        title: Breaking Changes
+        type: code-block
+        language: text
+        content: |
+          feat(auth)!: change login endpoint structure
+
+          BREAKING CHANGE: /auth/login now returns user object 
+          instead of just token. Update client code accordingly.
+
+          Fixes #456
+
+  - id: guidelines
+    title: Writing Guidelines
+    instruction: |
+      Provide specific rules for writing effective commit messages.
+    sections:
+      - id: description-rules
+        title: Description Guidelines
+        type: bullet-list
+        items:
+          - "Use imperative mood ('add' not 'added' or 'adds')"
+          - "Start with lowercase letter"
+          - "No period at the end"
+          - "Be specific but concise"
+          - "Focus on WHAT and WHY, not HOW"
+      - id: body-rules
+        title: Body Guidelines (Optional)
+        type: bullet-list
+        items:
+          - "Separate from subject with blank line"
+          - "Wrap at 72 characters per line"
+          - "Explain motivation for the change"
+          - "Include any breaking changes"
+          - "Reference issues/tickets"
+      - id: footer-rules
+        title: Footer Guidelines (Optional)
+        type: bullet-list
+        items:
+          - "`BREAKING CHANGE:` for breaking changes"
+          - "`Fixes #123` or `Closes #456` for issue references"
+          - "`Reviewed-by:` for code reviews"
+          - "`Co-authored-by:` for pair programming"
+
+  - id: anti-patterns
+    title: Common Mistakes to Avoid
+    instruction: |
+      Show examples of what NOT to do with explanations of why.
+    sections:
+      - id: bad-examples
+        title: ❌ Anti-patterns
+        type: bullet-list
+        items:
+          - "`Updated stuff` - Too vague, no context"
+          - "`Fixed bug` - No specificity about what was fixed"
+          - "`feat: Added new feature for users to be able to login` - Too verbose, exceeds 50 chars"
+          - "`WIP` or `temp commit` - Not descriptive, should be squashed"
+          - "Mixing multiple unrelated changes - Should be separate commits"
+      - id: good-examples
+        title: "✅ Better alternatives"
+        type: bullet-list
+        items:
+          - "`fix(auth): handle invalid token error`"
+          - "`feat(ui): add dark mode toggle`"
+          - "`docs: update API authentication guide`"
+          - "`refactor(db): optimize user query performance`"
+
+  - id: automation-benefits
+    title: Automation Benefits
+    instruction: |
+      Explain how following these standards enables automation and tooling.
+    type: bullet-list
+    items:
+      - "**Automatic changelog generation** - Tools can parse commit types"
+      - "**Semantic version bumping** - feat = minor, fix = patch, BREAKING = major"
+      - "**Release note creation** - Generate user-facing release notes"
+      - "**Commit message validation** - CI/CD can enforce standards"
+      - "**Better git history** - Searchable, filterable, and scannable"
+
+  - id: quick-reference
+    title: Quick Reference for Agents
+    instruction: |
+      Provide a condensed format that agents can easily reference when creating commits.
+    content: |
+      **Format**: `<type>[scope]: <description>` (≤50 chars)
+      
+      **Common patterns**:
+      - `feat(auth): add password reset`
+      - `fix(api): handle race condition in user registration`
+      - `docs: update commit guidelines`
+      - `refactor(ui): restructure components`
+      
+      **For complex changes**:
+      ```
+      feat(api): add user profile management
+      
+      - Add profile endpoints
+      - Implement avatar upload
+      - Add input validation
+      
+      Closes #123
+      ```
+      
+      **Breaking changes**: Use `!` or `BREAKING CHANGE:` footer
+
+  - id: enforcement
+    title: Enforcement & Validation
+    instruction: |
+      Describe how these standards can be enforced in the development workflow.
+    elicit: true
+    sections:
+      - id: git-hooks
+        title: Git Hooks
+        instruction: |
+          Explain how commit-msg hooks can validate format before commits are created.
+      - id: ci-validation
+        title: CI/CD Validation
+        instruction: |
+          Describe how CI pipelines can validate commit message format in pull requests.
+      - id: tools
+        title: Recommended Tools
+        instruction: |
+          List tools like commitizen, commitlint, and conventional-changelog that support these standards.

@@ -20,7 +20,6 @@ export function Navigation() {
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
               <Sparkles className="h-5 w-5 text-primary" />
@@ -28,7 +27,6 @@ export function Navigation() {
             <span className="text-lg text-foreground">Teamified</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden items-center gap-6 md:flex">
             {navItems.map((item) => (
               <Link
@@ -43,7 +41,6 @@ export function Navigation() {
             ))}
           </div>
 
-          {/* Desktop Actions */}
           <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
             <Button asChild variant="ghost">
@@ -54,7 +51,6 @@ export function Navigation() {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -63,7 +59,6 @@ export function Navigation() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="border-t border-border py-4 md:hidden">
             <div className="flex flex-col gap-4">

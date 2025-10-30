@@ -6,7 +6,7 @@ Quick NFR validation focused on the core four: security, performance, reliabilit
 
 ## Inputs
 
-```yaml
+\`\`\`yaml
 required:
   - story_id: '{epic}.{story}' # e.g., "1.3"
   - story_path: `bmad-core/core-config.yaml` for the `devStoryLocation`
@@ -15,7 +15,7 @@ optional:
   - architecture_refs: `bmad-core/core-config.yaml` for the `architecture.architectureFile`
   - technical_preferences: `bmad-core/core-config.yaml` for the `technicalPreferences`
   - acceptance_criteria: From story file
-```
+\`\`\`
 
 ## Purpose
 
@@ -39,7 +39,7 @@ If story_path or story file can't be found:
 **Interactive mode:** Ask which NFRs to assess
 **Non-interactive mode:** Default to core four (security, performance, reliability, maintainability)
 
-```text
+\`\`\`text
 Which NFRs should I assess? (Enter numbers or press Enter for default)
 [1] Security (default)
 [2] Performance (default)
@@ -51,7 +51,7 @@ Which NFRs should I assess? (Enter numbers or press Enter for default)
 [8] Functional Suitability
 
 > [Enter for 1-4]
-```
+\`\`\`
 
 ### 2. Check for Thresholds
 
@@ -64,13 +64,13 @@ Look for NFR requirements in:
 **Interactive mode:** Ask for missing thresholds
 **Non-interactive mode:** Mark as CONCERNS with "Target unknown"
 
-```text
+\`\`\`text
 No performance requirements found. What's your target response time?
 > 200ms for API calls
 
 No security requirements found. Required auth method?
 > JWT with refresh tokens
-```
+\`\`\`
 
 **Unknown targets policy:** If a target is missing and not provided, mark status as CONCERNS with notes: "Target unknown"
 
@@ -88,7 +88,7 @@ For each selected NFR, check:
 
 Generate ONLY for NFRs actually assessed (no placeholders):
 
-```yaml
+\`\`\`yaml
 # Gate YAML (copy/paste):
 nfr_validation:
   _assessed: [security, performance, reliability, maintainability]
@@ -104,7 +104,7 @@ nfr_validation:
   maintainability:
     status: CONCERNS
     notes: 'Test coverage at 65%, target is 80%'
-```
+\`\`\`
 
 ## Deterministic Status Rules
 
@@ -114,12 +114,12 @@ nfr_validation:
 
 ## Quality Score Calculation
 
-```
+\`\`\`
 quality_score = 100
 - 20 for each FAIL attribute
 - 10 for each CONCERNS attribute
 Floor at 0, ceiling at 100
-```
+\`\`\`
 
 If `technical-preferences.md` defines custom weights, use those instead.
 
@@ -127,7 +127,7 @@ If `technical-preferences.md` defines custom weights, use those instead.
 
 **ALWAYS save to:** `qa.qaLocation/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md`
 
-```markdown
+\`\`\`markdown
 # NFR Assessment: {epic}.{story}
 
 Date: {date}
@@ -157,23 +157,23 @@ Reviewer: Quinn
 - Add rate limiting: ~2 hours
 - Increase test coverage: ~4 hours
 - Add performance monitoring: ~1 hour
-```
+\`\`\`
 
 ## Output 3: Story Update Line
 
 **End with this line for the review task to quote:**
 
-```
+\`\`\`
 NFR assessment: qa.qaLocation/assessments/{epic}.{story}-nfr-{YYYYMMDD}.md
-```
+\`\`\`
 
 ## Output 4: Gate Integration Line
 
 **Always print at the end:**
 
-```
+\`\`\`
 Gate NFR block ready → paste into qa.qaLocation/gates/{epic}.{story}-{slug}.yml under nfr_validation
-```
+\`\`\`
 
 ## Assessment Criteria
 
@@ -262,7 +262,7 @@ Gate NFR block ready → paste into qa.qaLocation/gates/{epic}.{story}-{slug}.ym
 
 ### What to Check
 
-```yaml
+\`\`\`yaml
 security:
   - Authentication mechanism
   - Authorization checks
@@ -288,7 +288,7 @@ maintainability:
   - Code structure
   - Documentation
   - Dependencies
-```
+\`\`\`
 
 ## Key Principles
 
@@ -325,7 +325,7 @@ Use these when assessing beyond the core four.
 <details>
 <summary>Example: Deep Performance Analysis (click to expand)</summary>
 
-```yaml
+\`\`\`yaml
 performance_deep_dive:
   response_times:
     p50: 45ms
@@ -340,6 +340,6 @@ performance_deep_dive:
   load_test:
     max_rps: 150
     breaking_point: 200 rps
-```
+\`\`\`
 
 </details>

@@ -34,7 +34,7 @@
 - `parsed_at`: DateTime (nullable) - When AI parsing completed
 - `parsing_status`: Enum - `pending`, `processing`, `completed`, `failed`
 - `parsed_data`: JSONB - AI-extracted skills, experience, technologies
-  ```json
+  \`\`\`json
   {
     "skills": ["React", "TypeScript", "Node.js"],
     "experience_years": 3,
@@ -42,7 +42,7 @@
     "previous_roles": ["Frontend Developer", "Full-Stack Engineer"],
     "technical_domains": {"frontend": "advanced", "backend": "intermediate"}
   }
-  ```
+  \`\`\`
 
 **Relationships:**
 - Belongs to one `Candidate`
@@ -112,13 +112,13 @@
 - `current_difficulty_level`: Enum - `warmup`, `standard`, `advanced`
 - `questions_asked_count`: Integer - Number of questions asked so far
 - `skill_boundaries_identified`: JSONB - Map of skill → proficiency level
-  ```json
+  \`\`\`json
   {
     "react_hooks": "proficient",
     "state_management": "intermediate",
     "performance_optimization": "boundary_reached"
   }
-  ```
+  \`\`\`
 - `progression_state`: JSONB - Internal state for progressive assessment algorithm
 - `last_activity_at`: DateTime - For detecting abandoned sessions
 
@@ -142,7 +142,7 @@
 - `content_audio_url`: String (nullable) - Audio file URL if speech-based
 - `audio_duration_seconds`: Integer (nullable) - Audio length
 - `audio_metadata`: JSONB (nullable) - Audio technical details for debugging
-  ```json
+  \`\`\`json
   {
     "sample_rate": 16000,
     "codec": "opus",
@@ -150,7 +150,7 @@
     "whisper_processing_time_ms": 850,
     "confidence_score": 0.94
   }
-  ```
+  \`\`\`
 - `response_time_seconds`: Integer (nullable) - Time from question to response start
 - `metadata`: JSONB - Additional data (hesitation markers, speech patterns, etc.)
 - `created_at`: DateTime - Message timestamp
@@ -170,20 +170,20 @@
 - `interview_id`: UUID - Foreign key to Interview (one-to-one)
 - `overall_score`: Decimal - Overall competency score (0-100)
 - `skill_scores`: JSONB - Detailed scores per technical area
-  ```json
+  \`\`\`json
   {
     "react_fundamentals": 85,
     "state_management": 72,
     "hooks_patterns": 88,
     "performance": 45
   }
-  ```
+  \`\`\`
 - `skill_boundary_map`: JSONB - Visualization data for skill proficiency
 - `strengths`: JSONB - Array of identified strengths with evidence
 - `weaknesses`: JSONB - Array of improvement areas with evidence
 - `integrity_score`: Decimal - Overall integrity rating (0-100)
 - `integrity_flags`: JSONB - Specific red flags with severity and evidence
-  ```json
+  \`\`\`json
   [
     {
       "type": "response_timing_anomaly",
@@ -192,7 +192,7 @@
       "confidence": 0.75
     }
   ]
-  ```
+  \`\`\`
 - `ai_reasoning`: JSONB - AI's explanation for scores and decisions
 - `recommended_actions`: JSONB - Suggestions for recruiter
 - `generated_at`: DateTime - When assessment was completed
@@ -243,7 +243,7 @@
 
 ## Data Model Diagram
 
-```mermaid
+\`\`\`mermaid
 erDiagram
     Candidate ||--o{ Resume : uploads
     Candidate ||--o{ Interview : takes
@@ -359,7 +359,7 @@ erDiagram
         datetime last_login_at
         boolean is_active
     }
-```
+\`\`\`
 
 ---
 
@@ -404,4 +404,3 @@ erDiagram
 - 🔄 Add comprehensive audit trails in production phase when GDPR compliance critical
 
 ---
-

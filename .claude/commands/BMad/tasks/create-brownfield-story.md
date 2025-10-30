@@ -109,7 +109,7 @@ Ask the user to help identify:
 
 Start with the story template, filling in what's known:
 
-```markdown
+\`\`\`markdown
 # Story {{Enhancement Title}}
 
 ## Status: Draft
@@ -125,7 +125,7 @@ so that {{value_delivered}}.
 - Source Document: {{document name/type}}
 - Enhancement Type: {{single feature/bug fix/integration/etc}}
 - Existing System Impact: {{brief assessment}}
-```
+\`\`\`
 
 #### 3.2 Develop Acceptance Criteria
 
@@ -145,7 +145,7 @@ Critical: This is where you'll need to be interactive with the user if informati
 
 Create Dev Technical Guidance section with available information:
 
-````markdown
+\`\`\``markdown
 ## Dev Technical Guidance
 
 ### Existing System Context
@@ -177,7 +177,7 @@ Based on gathered context, create tasks that:
 
 Example task structure for brownfield:
 
-```markdown
+\`\`\`markdown
 ## Tasks / Subtasks
 
 - [ ] Task 1: Analyze existing {{component/feature}} implementation
@@ -199,8 +199,8 @@ Example task structure for brownfield:
   - [ ] Unit tests following {{project test pattern}}
   - [ ] Integration test for {{integration point}}
   - [ ] Update existing tests if needed
-```
-````
+\`\`\`
+\`\`\``
 
 ### 5. Risk Assessment and Mitigation
 
@@ -208,7 +208,7 @@ CRITICAL: for brownfield - always include risk assessment
 
 Add section for brownfield-specific risks:
 
-```markdown
+\`\`\`markdown
 ## Risk Assessment
 
 ### Implementation Risks
@@ -226,7 +226,7 @@ Add section for brownfield-specific risks:
 - [ ] Existing {{feature}} tested before changes
 - [ ] Changes can be feature-flagged or isolated
 - [ ] Rollback procedure documented
-```
+\`\`\`
 
 ### 6. Final Story Validation
 
@@ -258,7 +258,7 @@ Save the story with appropriate naming:
 
 Include header noting documentation context:
 
-```markdown
+\`\`\`markdown
 # Story: {{Title}}
 
 <!-- Source: {{documentation type used}} -->
@@ -267,13 +267,13 @@ Include header noting documentation context:
 ## Status: Draft
 
 [Rest of story content...]
-```
+\`\`\`
 
 ### 8. Handoff Communication
 
 Provide clear handoff to the user:
 
-```text
+\`\`\`text
 Brownfield story created: {{story title}}
 
 Source Documentation: {{what was used}}
@@ -294,7 +294,7 @@ Next Steps:
 2. Verify integration approach aligns with your system
 3. Approve story or request adjustments
 4. Dev agent can then implement with safety checks
-```
+\`\`\`
 
 ## Success Criteria
 

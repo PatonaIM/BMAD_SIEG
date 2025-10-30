@@ -156,7 +156,7 @@ etc...
 
 ### Project Structure (Actual)
 
-```text
+\`\`\`text
 project-root/
 ├── src/
 │   ├── controllers/     # HTTP request handlers
@@ -167,7 +167,7 @@ project-root/
 ├── tests/               # Jest tests (60% coverage)
 ├── scripts/             # Build and deployment scripts
 └── config/              # Environment configs
-```
+\`\`\`
 
 ### Key Modules and Their Purpose
 
@@ -249,10 +249,10 @@ etc...
 
 ### Running Tests
 
-```bash
+\`\`\`bash
 npm test           # Runs unit tests
 npm run test:integration  # Runs integration tests (requires local DB)
-```
+\`\`\`
 
 ## If Enhancement PRD Provided - Impact Analysis
 
@@ -281,12 +281,12 @@ Based on the enhancement requirements, these files will be affected:
 
 ### Frequently Used Commands
 
-```bash
+\`\`\`bash
 npm run dev         # Start development server
 npm run build       # Production build
 npm run migrate     # Run database migrations
 npm run seed        # Seed test data
-```
+\`\`\`
 
 ### Debugging and Troubleshooting
 

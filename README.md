@@ -19,7 +19,7 @@ Teamified Candidates Portal enables recruitment consultants to conduct scalable,
 
 This is a monorepo containing both frontend and backend applications:
 
-```
+\`\`\`
 ├── backend/                # FastAPI Python backend
 │   ├── app/               # Application code
 │   ├── tests/             # Backend tests
@@ -31,7 +31,7 @@ This is a monorepo containing both frontend and backend applications:
     ├── architecture/      # Technical architecture
     ├── prd/              # Product requirements
     └── stories/          # User stories
-```
+\`\`\`
 
 ## 📋 Prerequisites
 
@@ -53,39 +53,39 @@ This is a monorepo containing both frontend and backend applications:
 ### 1. Install pyenv (Python Version Manager)
 
 **macOS:**
-```bash
+\`\`\`bash
 brew install pyenv
 # Add to your shell profile (~/.zshrc or ~/.bash_profile)
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
 echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
 echo 'eval "$(pyenv init -)"' >> ~/.zshrc
 source ~/.zshrc
-```
+\`\`\`
 
 **Linux:**
-```bash
+\`\`\`bash
 curl https://pyenv.run | bash
 # Add to your shell profile (~/.bashrc or ~/.zshrc)
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
 echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
 echo 'eval "$(pyenv init -)"' >> ~/.bashrc
 source ~/.bashrc
-```
+\`\`\`
 
 **Windows:**
 Follow instructions at: https://github.com/pyenv-win/pyenv-win
 
 ### 2. Install Python 3.11.9
 
-```bash
+\`\`\`bash
 pyenv install 3.11.9
 pyenv local 3.11.9
 python --version  # Should output: Python 3.11.9
-```
+\`\`\`
 
 ### 3. Backend Setup
 
-```bash
+\`\`\`bash
 cd backend
 
 # Install UV package manager
@@ -104,11 +104,11 @@ uv pip install -r requirements.txt
 # Create environment file
 cp .env.example .env
 # Edit .env with your configuration (DATABASE_URL, OPENAI_API_KEY, etc.)
-```
+\`\`\`
 
 ### 4. Frontend Setup
 
-```bash
+\`\`\`bash
 cd frontend
 
 # Install dependencies
@@ -117,29 +117,29 @@ npm install
 # Create environment file
 cp .env.example .env.development
 # Edit .env.development if needed
-```
+\`\`\`
 
 ## 🏃 Running the Application
 
 ### Start Backend (from backend directory)
 
-```bash
+\`\`\`bash
 cd backend
 source .venv/bin/activate  # Activate venv
 uvicorn main:app --reload
 
 # Backend will run on: http://localhost:8000
 # OpenAPI docs at: http://localhost:8000/docs
-```
+\`\`\`
 
 ### Start Frontend (from frontend directory)
 
-```bash
+\`\`\`bash
 cd frontend
 npm run dev
 
 # Frontend will run on: http://localhost:3000
-```
+\`\`\`
 
 ### Health Check
 
@@ -151,28 +151,28 @@ Once both services are running, visit:
 
 ### Backend Tests
 
-```bash
+\`\`\`bash
 cd backend
 source .venv/bin/activate
 pytest tests/unit/              # Unit tests
 pytest tests/integration/       # Integration tests
 pytest --cov=app --cov-report=term-missing  # With coverage
-```
+\`\`\`
 
 ### Frontend Tests
 
-```bash
+\`\`\`bash
 cd frontend
 npm run test              # Run tests in watch mode
 npm run test:ui           # Run tests with UI
 npm run test:coverage     # Run with coverage report
-```
+\`\`\`
 
 ## 🔍 Code Quality
 
 ### Backend Linting & Formatting
 
-```bash
+\`\`\`bash
 cd backend
 source .venv/bin/activate
 
@@ -187,11 +187,11 @@ black .
 
 # Type checking
 mypy .
-```
+\`\`\`
 
 ### Frontend Linting & Formatting
 
-```bash
+\`\`\`bash
 cd frontend
 
 # Lint code
@@ -202,7 +202,7 @@ npm run lint:fix
 
 # Format code
 npm run format
-```
+\`\`\`
 
 ## 📚 Documentation
 

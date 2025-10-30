@@ -1,6 +1,6 @@
 # 3. Project Structure
 
-```
+\`\`\`
 frontend/
 ├── public/                          # Static assets
 │   ├── favicon.ico
@@ -184,7 +184,7 @@ frontend/
 ├── playwright.config.ts             # Playwright configuration
 ├── package.json
 └── README.md
-```
+\`\`\`
 
 ## Structure Rationale
 

@@ -2,7 +2,7 @@
 
 ## 14.1 Authentication Flow
 
-```typescript
+\`\`\`typescript
 // src/features/auth/services/authService.ts
 import { apiClient } from '@/services/api/client';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
@@ -20,9 +20,9 @@ export const authService = {
     return apiClient.get(API_ENDPOINTS.AUTH.ME);
   },
 };
-```
+\`\`\`
 
-```typescript
+\`\`\`typescript
 // src/features/auth/hooks/useAuth.ts
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -93,7 +93,7 @@ export const useAuthStatus = () => {
     },
   });
 };
-```
+\`\`\`
 
 ## 14.2 Security Best Practices
 
@@ -116,7 +116,7 @@ export const useAuthStatus = () => {
 - Never expose sensitive data in URLs
 
 **Content Security:**
-```html
+\`\`\`html
 <!-- index.html -->
 <meta http-equiv="Content-Security-Policy" 
       content="default-src 'self'; 
@@ -124,6 +124,6 @@ export const useAuthStatus = () => {
                style-src 'self' 'unsafe-inline'; 
                img-src 'self' data: https:; 
                connect-src 'self' https://api.cognitive.microsoft.com;">
-```
+\`\`\`
 
 ---

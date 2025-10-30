@@ -3,7 +3,7 @@
 ## Input Validation
 
 **1. Pydantic at API Boundary:**
-```python
+\`\`\`python
 class CreateInterviewRequest(BaseModel):
     role_type: Literal["react", "python", "javascript", "fullstack"]
     resume_id: Optional[UUID] = None
@@ -13,20 +13,20 @@ class CreateInterviewRequest(BaseModel):
         if v not in ["react", "python", "javascript", "fullstack"]:
             raise ValueError("Invalid role type")
         return v
-```
+\`\`\`
 
 **2. SQL Injection Prevention:**
-```python
+\`\`\`python
 # ✅ SQLAlchemy ORM automatically parameterizes
 result = await session.execute(
     select(Candidate).where(Candidate.email == email)
 )
-```
+\`\`\`
 
 ## Authentication & Authorization
 
 **JWT Implementation:**
-```python
+\`\`\`python
 from jose import jwt
 from passlib.context import CryptContext
 
@@ -45,12 +45,12 @@ def verify_token(token: str) -> UUID:
         return UUID(payload["sub"])
     except JWTError:
         raise AuthenticationError("Invalid token")
-```
+\`\`\`
 
 ## API Security
 
 **1. Rate Limiting:**
-```python
+\`\`\`python
 from slowapi import Limiter
 
 limiter = Limiter(key_func=lambda: request.client.host)
@@ -59,10 +59,10 @@ limiter = Limiter(key_func=lambda: request.client.host)
 @limiter.limit("10/hour")  # Max 10 interview starts per hour
 async def start_interview(...):
     pass
-```
+\`\`\`
 
 **2. CORS Configuration:**
-```python
+\`\`\`python
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://teamified.com", "http://localhost:3000"],
@@ -70,10 +70,10 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
-```
+\`\`\`
 
 **3. Security Headers:**
-```python
+\`\`\`python
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -81,7 +81,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
-```
+\`\`\`
 
 ## Data Protection
 
@@ -90,21 +90,21 @@ async def add_security_headers(request: Request, call_next):
 **2. Encryption in Transit:** HTTPS enforced in production (nginx reverse proxy)
 
 **3. PII Handling:**
-```python
+\`\`\`python
 # ✅ Never log PII
 logger.info("candidate_registered", candidate_id=str(candidate_id))  # ✅
 
 # ❌ Don't log sensitive data
 logger.info("candidate_registered", email=email, password=password)  # ❌
-```
+\`\`\`
 
 **4. Secrets Management:**
-```python
+\`\`\`python
 # ✅ Load from environment
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # ❌ Never hardcode
 OPENAI_API_KEY = "sk-abc123..."  # ❌ NEVER DO THIS
-```
+\`\`\`
 
 ---

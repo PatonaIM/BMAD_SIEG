@@ -25,4 +25,3 @@ Review this PRD and create comprehensive technical architecture including:
 - Cost estimation for OpenAI services at pilot scale (500 interviews/month)
 
 **Command to initiate:** Load PRD and begin architecture mode using this document as input foundation.
-

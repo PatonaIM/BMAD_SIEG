@@ -3,7 +3,7 @@
 ## 15.1 WCAG 2.1 AA Compliance
 
 **Keyboard Navigation:**
-```typescript
+\`\`\`typescript
 // Example: Accessible button component
 <Button
   onClick={handleClick}
@@ -18,10 +18,10 @@
 >
   Start Interview
 </Button>
-```
+\`\`\`
 
 **Screen Reader Support:**
-```typescript
+\`\`\`typescript
 // Example: ARIA live regions for dynamic content
 <div role="status" aria-live="polite" aria-atomic="true">
   {isRecording ? 'Recording in progress' : 'Recording stopped'}
@@ -31,7 +31,7 @@
 <div role="alert" aria-live="assertive">
   {`Question ${currentQuestion} of ${totalQuestions}`}
 </div>
-```
+\`\`\`
 
 **Color Contrast:**
 - Text: 4.5:1 minimum contrast ratio
@@ -40,7 +40,7 @@
 - Use color + icon/text (not color alone)
 
 **Focus Management:**
-```typescript
+\`\`\`typescript
 // Example: Focus trap in modal
 import { useRef, useEffect } from 'react';
 
@@ -77,7 +77,7 @@ export const Modal = ({ isOpen, children }) => {
 
   return <div ref={modalRef} role="dialog">{children}</div>;
 };
-```
+\`\`\`
 
 ## 15.2 Speech-Specific Accessibility
 

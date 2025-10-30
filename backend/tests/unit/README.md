@@ -16,9 +16,9 @@
 - `test_generate_completion_context_length_error`
 
 **Error:**
-```
+\`\`\`
 ValueError: "ChatOpenAI" object has no field "ainvoke"
-```
+\`\`\`
 
 **Root Cause:**
 LangChain's `ChatOpenAI` is a Pydantic v2 model. Can't directly assign mocked methods to it.
@@ -26,7 +26,7 @@ LangChain's `ChatOpenAI` is a Pydantic v2 model. Can't directly assign mocked me
 **Recommended Fixes:**
 
 **Option 1:** Mock at HTTP client level using `respx`
-```python
+\`\`\`python
 import respx
 from httpx import Response
 
@@ -42,10 +42,10 @@ async def test_generate_completion_success(provider):
     
     result = await provider.generate_completion([...])
     assert result == "Test response"
-```
+\`\`\`
 
 **Option 2:** Use MockAIProvider in tests
-```python
+\`\`\`python
 from app.providers.mock_ai_provider import MockAIProvider
 
 @pytest.mark.asyncio
@@ -54,17 +54,17 @@ async def test_generate_completion_success():
     result = await provider.generate_completion([...])
     assert isinstance(result, str)
     assert len(result) > 0
-```
+\`\`\`
 
 **Option 3:** Patch the underlying OpenAI client
-```python
+\`\`\`python
 @patch("app.providers.openai_provider.ChatOpenAI")
 async def test_generate_completion_success(mock_chatgpt, provider):
     mock_instance = mock_chatgpt.return_value
     mock_response = Mock(content="Test response")
     mock_instance.ainvoke = AsyncMock(return_value=mock_response)
     # ... rest of test
-```
+\`\`\`
 
 #### Issue 2: OpenAI Exception Constructor Changes
 
@@ -75,16 +75,16 @@ async def test_generate_completion_success(mock_chatgpt, provider):
 - `test_generate_completion_api_error_retry`
 
 **Error:**
-```
+\`\`\`
 TypeError: APIStatusError.__init__() missing 2 required keyword-only arguments: 'response' and 'body'
-```
+\`\`\`
 
 **Root Cause:**
 OpenAI SDK v1.0+ changed exception signatures to require `response` and `body` parameters.
 
 **Fix:**
 Create helper fixture:
-```python
+\`\`\`python
 @pytest.fixture
 def create_openai_error():
     """Factory for creating properly formatted OpenAI errors."""
@@ -104,11 +104,11 @@ async def test_rate_limit_retry(provider, create_openai_error):
     error = create_openai_error(RateLimitError, "Rate limit exceeded", 429)
     provider.llm.ainvoke = AsyncMock(side_effect=[error, error, mock_success])
     # ... rest of test
-```
+\`\`\`
 
 ## Quick Commands
 
-```bash
+\`\`\`bash
 # Run only passing tests
 uv run pytest tests/unit/ -k "not openai_provider" -v
 
@@ -120,7 +120,7 @@ uv run pytest tests/unit/test_prompt_loader.py -v
 
 # Run with detailed output
 uv run pytest tests/unit/test_openai_provider.py -vv --tb=long
-```
+\`\`\`
 
 ## Working Test Files
 ✅ `test_prompt_loader.py` - All 8 tests passing

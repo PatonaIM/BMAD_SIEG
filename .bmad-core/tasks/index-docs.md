@@ -54,7 +54,7 @@ You are now operating as a Documentation Indexer. Your goal is to ensure all doc
 
 The index should be organized as follows:
 
-```markdown
+\`\`\`markdown
 # Documentation Index
 
 ## Root Documents
@@ -86,17 +86,17 @@ Documents within the `another-folder/` directory:
 ### [Nested Document](./another-folder/document.md)
 
 Description of nested document.
-```
+\`\`\`
 
 ### Index Entry Format
 
 Each entry should follow this format:
 
-```markdown
+\`\`\`markdown
 ### [Document Title](relative/path/to/file.md)
 
 Brief description of the document's purpose and contents.
-```
+\`\`\`
 
 ### Rules of Operation
 
@@ -132,7 +132,7 @@ For each file referenced in the index but not found in the filesystem:
 
 1. Present the entry:
 
-   ```markdown
+   \`\`\`markdown
    Missing file detected:
    Title: [Document Title]
    Path: relative/path/to/file.md
@@ -146,7 +146,7 @@ For each file referenced in the index but not found in the filesystem:
    3. Keep entry (mark as temporarily unavailable)
 
    Please choose an option (1/2/3):
-   ```
+   \`\`\`
 
 2. Wait for user confirmation before taking any action
 3. Log the decision for the final report

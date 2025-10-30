@@ -2,7 +2,7 @@
 
 ## 9.1 Test Setup
 
-```typescript
+\`\`\`typescript
 // tests/setup.ts
 import { expect, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
@@ -28,11 +28,11 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
-```
+\`\`\`
 
 ## 9.2 Component Test Template
 
-```typescript
+\`\`\`typescript
 // Component.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -65,7 +65,7 @@ describe('ComponentName', () => {
     });
   });
 });
-```
+\`\`\`
 
 ## 9.3 Testing Best Practices
 

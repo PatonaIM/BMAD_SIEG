@@ -47,7 +47,7 @@ This document defines the user experience goals, information architecture, user 
 
 ### Site Map / Screen Inventory
 
-```mermaid
+\`\`\`mermaid
 graph TD
     A[Login/Auth] --> B[Dashboard Hub]
     
@@ -81,7 +81,7 @@ graph TD
     E --> E3[AI Model Settings]
     E --> E4[Audit Logs]
     E --> E5[Platform Analytics]
-```
+\`\`\`
 
 ### Navigation Structure
 
@@ -126,7 +126,7 @@ graph TD
 
 #### Flow Diagram
 
-```mermaid
+\`\`\`mermaid
 graph TD
     A[Receive Interview Invite] --> B[Click Start Interview]
     B --> C[Login/Auth]
@@ -156,7 +156,7 @@ graph TD
     Q --> R[Thank You Screen]
     R --> S[Email Notification: Results Available]
     S --> T[View Detailed Results]
-```
+\`\`\`
 
 #### Edge Cases & Error Handling:
 
@@ -187,7 +187,7 @@ graph TD
 
 #### Flow Diagram
 
-```mermaid
+\`\`\`mermaid
 graph TD
     A[Notification: Results Ready] --> B[Click to Review]
     B --> C[Candidate Detail View]
@@ -212,7 +212,7 @@ graph TD
     M -->|Accept| N[Send to Client Portal]
     M -->|Reject| O[Archive Candidate]
     M -->|Maybe| P[Flag for Follow-Up]
-```
+\`\`\`
 
 #### Edge Cases & Error Handling:
 
@@ -242,7 +242,7 @@ graph TD
 
 #### Flow Diagram
 
-```mermaid
+\`\`\`mermaid
 graph TD
     A[Access Resume Upload] --> B[Drag & Drop or Browse File]
     B --> C{Valid File?}
@@ -266,7 +266,7 @@ graph TD
     
     N -->|Yes| O[Schedule Interview]
     N -->|No| P[Save for Later]
-```
+\`\`\`
 
 #### Edge Cases & Error Handling:
 

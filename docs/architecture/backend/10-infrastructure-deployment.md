@@ -3,7 +3,7 @@
 ## Docker Configuration
 
 **Dockerfile:**
-```dockerfile
+\`\`\`dockerfile
 FROM python:3.11.9-slim
 
 WORKDIR /app
@@ -23,10 +23,10 @@ EXPOSE 8000
 
 # Run migrations and start server
 CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
-```
+\`\`\`
 
 **docker-compose.yml (Local Development):**
-```yaml
+\`\`\`yaml
 version: '3.8'
 
 services:
@@ -65,14 +65,14 @@ services:
 
 volumes:
   postgres_data:
-```
+\`\`\`
 
 ---
 
 ## GitHub Actions CI/CD Pipeline
 
 **.github/workflows/backend-ci.yml:**
-```yaml
+\`\`\`yaml
 name: Backend CI/CD
 
 on:
@@ -138,14 +138,14 @@ jobs:
         run: |
           # Production deployment with approval gate
           echo "Deploying to production..."
-```
+\`\`\`
 
 ---
 
 ## Environment Configuration
 
 **.env.example:**
-```bash
+\`\`\`bash
 # Database
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/teamified
 
@@ -170,6 +170,6 @@ CORS_ORIGINS=http://localhost:3000
 
 # Rate Limiting
 RATE_LIMIT_PER_MINUTE=60
-```
+\`\`\`
 
 ---

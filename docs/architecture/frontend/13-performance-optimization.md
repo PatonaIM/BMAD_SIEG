@@ -2,7 +2,7 @@
 
 ## 13.1 Code Splitting Strategy
 
-```typescript
+\`\`\`typescript
 // src/routes/index.tsx
 import React, { lazy, Suspense } from 'react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -16,7 +16,7 @@ const ResultsPage = lazy(() => import('@/pages/ResultsPage'));
 <Suspense fallback={<LoadingSpinner />}>
   <InterviewPage />
 </Suspense>
-```
+\`\`\`
 
 ## 13.2 Performance Budgets
 
@@ -38,7 +38,7 @@ const ResultsPage = lazy(() => import('@/pages/ResultsPage'));
 ## 13.3 Optimization Techniques
 
 **Asset Optimization:**
-```typescript
+\`\`\`typescript
 // vite.config.ts
 export default defineConfig({
   build: {
@@ -57,7 +57,7 @@ export default defineConfig({
     include: ['react', 'react-dom', '@tanstack/react-query'],
   },
 });
-```
+\`\`\`
 
 **Image Optimization:**
 - Use WebP format with fallbacks

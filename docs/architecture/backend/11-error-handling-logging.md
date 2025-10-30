@@ -2,7 +2,7 @@
 
 ## Exception Hierarchy
 
-```python
+\`\`\`python
 # app/core/exceptions.py
 
 class TeamifiedBaseException(Exception):
@@ -32,11 +32,11 @@ class OpenAIRateLimitError(ExternalAPIError):
 class DataValidationError(TeamifiedBaseException):
     """Raised when data validation fails"""
     pass
-```
+\`\`\`
 
 ## Global Error Handler
 
-```python
+\`\`\`python
 # app/api/error_handlers.py
 
 from fastapi import Request, status
@@ -59,11 +59,11 @@ async def auth_exception_handler(request: Request, exc: AuthenticationError):
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={"error": "Unauthorized", "message": str(exc)}
     )
-```
+\`\`\`
 
 ## Structured Logging
 
-```python
+\`\`\`python
 # app/core/logging.py
 
 import structlog
@@ -86,6 +86,6 @@ logger = structlog.get_logger()
 # Usage example:
 logger.info("interview_started", interview_id=str(interview_id), candidate_id=str(candidate_id))
 logger.error("openai_api_failure", error=str(exc), retry_attempt=3)
-```
+\`\`\`
 
 ---

@@ -6,7 +6,7 @@
 
 **Actors:** Candidate, Frontend, Backend, OpenAI API, Database
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant C as Candidate
     participant FE as Frontend
@@ -89,7 +89,7 @@ sequenceDiagram
     IE->>DB: INSERT AssessmentResult
     
     Note over C: Candidate can view results when ready
-```
+\`\`\`
 
 **Key Steps:**
 1. Interview creation with resume context
@@ -114,7 +114,7 @@ sequenceDiagram
 
 **Actors:** Candidate, Frontend, Backend, OpenAI API, Recruiter
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant C as Candidate
     participant FE as Frontend
@@ -179,7 +179,7 @@ sequenceDiagram
     end
     
     Note over C: Candidate receives feedback email
-```
+\`\`\`
 
 **Key Steps:**
 1. File upload to Supabase Storage
@@ -205,7 +205,7 @@ sequenceDiagram
 
 **Actors:** Background Task, Interview Engine, OpenAI API, Database
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant BG as Background Task
     participant IE as Interview Engine
@@ -246,7 +246,7 @@ sequenceDiagram
     Scoring-->>BG: Assessment complete
     
     Note over DB: Recruiter can now view results in portal
-```
+\`\`\`
 
 **Key Steps:**
 1. Load interview conversation history
@@ -271,7 +271,7 @@ sequenceDiagram
 
 **Actors:** Candidate, Frontend, Backend
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant C as Candidate
     participant FE as Frontend
@@ -306,7 +306,7 @@ sequenceDiagram
         API-->>FE: {status: 'abandoned', can_restart: true}
         FE->>C: Show "Interview expired, start new interview"
     end
-```
+\`\`\`
 
 **Key Features:**
 - Session state persisted after every message
@@ -320,7 +320,7 @@ sequenceDiagram
 
 **Trigger:** Candidate clicks "Sign Up" from landing page
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant C as Candidate
     participant FE as Frontend
@@ -354,7 +354,7 @@ sequenceDiagram
         
         C->>FE: See "Upload Resume" and "Start Interview" options
     end
-```
+\`\`\`
 
 **Validation Rules:**
 - Email: Valid email format, unique
@@ -367,4 +367,3 @@ sequenceDiagram
 - HTTPS-only token transmission
 
 ---
-

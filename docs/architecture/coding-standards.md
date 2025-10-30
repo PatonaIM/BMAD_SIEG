@@ -15,7 +15,7 @@ This document defines the coding standards and best practices for the Teamified 
 ### Code Organization
 
 #### Project Structure
-```
+\`\`\`
 backend/
 ├── app/
 │   ├── core/              # Core configuration
@@ -53,7 +53,7 @@ backend/
 │   ├── integration/
 │   └── conftest.py
 └── main.py
-```
+\`\`\`
 
 #### File Naming Conventions
 - **Models**: `{feature}.py` (e.g., `candidate.py`, `interview.py`)
@@ -65,7 +65,7 @@ backend/
 
 ### Naming Conventions
 
-```python
+\`\`\`python
 # ✅ Functions and variables: snake_case
 def create_interview_session(candidate_id: UUID) -> Interview:
     session_data = {"candidate_id": candidate_id}
@@ -89,11 +89,11 @@ def _validate_internal_state(self) -> bool:
 
 # ✅ Type aliases: PascalCase
 InterviewDict = dict[str, Any]
-```
+\`\`\`
 
 ### Type Hints (Required)
 
-```python
+\`\`\`python
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
@@ -118,11 +118,11 @@ def get_resume_data(candidate_id: UUID) -> Optional[Dict[str, Any]]:
 # ❌ Never omit type hints
 async def create_interview(candidate_id, resume_id):  # Bad!
     pass
-```
+\`\`\`
 
 ### SQLAlchemy Models
 
-```python
+\`\`\`python
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -190,11 +190,11 @@ class Interview(Base):
     candidate = relationship("Candidate", back_populates="interviews")
     resume = relationship("Resume")
     session = relationship("InterviewSession", uselist=False, back_populates="interview")
-```
+\`\`\`
 
 ### Pydantic Schemas
 
-```python
+\`\`\`python
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from uuid import UUID
@@ -256,11 +256,11 @@ class InterviewUpdate(BaseModel):
 class InterviewWithCandidate(InterviewResponse):
     """Interview with candidate details."""
     candidate: CandidateResponse
-```
+\`\`\`
 
 ### FastAPI Routes
 
-```python
+\`\`\`python
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -317,7 +317,7 @@ async def list_interviews(
         limit=limit
     )
     return interviews
-```
+\`\`\`
 
 #### HTTP Status Codes
 - `200` - OK (GET, PUT, PATCH)
@@ -333,7 +333,7 @@ async def list_interviews(
 
 ### Service Layer
 
-```python
+\`\`\`python
 from typing import Optional, List
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -420,11 +420,11 @@ class InterviewEngine:
                 error=str(e)
             )
             raise
-```
+\`\`\`
 
 ### Repository Pattern
 
-```python
+\`\`\`python
 from typing import Optional, List
 from uuid import UUID
 from sqlalchemy import select
@@ -483,11 +483,11 @@ class InterviewRepository:
         await self.db.commit()
         await self.db.refresh(interview)
         return interview
-```
+\`\`\`
 
 ### Async/Await (Required)
 
-```python
+\`\`\`python
 # ✅ All I/O operations must be async
 async def get_candidate(candidate_id: UUID) -> Candidate:
     return await candidate_repo.get_by_id(candidate_id)
@@ -512,11 +512,11 @@ async def process_batch():
         api_call_3()
     )
     return results
-```
+\`\`\`
 
 ### Error Handling
 
-```python
+\`\`\`python
 from fastapi import HTTPException, status
 import structlog
 
@@ -561,11 +561,11 @@ except Exception as e:
         error_type=type(e).__name__
     )
     raise
-```
+\`\`\`
 
 ### Logging Standards
 
-```python
+\`\`\`python
 import structlog
 
 # ✅ Use structured logging with context
@@ -597,11 +597,11 @@ print(f"Interview {interview_id} started")  # Bad!
 
 # ❌ Avoid console.log (this is Python, not JavaScript!)
 console.log("Something happened")  # This doesn't exist in Python!
-```
+\`\`\`
 
 ### Security Standards
 
-```python
+\`\`\`python
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
@@ -628,7 +628,7 @@ candidate.password = request.password  # Bad!
 
 # ❌ Never expose API keys in responses
 return {"openai_key": settings.OPENAI_API_KEY}  # Bad!
-```
+\`\`\`
 
 ---
 
@@ -637,7 +637,7 @@ return {"openai_key": settings.OPENAI_API_KEY}  # Bad!
 ### Component Structure
 
 #### Functional Components with TypeScript
-```typescript
+\`\`\`typescript
 import React, { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
 import type { Interview } from '@/types/interview.types';
@@ -678,10 +678,10 @@ export const InterviewCard: React.FC<InterviewCardProps> = ({
 };
 
 export default InterviewCard;
-```
+\`\`\`
 
 #### File Organization
-```
+\`\`\`
 src/
 ├── components/
 │   ├── ui/                    # Reusable UI components
@@ -714,11 +714,11 @@ src/
 └── utils/
     ├── formatters.ts
     └── validators.ts
-```
+\`\`\`
 
 ### Naming Conventions
 
-```typescript
+\`\`\`typescript
 // ✅ Components: PascalCase
 const InterviewCard: React.FC = () => <div />;
 const WaveformVisualizer: React.FC = () => <canvas />;
@@ -755,11 +755,11 @@ interface FormProps {
   onChange: (field: string, value: any) => void;
   onError: (error: Error) => void;
 }
-```
+\`\`\`
 
 ### State Management with Zustand
 
-```typescript
+\`\`\`typescript
 // stores/authStore.ts
 import { create } from 'zustand';
 import type { User } from '@/types/auth.types';
@@ -790,11 +790,11 @@ import { useAuthStore } from '@/stores/authStore';
 
 const user = useAuthStore((state) => state.user);
 const { logout } = useAuthStore();
-```
+\`\`\`
 
 ### Data Fetching with TanStack Query
 
-```typescript
+\`\`\`typescript
 // services/api/interviews.ts
 import { apiClient } from './client';
 import type { Interview, InterviewCreate } from '@/types/interview.types';
@@ -855,11 +855,11 @@ export const useCreateInterview = () => {
 // Usage in component
 const { data: interviews, isLoading, error } = useInterviews();
 const { mutate: createNewInterview, isPending } = useCreateInterview();
-```
+\`\`\`
 
 ### Form Handling with React Hook Form + Zod
 
-```typescript
+\`\`\`typescript
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -915,11 +915,11 @@ export const LoginForm: React.FC = () => {
     </form>
   );
 };
-```
+\`\`\`
 
 ### MUI Theming
 
-```typescript
+\`\`\`typescript
 // theme/theme.ts
 import { createTheme } from '@mui/material/styles';
 
@@ -968,11 +968,11 @@ export const teamifiedTheme = createTheme({
 >
   Content
 </Box>
-```
+\`\`\`
 
 ### Error Handling
 
-```typescript
+\`\`\`typescript
 // ✅ Use try-catch for async operations
 const handleStartInterview = async () => {
   try {
@@ -1000,11 +1000,11 @@ const { data, error, isError } = useInterviews();
 if (isError) {
   return <div>Error loading interviews: {error.message}</div>;
 }
-```
+\`\`\`
 
 ### TypeScript Best Practices
 
-```typescript
+\`\`\`typescript
 // ✅ Define proper types
 interface Interview {
   id: string;
@@ -1034,7 +1034,7 @@ const email = user?.profile?.email;
 
 // ✅ Use nullish coalescing
 const displayName = user?.fullName ?? 'Guest';
-```
+\`\`\`
 
 ---
 
@@ -1043,7 +1043,7 @@ const displayName = user?.fullName ?? 'Guest';
 ### Backend Testing (pytest)
 
 #### Test Structure
-```python
+\`\`\`python
 # tests/unit/test_interview_engine.py
 import pytest
 from uuid import uuid4
@@ -1116,10 +1116,10 @@ class TestInterviewEngine:
                 resume_id=None,
                 role_type="invalid"
             )
-```
+\`\`\`
 
 #### Integration Tests
-```python
+\`\`\`python
 # tests/integration/test_interview_flow.py
 import pytest
 from httpx import AsyncClient
@@ -1171,12 +1171,12 @@ async def test_complete_interview_flow(db: AsyncSession, client: AsyncClient):
     )
     assert complete_response.status_code == 200
     assert complete_response.json()["status"] == "completed"
-```
+\`\`\`
 
 ### Frontend Testing (Vitest + React Testing Library)
 
 #### Component Tests
-```typescript
+\`\`\`typescript
 // components/interview/InterviewCard.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -1260,10 +1260,10 @@ describe('InterviewCard', () => {
     expect(screen.getByText(/starting/i)).toBeInTheDocument();
   });
 });
-```
+\`\`\`
 
 #### Hook Tests
-```typescript
+\`\`\`typescript
 // hooks/useInterviews.test.ts
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -1321,7 +1321,7 @@ describe('useInterviews', () => {
     expect(result.current.error).toBeDefined();
   });
 });
-```
+\`\`\`
 
 ---
 
@@ -1331,13 +1331,13 @@ describe('useInterviews', () => {
 
 All commit messages must follow this structure:
 
-```
+\`\`\`
 <type>[optional scope]: <description>
 
 [optional body]
 
 [optional footer(s)]
-```
+\`\`\`
 
 ### Character Limits (50/72 Rule)
 
@@ -1382,16 +1382,16 @@ Use scope to specify the area of change:
 ### Examples
 
 **Simple commits:**
-```
+\`\`\`
 feat(auth): add password reset functionality
 fix(api): resolve race condition in user registration
 docs: update API authentication guide
 refactor(ui): restructure component hierarchy
 test(interview): add tests for question generation
-```
+\`\`\`
 
 **With body:**
-```
+\`\`\`
 fix(api): resolve race condition in user registration
 
 Introduce request ID tracking to dismiss incoming responses
@@ -1399,17 +1399,17 @@ other than from latest request. This prevents duplicate user
 creation when users double-click the register button.
 
 Fixes #234
-```
+\`\`\`
 
 **Breaking change:**
-```
+\`\`\`
 feat(api)!: change authentication endpoint structure
 
 BREAKING CHANGE: /auth/login now requires email instead of username.
 Update all client applications to use email field for authentication.
 
 Closes #456
-```
+\`\`\`
 
 ### Anti-patterns to Avoid
 
@@ -1433,7 +1433,7 @@ Closes #456
 ### Backend (Python)
 
 **Linting & Formatting:**
-```bash
+\`\`\`bash
 # Format code with black
 black app/ tests/
 
@@ -1448,10 +1448,10 @@ mypy app/
 
 # Security scanning with bandit
 bandit -r app/
-```
+\`\`\`
 
 **Testing:**
-```bash
+\`\`\`bash
 # Run all tests
 pytest
 
@@ -1466,12 +1466,12 @@ pytest -v
 
 # Run async tests
 pytest -v -k "async"
-```
+\`\`\`
 
 ### Frontend (TypeScript/React)
 
 **Linting & Formatting:**
-```bash
+\`\`\`bash
 # Lint TypeScript/React code
 npm run lint
 
@@ -1483,10 +1483,10 @@ npm run format
 
 # Type checking
 npm run type-check
-```
+\`\`\`
 
 **Testing:**
-```bash
+\`\`\`bash
 # Run all tests
 npm run test
 
@@ -1501,7 +1501,7 @@ npm run test -- InterviewCard.test.tsx
 
 # Watch mode
 npm run test:watch
-```
+\`\`\`
 
 ---
 
@@ -1597,7 +1597,7 @@ npm run test:watch
 ## Documentation Standards
 
 ### Python Docstrings
-```python
+\`\`\`python
 def create_interview(
     candidate_id: UUID,
     resume_id: Optional[UUID],
@@ -1626,10 +1626,10 @@ def create_interview(
         ... )
     """
     pass
-```
+\`\`\`
 
 ### TypeScript JSDoc
-```typescript
+\`\`\`typescript
 /**
  * Fetch all interviews for the current user
  * 
@@ -1646,7 +1646,7 @@ export const fetchInterviews = async (): Promise<Interview[]> => {
   const response = await apiClient.get('/api/v1/interviews');
   return response.data;
 };
-```
+\`\`\`
 
 ### API Documentation
 - Use FastAPI's automatic OpenAPI documentation

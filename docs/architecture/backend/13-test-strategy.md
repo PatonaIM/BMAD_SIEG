@@ -2,7 +2,7 @@
 
 ## Testing Pyramid
 
-```
+\`\`\`
            /\
           /E2E\        10% - End-to-end tests (full workflows)
          /______\
@@ -12,11 +12,11 @@
      /              \
     /      Unit      \ 60% - Unit tests (pure logic)
    /__________________\
-```
+\`\`\`
 
 ## Unit Tests (60% of tests)
 
-```python
+\`\`\`python
 # tests/unit/test_auth_service.py
 
 @pytest.mark.asyncio
@@ -37,11 +37,11 @@ async def test_register_candidate_success():
     assert candidate.email == "test@example.com"
     assert candidate.password_hash != "SecurePass123!"  # Hashed
     mock_repo.create.assert_called_once()
-```
+\`\`\`
 
 ## Integration Tests (30% of tests)
 
-```python
+\`\`\`python
 # tests/integration/test_interview_flow.py
 
 @pytest.mark.asyncio
@@ -63,11 +63,11 @@ async def test_complete_interview_flow(test_db, test_candidate):
     
     assert result.status == "completed"
     assert result.assessment is not None
-```
+\`\`\`
 
 ## E2E Tests (10% of tests)
 
-```python
+\`\`\`python
 # tests/e2e/test_complete_interview.py
 
 @pytest.mark.e2e
@@ -96,11 +96,11 @@ async def test_candidate_completes_interview_via_api(test_client):
     # 4. Complete and verify results
     response = await test_client.post(f"/api/v1/interviews/{interview_id}/complete")
     assert response.status_code == 200
-```
+\`\`\`
 
 ## Test Fixtures
 
-```python
+\`\`\`python
 # tests/conftest.py
 
 @pytest.fixture
@@ -120,6 +120,6 @@ def mock_openai_provider():
     provider.generate_question.return_value = "What is React?"
     provider.transcribe_audio.return_value = TranscriptionResult(text="My answer")
     return provider
-```
+\`\`\`
 
 ---

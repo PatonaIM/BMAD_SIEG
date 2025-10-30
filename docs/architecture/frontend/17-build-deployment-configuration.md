@@ -2,7 +2,7 @@
 
 ## 17.1 Vite Configuration
 
-```typescript
+\`\`\`typescript
 // vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -38,11 +38,11 @@ export default defineConfig({
     },
   },
 });
-```
+\`\`\`
 
 ## 17.2 Environment Configuration
 
-```typescript
+\`\`\`typescript
 // src/config/env.ts
 import { z } from 'zod';
 
@@ -65,7 +65,7 @@ const validateEnv = () => {
 };
 
 export const env = validateEnv();
-```
+\`\`\`
 
 ## 17.3 Deployment Checklist
 

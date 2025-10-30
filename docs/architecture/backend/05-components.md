@@ -63,7 +63,7 @@
 4. **Adaptive Branching:** AI adjusts based on response quality
 
 **Internal Structure:**
-```python
+\`\`\`python
 class AIInterviewEngine:
     def __init__(self, ai_provider: AIProvider, session_repo: SessionRepository):
         self.ai_provider = ai_provider
@@ -77,7 +77,7 @@ class AIInterviewEngine:
         # Determine next difficulty level
         # Generate contextual question
         # Save state
-```
+\`\`\`
 
 ---
 
@@ -105,7 +105,7 @@ class AIInterviewEngine:
 - Backend audio processing (never expose API keys to frontend)
 
 **Provider Abstraction:**
-```python
+\`\`\`python
 class SpeechProvider(ABC):
     @abstractmethod
     async def transcribe(self, audio_data: bytes) -> TranscriptionResult:
@@ -119,7 +119,7 @@ class OpenAISpeechProvider(SpeechProvider):
     # OpenAI Whisper + TTS implementation
 
 # Future: AzureSpeechProvider, GCPSpeechProvider
-```
+\`\`\`
 
 **Audio Metadata Capture:**
 - Sample rate, codec, file size
@@ -222,7 +222,7 @@ class OpenAISpeechProvider(SpeechProvider):
 - Error handling and standardization
 
 **Router Structure:**
-```
+\`\`\`
 /api/v1/
 ├── /auth/          → Auth Service
 ├── /candidates/    → Candidate operations
@@ -232,7 +232,7 @@ class OpenAISpeechProvider(SpeechProvider):
 ├── /assessments/   → Results retrieval
 ├── /recruiters/    → Recruiter portal
 └── /webhooks/      → External integrations (Epic 5)
-```
+\`\`\`
 
 **Middleware Pipeline:**
 1. **CORS** - Frontend origin whitelisting
@@ -259,7 +259,7 @@ class OpenAISpeechProvider(SpeechProvider):
 - `AssessmentResultRepository`
 
 **Standard Interface Pattern:**
-```python
+\`\`\`python
 class BaseRepository(ABC, Generic[T]):
     @abstractmethod
     async def create(self, entity: T) -> T:
@@ -276,7 +276,7 @@ class BaseRepository(ABC, Generic[T]):
     @abstractmethod
     async def delete(self, id: UUID) -> bool:
         pass
-```
+\`\`\`
 
 **Technology Stack:**
 - SQLAlchemy 2.0 async ORM
@@ -288,7 +288,7 @@ class BaseRepository(ABC, Generic[T]):
 
 ## Component Interaction Diagram
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant Frontend
     participant API Gateway
@@ -323,7 +323,6 @@ sequenceDiagram
     AI Provider-->>Speech Service: Audio file
     
     API Gateway-->>Frontend: Response (audio URL + text)
-```
+\`\`\`
 
 ---
-

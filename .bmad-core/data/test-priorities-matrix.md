@@ -142,7 +142,7 @@ Guide for prioritizing test scenarios based on risk, criticality, and business i
 
 ## Priority Decision Tree
 
-```
+\`\`\`
 Is it revenue-critical?
 ├─ YES → P0
 └─ NO → Does it affect core user journey?
@@ -154,7 +154,7 @@ Is it revenue-critical?
         └─ NO → Is it customer-facing?
             ├─ YES → P2
             └─ NO → P3
-```
+\`\`\`
 
 ## Test Execution Order
 

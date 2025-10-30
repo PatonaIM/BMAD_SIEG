@@ -53,7 +53,7 @@ This is a repository template for Teamified projects featuring a full-stack arch
 - **Error Handling**: Try-catch with user-friendly error messages
 
 ### File Structure Examples
-```
+\`\`\`
 Backend:
 src/{feature}/
 ├── entities/{feature}.entity.ts
@@ -68,7 +68,7 @@ src/components/{ComponentName}/
 ├── {ComponentName}.tsx
 ├── {ComponentName}.test.tsx
 └── {ComponentName}.module.css
-```
+\`\`\`
 
 ## Quality Standards
 

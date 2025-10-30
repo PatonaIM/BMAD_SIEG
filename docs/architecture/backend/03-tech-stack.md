@@ -114,20 +114,19 @@
 ## Model Selection Strategy
 
 **Development Phase:**
-```python
+\`\`\`python
 # config/settings.py
 OPENAI_MODEL = "gpt-4o-mini"  # $0.15/M input tokens
 COST_PER_INTERVIEW = ~$0.02   # Estimated 100K tokens per interview
-```
+\`\`\`
 
 **Production Phase (when revenue-proven):**
-```python
+\`\`\`python
 # config/settings.py
 OPENAI_MODEL = "gpt-4"        # $30/M input tokens  
 COST_PER_INTERVIEW = ~$3-5    # Higher quality, justified by revenue
-```
+\`\`\`
 
 **Upgrade Trigger:** When pilot demonstrates product-market fit and pricing model supports higher AI costs.
 
 ---
-

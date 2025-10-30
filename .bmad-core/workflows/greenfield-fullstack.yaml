@@ -164,7 +164,7 @@ workflow:
         Reference: .bmad-core/data/bmad-kb.md#IDE Development Workflow
 
   flow_diagram: |
-    ```mermaid
+    \`\`\`mermaid
     graph TD
         A[Start: Greenfield Project] --> B[analyst: project-brief.md]
         B --> C[pm: prd.md]
@@ -219,7 +219,7 @@ workflow:
         style N fill:#F0E68C
         style Q fill:#F0E68C
         style V fill:#F0E68C
-    ```
+    \`\`\`
 
   decision_guidance:
     when_to_use:

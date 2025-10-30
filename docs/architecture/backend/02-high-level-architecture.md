@@ -36,7 +36,7 @@ Single repository containing `/frontend` and `/backend` as specified in PRD, ena
 
 **4. Primary Data Flow**
 
-```
+\`\`\`
 Candidate → Frontend (React) → Backend API (FastAPI)
                                       ↓
                         ┌─────────────┴──────────────┐
@@ -51,7 +51,7 @@ Candidate → Frontend (React) → Backend API (FastAPI)
                               PostgreSQL (Supabase)
                                       ↓
                         Recruiter Portal / ATS APIs
-```
+\`\`\`
 
 **5. Key Architectural Decisions**
 
@@ -65,7 +65,7 @@ Candidate → Frontend (React) → Backend API (FastAPI)
 
 ## High Level Project Diagram
 
-```mermaid
+\`\`\`mermaid
 graph TB
     subgraph "Client Layer"
         FE[Frontend - React + TypeScript]
@@ -115,7 +115,7 @@ graph TB
     
     API -->|Webhooks/REST| ATS
     ATS -->|Candidate Data| API
-```
+\`\`\`
 
 ## Architectural and Design Patterns
 
@@ -151,4 +151,3 @@ graph TB
 - **Rationale:** Sufficient for 24-hour resume processing SLA at pilot scale; defer infrastructure complexity
 
 ---
-

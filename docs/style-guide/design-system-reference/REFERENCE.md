@@ -29,7 +29,7 @@ When implementing a story:
 
 ## 📁 Directory Structure
 
-```
+\`\`\`
 design-system-reference/
 ├── components/
 │   ├── teamified/          # Core design system components
@@ -45,7 +45,7 @@ design-system-reference/
 ├── lib/
 │   └── theme.ts            # MUI theme configuration
 └── README.md               # Original v0 README
-```
+\`\`\`
 
 ## ⚠️ Important Notes
 
@@ -62,7 +62,7 @@ design-system-reference/
 
 ## 🚀 Typical Workflow
 
-```
+\`\`\`
 User Story: "Implement Primary Button Component"
 
 1. PM references: docs/style-guide/design-system-reference/components/teamified/Button.tsx
@@ -74,7 +74,7 @@ User Story: "Implement Primary Button Component"
    - Unit tests
    - Storybook stories
 5. Developer ensures design specs match exactly
-```
+\`\`\`
 
 ## 📊 Design Specifications
 

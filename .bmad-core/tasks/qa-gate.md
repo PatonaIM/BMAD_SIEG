@@ -27,7 +27,7 @@ Slug rules:
 
 ## Minimal Required Schema
 
-```yaml
+\`\`\`yaml
 schema: 1
 story: '{epic}.{story}'
 gate: PASS|CONCERNS|FAIL|WAIVED
@@ -36,11 +36,11 @@ reviewer: 'Quinn'
 updated: '{ISO-8601 timestamp}'
 top_issues: [] # Empty array if no issues
 waiver: { active: false } # Only set active: true if WAIVED
-```
+\`\`\`
 
 ## Schema with Issues
 
-```yaml
+\`\`\`yaml
 schema: 1
 story: '1.3'
 gate: CONCERNS
@@ -57,11 +57,11 @@ top_issues:
     finding: 'No integration tests for auth flow'
     suggested_action: 'Add integration test coverage'
 waiver: { active: false }
-```
+\`\`\`
 
 ## Schema when Waived
 
-```yaml
+\`\`\`yaml
 schema: 1
 story: '1.3'
 gate: WAIVED
@@ -77,7 +77,7 @@ waiver:
   active: true
   reason: 'MVP release - performance optimization deferred'
   approved_by: 'Product Owner'
-```
+\`\`\`
 
 ## Gate Decision Criteria
 
@@ -129,9 +129,9 @@ waiver:
 1. **ALWAYS** create gate file at: `qa.qaLocation/gates` from `bmad-core/core-config.yaml`
 2. **ALWAYS** append this exact format to story's QA Results section:
 
-   ```text
+   \`\`\`text
    Gate: {STATUS} → qa.qaLocation/gates/{epic}.{story}-{slug}.yml
-   ```
+   \`\`\`
 
 3. Keep status_reason to 1-2 sentences maximum
 4. Use severity values exactly: `low`, `medium`, or `high`
@@ -140,7 +140,7 @@ waiver:
 
 After creating gate file, append to story's QA Results section:
 
-```markdown
+\`\`\`markdown
 ## QA Results
 
 ### Review Date: 2025-01-12
@@ -152,7 +152,7 @@ After creating gate file, append to story's QA Results section:
 ### Gate Status
 
 Gate: CONCERNS → qa.qaLocation/gates/{epic}.{story}-{slug}.yml
-```
+\`\`\`
 
 ## Key Principles
 

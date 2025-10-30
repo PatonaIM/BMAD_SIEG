@@ -2,7 +2,7 @@
 
 ## 6.1 TanStack Query Setup
 
-```typescript
+\`\`\`typescript
 // src/services/api/queryClient.ts
 import { QueryClient } from '@tanstack/react-query';
 
@@ -20,9 +20,9 @@ export const queryClient = new QueryClient({
     },
   },
 });
-```
+\`\`\`
 
-```typescript
+\`\`\`typescript
 // src/App.tsx
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -36,11 +36,11 @@ function App() {
     </QueryClientProvider>
   );
 }
-```
+\`\`\`
 
 ## 6.2 API Client with Fetch
 
-```typescript
+\`\`\`typescript
 // src/services/api/client.ts
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
@@ -159,11 +159,11 @@ export const apiClient = {
 };
 
 export { ApiError };
-```
+\`\`\`
 
 ## 6.3 API Endpoints
 
-```typescript
+\`\`\`typescript
 // src/services/api/endpoints.ts
 export const API_ENDPOINTS = {
   AUTH: {
@@ -198,11 +198,11 @@ export const API_ENDPOINTS = {
     ANALYTICS: '/recruiters/analytics',
   },
 } as const;
-```
+\`\`\`
 
 ## 6.4 Service with TanStack Query
 
-```typescript
+\`\`\`typescript
 // src/features/interview/services/interviewService.ts
 import { apiClient } from '@/services/api/client';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
@@ -260,11 +260,11 @@ export const interviewService = {
     return apiClient.get<InterviewResults>(API_ENDPOINTS.INTERVIEWS.RESULTS(id));
   },
 };
-```
+\`\`\`
 
 ## 6.5 Query Hooks Pattern
 
-```typescript
+\`\`\`typescript
 // src/features/interview/hooks/useInterviewQueries.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { interviewService } from '../services/interviewService';
@@ -346,11 +346,11 @@ export const useEndInterview = () => {
     },
   });
 };
-```
+\`\`\`
 
 ## 6.6 Using Queries in Components
 
-```typescript
+\`\`\`typescript
 // src/features/interview/components/InterviewList.tsx
 import { useInterviews } from '../hooks/useInterviewQueries';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -370,9 +370,9 @@ export const InterviewList = () => {
     </div>
   );
 };
-```
+\`\`\`
 
-```typescript
+\`\`\`typescript
 // src/features/interview/components/InterviewChat.tsx
 import { useSendMessage } from '../hooks/useInterviewQueries';
 import { useGlobalStore } from '@/store/globalStore';
@@ -404,7 +404,6 @@ export const InterviewChat = ({ interviewId }: { interviewId: string }) => {
     </div>
   );
 };
-```
+\`\`\`
 
 ---
-

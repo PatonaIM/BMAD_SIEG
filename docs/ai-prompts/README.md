@@ -64,7 +64,7 @@ Exact specifications, data structures, API contracts.
 Define boundaries - what to do AND what NOT to do.
 
 **Template:**
-```markdown
+\`\`\`markdown
 # [SCREEN/COMPONENT NAME]
 
 ## PROJECT CONTEXT
@@ -84,7 +84,7 @@ Define boundaries - what to do AND what NOT to do.
 
 ## DELIVERABLES
 [List of expected files/outputs]
-```
+\`\`\`
 
 ---
 

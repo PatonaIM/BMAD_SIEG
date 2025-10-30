@@ -151,4 +151,3 @@ gate_decision_rationale: |
   Quality score: 85/100 = 100 - (10 for SEC-001) - (5 for TEST-001)
 
 expires: "2025-11-12T00:00:00Z"  # 2 weeks from review date
-

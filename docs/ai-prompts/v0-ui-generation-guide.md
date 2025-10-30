@@ -24,18 +24,18 @@ This document contains carefully crafted prompts for generating the Teamified Ca
 4. **Review and iterate** with v0 as needed
 
 **Visual Guide:**
-```
+\`\`\`
 <details>                          ← Don't copy this
 <summary>...</summary>             ← Don't copy this
-```                                ← Don't copy this outer fence
+\`\`\`                                ← Don't copy this outer fence
 # TEAMIFIED DESIGN SYSTEM...      ← START copying here
 ...
 [All the prompt content]
 ...
 Include a brief README...         ← STOP copying here
-```                                ← Don't copy this outer fence
+\`\`\`                                ← Don't copy this outer fence
 </details>                         ← Don't copy this
-```
+\`\`\`
 
 **Note:** The prompts are quite comprehensive (~500+ lines each). v0 handles this well, but if you encounter token limits, you can ask v0 to focus on specific components first.
 
@@ -59,7 +59,7 @@ Generate reusable, accessible, and professionally styled components that will se
 <details>
 <summary><strong>📋 Click to expand: Phase 1 Prompt (Copy the text inside to v0)</strong></summary>
 
-```
+\`\`\`
 ⬇️ COPY EVERYTHING BELOW THIS LINE (excluding this line) ⬇️
 
 # TEAMIFIED DESIGN SYSTEM - CORE COMPONENTS
@@ -97,7 +97,7 @@ Create a file `theme.ts` that defines the Teamified custom theme:
 6. Set border radius defaults
 
 **Required Color Palette:**
-```typescript
+\`\`\`typescript
 palette: {
   primary: {
     main: '#A16AE8',      // Brand Purple
@@ -134,7 +134,7 @@ palette: {
     paper: '#FFFFFF'
   }
 }
-```
+\`\`\`
 
 **Typography Configuration:**
 - Font family: `"Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
@@ -144,7 +144,7 @@ palette: {
 **Spacing:** Use 8px baseline (theme.spacing(1) = 8px)
 
 **Shadows:**
-```typescript
+\`\`\`typescript
 shadows: {
   cardDefault: '0 2px 8px rgba(0, 0, 0, 0.04)',
   cardHover: '0 4px 16px rgba(0, 0, 0, 0.08)',
@@ -153,7 +153,7 @@ shadows: {
   level3: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
   dialog: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
 }
-```
+\`\`\`
 
 **Border Radius:**
 - Small (badges): 16px
@@ -191,7 +191,7 @@ Create `components/Button.tsx` with the following specifications:
 - Active animation: 150ms cubic-bezier(0.4, 0.0, 0.2, 1)
 
 **Props Interface:**
-```typescript
+\`\`\`typescript
 interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'standard' | 'compact';
@@ -203,7 +203,7 @@ interface ButtonProps {
   onClick?: () => void;
   children: React.ReactNode;
 }
-```
+\`\`\`
 
 ---
 
@@ -227,14 +227,14 @@ Create `components/Card.tsx` with the following specifications:
 - Hover animation: 250ms cubic-bezier(0.4, 0.0, 0.2, 1)
 
 **Props Interface:**
-```typescript
+\`\`\`typescript
 interface CardProps {
   variant?: 'default' | 'interactive' | 'selected';
   onClick?: () => void;
   children: React.ReactNode;
   className?: string;
 }
-```
+\`\`\`
 
 ---
 
@@ -257,13 +257,13 @@ Create `components/StatusBadge.tsx` with the following specifications:
 - Text transform: capitalize
 
 **Props Interface:**
-```typescript
+\`\`\`typescript
 interface StatusBadgeProps {
   variant: 'success' | 'warning' | 'error' | 'info';
   icon?: React.ReactNode;
   children: React.ReactNode;
 }
-```
+\`\`\`
 
 ---
 
@@ -290,7 +290,7 @@ Create `components/Input.tsx` with the following specifications:
 - Error message: 12px, red (#EF4444), with error icon
 
 **Props Interface:**
-```typescript
+\`\`\`typescript
 interface InputProps {
   variant?: 'text' | 'textarea' | 'password';
   label: string;
@@ -303,7 +303,7 @@ interface InputProps {
   required?: boolean;
   rows?: number; // for textarea
 }
-```
+\`\`\`
 
 ---
 
@@ -337,7 +337,7 @@ Create `components/ProgressIndicator.tsx` with the following specifications:
 - Connect steps with lines
 
 **Props Interface:**
-```typescript
+\`\`\`typescript
 interface ProgressIndicatorProps {
   variant: 'linear' | 'circular' | 'stepper';
   value?: number; // 0-100 for linear
@@ -345,14 +345,14 @@ interface ProgressIndicatorProps {
   currentStep?: number; // for stepper
   size?: 'small' | 'standard'; // for circular
 }
-```
+\`\`\`
 
 ---
 
 ## CODE EXAMPLES & CONSTRAINTS
 
 **MUI Theme Usage:**
-```typescript
+\`\`\`typescript
 // Use MUI's sx prop for styling
 <Box sx={{
   backgroundColor: 'primary.main',
@@ -360,10 +360,10 @@ interface ProgressIndicatorProps {
   borderRadius: '12px',
   boxShadow: (theme) => theme.shadows.cardDefault
 }}>
-```
+\`\`\`
 
 **Animation Example:**
-```typescript
+\`\`\`typescript
 // Button hover animation
 sx={{
   transition: 'all 150ms cubic-bezier(0.4, 0.0, 0.2, 1)',
@@ -375,7 +375,7 @@ sx={{
     transform: 'scale(0.95)'
   }
 }}
-```
+\`\`\`
 
 **Accessibility Requirements:**
 - All interactive elements must have minimum 44x44px touch target
@@ -421,7 +421,7 @@ Provide the following files:
 Include a brief README explaining how to use each component with code examples.
 
 ⬆️ COPY EVERYTHING ABOVE THIS LINE (excluding this line) ⬆️
-```
+\`\`\`
 
 </details>
 
@@ -447,7 +447,7 @@ Generate a fully functional, production-ready Pre-Interview System Check page th
 <details>
 <summary><strong>📋 Click to expand: Phase 2 Prompt (Copy the text inside to v0)</strong></summary>
 
-```
+\`\`\`
 ⬇️ COPY EVERYTHING BELOW THIS LINE (excluding this line) ⬇️
 
 # TEAMIFIED - PRE-INTERVIEW SYSTEM CHECK SCREEN
@@ -550,12 +550,12 @@ Build a vertical checklist showing 3 steps:
    - Show "Retry" button
 
 **Troubleshooting Accordion Content:**
-```
+\`\`\`
 How to enable microphone access:
 - Chrome: Click the camera icon in address bar
 - Safari: Go to Preferences > Websites > Microphone
 - Firefox: Click the shield icon in address bar
-```
+\`\`\`
 
 ---
 
@@ -638,7 +638,7 @@ In the footer, add:
 ## CODE EXAMPLES & CONSTRAINTS
 
 **Using Design System Components:**
-```typescript
+\`\`\`typescript
 import { Button, Card, StatusBadge, ProgressIndicator } from '@/components';
 
 // Button usage
@@ -655,10 +655,10 @@ import { Button, Card, StatusBadge, ProgressIndicator } from '@/components';
 <StatusBadge variant="success" icon={<CheckCircleIcon />}>
   Completed
 </StatusBadge>
-```
+\`\`\`
 
 **Audio API Example:**
-```typescript
+\`\`\`typescript
 // Request microphone permission
 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -671,10 +671,10 @@ source.connect(analyser);
 // Get frequency data for visualization
 const dataArray = new Uint8Array(analyser.frequencyBinCount);
 analyser.getByteFrequencyData(dataArray);
-```
+\`\`\`
 
 **Step State Management:**
-```typescript
+\`\`\`typescript
 type StepStatus = 'pending' | 'inProgress' | 'completed' | 'failed';
 
 interface Step {
@@ -684,7 +684,7 @@ interface Step {
   status: StepStatus;
   errorMessage?: string;
 }
-```
+\`\`\`
 
 **Accessibility Requirements:**
 - All interactive elements keyboard accessible (Tab navigation)
@@ -729,7 +729,7 @@ interface Step {
 
 Use this mock data for testing:
 
-```typescript
+\`\`\`typescript
 // Simulated latency test result
 const mockLatency = Math.random() * 300 + 50; // 50-350ms
 
@@ -757,7 +757,7 @@ const initialSteps: Step[] = [
     status: 'pending'
   }
 ];
-```
+\`\`\`
 
 ---
 
@@ -811,7 +811,7 @@ Provide:
 This flow should feel smooth, reassuring, and professional. Minimize anxiety through clear feedback and encouraging copy.
 
 ⬆️ COPY EVERYTHING ABOVE THIS LINE (excluding this line) ⬆️
-```
+\`\`\`
 
 </details>
 
@@ -825,7 +825,7 @@ This flow should feel smooth, reassuring, and professional. Minimize anxiety thr
 **IMPORTANT:** v0-generated code serves as **design reference**, not production code.
 
 **Reference Location (v0 Output):**
-```
+\`\`\`
 docs/style-guide/design-system-reference/
 ├── components/
 │   ├── teamified/          # Design system components
@@ -840,10 +840,10 @@ docs/style-guide/design-system-reference/
 ├── lib/
 │   └── theme.ts
 └── REFERENCE.md
-```
+\`\`\`
 
 **Production Location (Developer Implementation):**
-```
+\`\`\`
 src/
 ├── components/
 │   └── ui/                 # Production components
@@ -855,7 +855,7 @@ src/
 │   └── api.ts              # API integration
 ├── hooks/
 └── pages/
-```
+\`\`\`
 
 **Workflow:**
 1. **PM/Designer:** References `docs/style-guide/design-system-reference/` in user stories
@@ -880,7 +880,7 @@ src/
    - Click "Code" tab in v0 interface
    - Copy all generated files
    - Save as **reference documentation** (not production code):
-     ```
+     \`\`\`
      docs/
        style-guide/
          design-system-reference/
@@ -895,12 +895,12 @@ src/
            lib/
              theme.ts
            REFERENCE.md
-     ```
+     \`\`\`
 
 ### Step 2: Test Design System Components
 
 1. **Create a component showcase page** (optional but recommended):
-   ```tsx
+   \`\`\`tsx
    // pages/design-system-showcase.tsx
    import { Button, Card, StatusBadge, Input, ProgressIndicator } from '@/components';
 
@@ -944,7 +944,7 @@ src/
        </div>
      );
    }
-   ```
+   \`\`\`
 
 2. **Manual testing checklist:**
    - [ ] All variants render correctly
@@ -987,16 +987,16 @@ src/
 **Important:** The reference code in `docs/style-guide/design-system-reference/` should NOT be directly imported into production. Instead, developers should:
 
 1. **Reference, don't copy blindly:**
-   ```
+   \`\`\`
    Reference:
      docs/style-guide/design-system-reference/components/teamified/Button.tsx
    
    Production Implementation:
      src/components/ui/Button.tsx (adapted with backend integration)
-   ```
+   \`\`\`
 
 2. **Add production requirements:**
-   ```typescript
+   \`\`\`typescript
    // Production implementation adds:
    - API integration and error handling
    - Analytics tracking
@@ -1004,7 +1004,7 @@ src/
    - Unit tests and integration tests
    - Proper TypeScript types
    - Documentation and Storybook stories
-   ```
+   \`\`\`
 
 3. **Maintain design specifications:**
    - Use exact colors, typography, spacing from reference
@@ -1013,7 +1013,7 @@ src/
    - Follow responsive breakpoints
 
 4. **Example production workflow:**
-   ```typescript
+   \`\`\`typescript
    // Reference: docs/style-guide/design-system-reference/components/teamified/Button.tsx
    // Production: src/components/ui/Button.tsx
    
@@ -1042,7 +1042,7 @@ src/
        </button>
      );
    }
-   ```
+   \`\`\`
 
 ### Step 5: Testing & Quality Assurance
 
@@ -1086,21 +1086,21 @@ src/
 ### Step 6: Documentation
 
 **Create component documentation:**
-```markdown
+\`\`\`markdown
 # Pre-Interview System Check
 
 ## Purpose
 Validates candidate audio setup before interview begins.
 
 ## Usage
-```tsx
+\`\`\`tsx
 import PreInterviewCheck from '@/pages/pre-interview-check';
 
 <PreInterviewCheck 
   onComplete={() => router.push('/interview/session')}
   onSkip={() => router.push('/interview/session?skipCheck=true')}
 />
-```
+\`\`\`
 
 ## Browser Support
 - Chrome 90+
@@ -1114,7 +1114,7 @@ import PreInterviewCheck from '@/pages/pre-interview-check';
 
 ## Error Handling
 All errors are logged to Sentry and displayed to user with actionable guidance.
-```
+\`\`\`
 
 ### Step 7: Deployment Checklist
 
@@ -1145,7 +1145,7 @@ All errors are logged to Sentry and displayed to user with actionable guidance.
 - Accessibility improvements
 
 **Example iteration prompts:**
-```
+\`\`\`
 "Add a 'loading' variant to the Card component with a skeleton loader animation"
 
 "Create a toast notification component that slides in from top-right"
@@ -1153,7 +1153,7 @@ All errors are logged to Sentry and displayed to user with actionable guidance.
 "Make the Pre-Interview Check screen work in landscape mode on mobile"
 
 "Add a dark mode variant to the entire design system"
-```
+\`\`\`
 
 ### Maintaining Consistency
 

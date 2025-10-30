@@ -72,7 +72,7 @@ Generate the next interview question tailored to the candidate's current skill l
 
 Generate your question in the following JSON structure:
 
-```json
+\`\`\`json
 {
   "question": "<your interview question here>",
   "skill_area": "<primary skill being tested, e.g., 'react_hooks', 'async_programming', 'state_management'>",
@@ -80,7 +80,7 @@ Generate your question in the following JSON structure:
   "is_followup": <true|false>,
   "context_notes": "<brief note on why this question was chosen>"
 }
-```
+\`\`\`
 
 ## Quality Checklist
 - [ ] Question is clear and unambiguous

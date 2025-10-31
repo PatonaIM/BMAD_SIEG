@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.core.database import init_db, close_db, engine
+from app.core.config import settings
 from app.core.exceptions import (
     InterviewNotFoundException,
     InterviewCompletedException,
@@ -72,7 +73,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=settings.allowed_origins.split(","),  # From environment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

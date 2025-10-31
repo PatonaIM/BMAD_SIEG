@@ -80,6 +80,10 @@ class SendMessageResponse(BaseModel):
         ...,
         description="Current session progression state for UI"
     )
+    interview_complete: bool = Field(
+        default=False,
+        description="Flag indicating if interview should be completed (criteria met)"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -89,6 +93,7 @@ class SendMessageResponse(BaseModel):
                     "ai_response": "Great! Can you explain the useEffect hook and when to use it?",
                     "question_number": 5,
                     "total_questions": 15,
+                    "interview_complete": False,
                     "session_state": {
                         "current_difficulty": "standard",
                         "skill_boundaries": {

@@ -26,7 +26,9 @@ class Interview(Base):
         duration_seconds: Total duration in seconds
         ai_model_used: AI model identifier (e.g., gpt-4o-mini)
         total_tokens_used: Total tokens consumed
-        cost_usd: Estimated cost in USD
+        cost_usd: Estimated AI cost in USD
+        speech_tokens_used: Total character count for TTS (cost tracking)
+        speech_cost_usd: Estimated speech services cost in USD (STT + TTS)
         created_at: Timestamp of record creation
         candidate: Related Candidate record
         resume: Related Resume record
@@ -79,6 +81,10 @@ class Interview(Base):
     ai_model_used = Column(String(50), nullable=True)
     total_tokens_used = Column(Integer, default=0, nullable=False)
     cost_usd = Column(Numeric(10, 4), default=Decimal("0.0"), nullable=False)
+    
+    # Speech services tracking (STT/TTS)
+    speech_tokens_used = Column(Integer, default=0, nullable=False)  # Character count for TTS
+    speech_cost_usd = Column(Numeric(10, 4), default=Decimal("0.0"), nullable=False)
 
     # Record timestamp
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)

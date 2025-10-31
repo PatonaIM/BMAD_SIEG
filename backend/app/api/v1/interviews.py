@@ -265,6 +265,26 @@ async def send_interview_message(
             role_type=interview.role_type
         )
         
+        # Check if interview should be completed
+        if result.get("interview_complete", False):
+            logger.info(
+                "interview_auto_completing",
+                correlation_id=correlation_id,
+                interview_id=str(interview_id),
+                questions_asked=result["question_number"]
+            )
+            
+            # Update interview status to completed
+            interview.status = "completed"
+            interview.completed_at = datetime.utcnow()
+            
+            # Calculate duration if started_at exists
+            if interview.started_at:
+                duration = (interview.completed_at - interview.started_at).total_seconds()
+                interview.duration_seconds = int(duration)
+            
+            db.add(interview)
+        
         # Commit all changes
         await db.commit()
         
@@ -273,7 +293,8 @@ async def send_interview_message(
             correlation_id=correlation_id,
             interview_id=str(interview_id),
             question_number=result["question_number"],
-            tokens_used=result.get("tokens_used", 0)
+            tokens_used=result.get("tokens_used", 0),
+            interview_complete=result.get("interview_complete", False)
         )
         
         # Return response
@@ -282,7 +303,8 @@ async def send_interview_message(
             ai_response=result["ai_response"],
             question_number=result["question_number"],
             total_questions=result["total_questions"],
-            session_state=result["session_state"]
+            session_state=result["session_state"],
+            interview_complete=result.get("interview_complete", False)
         )
         
     except InterviewNotFoundException:

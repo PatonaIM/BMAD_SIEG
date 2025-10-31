@@ -21,7 +21,7 @@ async def test_complete_message_exchange_flow(test_db, test_candidate):
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=0,
         cost_usd=0.0
@@ -88,7 +88,7 @@ async def test_conversation_context_preservation(test_db, test_candidate):
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=0,
         cost_usd=0.0
@@ -155,7 +155,7 @@ async def test_session_state_persistence_and_recovery(test_db, test_candidate):
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=200,
         cost_usd=0.002
@@ -223,7 +223,7 @@ async def test_error_recovery_with_state_rollback(test_db, test_candidate):
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=0,
         cost_usd=0.0

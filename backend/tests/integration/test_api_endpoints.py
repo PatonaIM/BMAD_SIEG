@@ -15,7 +15,7 @@ async def test_send_message_endpoint_success(test_client, test_candidate, test_d
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",  # Valid enum: react|python|javascript|fullstack
         status="in_progress",
         total_tokens_used=0,
         cost_usd=0.0
@@ -103,7 +103,7 @@ async def test_send_message_endpoint_empty_message(test_client, test_candidate, 
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=0,
         cost_usd=0.0
@@ -130,7 +130,7 @@ async def test_send_message_endpoint_too_long_message(test_client, test_candidat
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=0,
         cost_usd=0.0
@@ -158,7 +158,7 @@ async def test_send_message_endpoint_completed_interview(test_client, test_candi
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="completed",
         total_tokens_used=500,
         cost_usd=0.05
@@ -194,7 +194,7 @@ async def test_get_interview_status_endpoint(test_client, test_candidate, test_d
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=250,
         cost_usd=0.025
@@ -231,7 +231,7 @@ async def test_get_interview_messages_endpoint(test_client, test_candidate, test
         id=uuid4(),
         candidate_id=test_candidate.id,
         resume_id=uuid4(),
-        role_type="Frontend Developer",
+        role_type="react",
         status="in_progress",
         total_tokens_used=0,
         cost_usd=0.0

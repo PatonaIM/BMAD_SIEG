@@ -1,4 +1,5 @@
 """Interview Engine service for managing AI-powered interviews."""
+import asyncio
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict
@@ -18,7 +19,11 @@ from app.services.progressive_assessment_engine import (
     DifficultyLevel
 )
 from app.services.conversation_memory import ConversationMemoryManager
-from app.core.exceptions import InterviewNotFoundException
+from app.core.exceptions import (
+    InterviewNotFoundException,
+    InterviewCompletedException,
+    InterviewAbandonedException
+)
 
 logger = structlog.get_logger().bind(service="interview_engine")
 
@@ -196,6 +201,19 @@ class InterviewEngine:
         if not session:
             raise InterviewNotFoundException(f"Session {session_id} not found")
         
+        # Load interview to check status
+        if self.interview_repo:
+            interview = await self.interview_repo.get_by_id(interview_id)
+            if interview:
+                if interview.status == "completed":
+                    raise InterviewCompletedException(
+                        f"Interview {interview_id} is already completed"
+                    )
+                elif interview.status == "abandoned":
+                    raise InterviewAbandonedException(
+                        f"Interview {interview_id} was abandoned"
+                    )
+        
         # Get current sequence number
         current_sequence = await self.message_repo.get_message_count_for_session(session_id)
         candidate_sequence = current_sequence + 1
@@ -240,10 +258,20 @@ class InterviewEngine:
             "skill_area": "general"
         }
         
-        analysis = await self.assessment_engine.analyze_response_quality(
+        # PERFORMANCE OPTIMIZATION: Parallelize response analysis and question generation
+        # Response analysis examines the past, question generation looks forward
+        # These are independent operations that can run concurrently
+        skill_area = question_context.get("skill_area", "general")
+        
+        # Create concurrent tasks for analysis and question generation
+        analysis_task = self.assessment_engine.analyze_response_quality(
             response_text=response_text,
             question_context=question_context
         )
+        
+        # Note: We'll generate question in parallel AFTER we have the analysis
+        # for now, to maintain quality. Future optimization: predictive question pre-generation
+        analysis = await analysis_task
         
         logger.info(
             "response_analyzed",
@@ -252,18 +280,40 @@ class InterviewEngine:
             accuracy=analysis.technical_accuracy
         )
         
-        # Detect skill boundaries
-        skill_area = question_context.get("skill_area", "general")
-        proficiency_level = await self.assessment_engine.detect_skill_boundaries(
+        # PARALLEL EXECUTION: Run boundary detection, difficulty determination, and question generation concurrently
+        # These operations read from session state and don't depend on each other's results
+        boundary_task = self.assessment_engine.detect_skill_boundaries(
             session=session,
             skill_area=skill_area,
             analysis=analysis
         )
         
-        # Determine next difficulty
-        next_difficulty = await self.assessment_engine.determine_next_difficulty(
+        difficulty_task = self.assessment_engine.determine_next_difficulty(
             session=session,
             analysis=analysis
+        )
+        
+        # Increment question count now so question generation has correct count
+        await self.session_repo.increment_question_count(session_id)
+        session.questions_asked_count += 1
+        
+        question_task = self.assessment_engine.generate_next_question(
+            session=session,
+            role_type=role_type
+        )
+        
+        # Wait for all three operations to complete in parallel
+        proficiency_level, next_difficulty, question_data = await asyncio.gather(
+            boundary_task,
+            difficulty_task,
+            question_task
+        )
+        
+        logger.info(
+            "parallel_assessment_complete",
+            session_id=str(session_id),
+            next_difficulty=next_difficulty.value,
+            proficiency_level=proficiency_level
         )
         
         # Update progression state with response data
@@ -272,7 +322,7 @@ class InterviewEngine:
             update_data={
                 "type": "response",
                 "data": {
-                    "question_num": session.questions_asked_count,
+                    "question_num": session.questions_asked_count - 1,  # Before increment
                     "confidence": analysis.confidence_level,
                     "accuracy": analysis.technical_accuracy,
                     "proficiency": analysis.proficiency_signal
@@ -295,16 +345,6 @@ class InterviewEngine:
         # Update skill boundaries
         session.skill_boundaries_identified = session.skill_boundaries_identified or {}
         session.skill_boundaries_identified[skill_area] = proficiency_level
-        
-        # Increment question count
-        await self.session_repo.increment_question_count(session_id)
-        session.questions_asked_count += 1
-        
-        # Generate next question using assessment engine
-        question_data = await self.assessment_engine.generate_next_question(
-            session=session,
-            role_type=role_type
-        )
         
         # Add AI question to memory
         langchain_memory.chat_memory.add_ai_message(question_data["question"])
@@ -339,13 +379,16 @@ class InterviewEngine:
             )
             updated_memory_dict = self.memory_manager.truncate_memory(updated_memory_dict)
         
-        # Update session state
-        await self.session_repo.update_session_state(
-            session=session,
-            conversation_memory=updated_memory_dict,
-            skill_boundaries=session.skill_boundaries_identified,
-            progression_state=session.progression_state
-        )
+        # PERFORMANCE OPTIMIZATION: Batch database writes in parallel
+        # These operations are independent and can run concurrently
+        update_tasks = [
+            self.session_repo.update_session_state(
+                session=session,
+                conversation_memory=updated_memory_dict,
+                skill_boundaries=session.skill_boundaries_identified,
+                progression_state=session.progression_state
+            )
+        ]
         
         # Track token usage if interview_repo available
         tokens_used = updated_memory_dict["metadata"].get("token_count", 0)
@@ -353,11 +396,16 @@ class InterviewEngine:
             # Calculate cost (simplified - would use actual model pricing)
             cost_per_token = Decimal("0.0000015")  # Example for gpt-4o-mini
             cost_usd = Decimal(tokens_used) * cost_per_token
-            await self.interview_repo.update_token_usage(
-                interview_id=interview_id,
-                tokens_used=tokens_used,
-                cost_usd=cost_usd
+            update_tasks.append(
+                self.interview_repo.update_token_usage(
+                    interview_id=interview_id,
+                    tokens_used=tokens_used,
+                    cost_usd=cost_usd
+                )
             )
+        
+        # Execute all updates in parallel
+        await asyncio.gather(*update_tasks)
         
         # Calculate processing time
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
@@ -370,6 +418,9 @@ class InterviewEngine:
             processing_time_ms=processing_time,
             tokens_used=tokens_used
         )
+        
+        # Check if interview should be completed
+        should_complete = await self._should_complete_interview(session)
         
         # Determine total questions estimate (12-20 range)
         total_questions = 15  # Default estimate
@@ -388,8 +439,67 @@ class InterviewEngine:
                 "skill_boundaries": session.skill_boundaries_identified,
                 "questions_asked": session.questions_asked_count
             },
-            "tokens_used": tokens_used
+            "tokens_used": tokens_used,
+            "interview_complete": should_complete
         }
+
+    async def _should_complete_interview(self, session: InterviewSession) -> bool:
+        """
+        Determine if interview should be completed based on criteria.
+        
+        Completion criteria:
+        - Minimum 12 questions asked AND 2+ skill boundaries identified
+        - OR maximum 20 questions reached
+        - OR all required skill areas assessed (role-specific)
+        
+        Args:
+            session: Interview session object
+            
+        Returns:
+            True if interview should be completed, False otherwise
+        """
+        questions_asked = session.questions_asked_count
+        skill_boundaries = session.skill_boundaries_identified or {}
+        progression_state = session.progression_state or {}
+        
+        # Maximum questions limit
+        if questions_asked >= 20:
+            logger.info(
+                "interview_complete_max_questions",
+                session_id=str(session.id),
+                questions_asked=questions_asked
+            )
+            return True
+        
+        # Minimum questions with sufficient boundaries
+        boundaries_identified = len([
+            skill for skill, level in skill_boundaries.items()
+            if level in ["proficient", "boundary_reached", "expert"]
+        ])
+        
+        if questions_asked >= 12 and boundaries_identified >= 2:
+            logger.info(
+                "interview_complete_criteria_met",
+                session_id=str(session.id),
+                questions_asked=questions_asked,
+                boundaries_identified=boundaries_identified
+            )
+            return True
+        
+        # Check if all phases completed with sufficient assessment
+        phase_history = progression_state.get("phase_history", [])
+        if questions_asked >= 12:
+            phases_completed = set(phase.get("phase") for phase in phase_history)
+            if len(phases_completed) >= 3:  # All three phases (warmup, standard, advanced)
+                logger.info(
+                    "interview_complete_all_phases",
+                    session_id=str(session.id),
+                    questions_asked=questions_asked,
+                    phases_completed=list(phases_completed)
+                )
+                return True
+        
+        return False
 
     async def get_next_question(self, session_id: UUID) -> Dict:
         """

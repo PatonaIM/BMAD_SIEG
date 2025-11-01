@@ -92,7 +92,7 @@ class SpeechProviderError(Exception):
     
     Raised for general speech service failures including STT and TTS operations.
     """
-    
+
     def __init__(self, message: str, retry_after: int | None = None):
         """
         Initialize speech provider error.
@@ -113,7 +113,7 @@ class AudioValidationError(SpeechProviderError):
     HTTP Status: 400
     Raised for invalid audio format, file size, sample rate, or duration issues.
     """
-    
+
     def __init__(self, message: str, field: str):
         """
         Initialize audio validation error.
@@ -133,7 +133,7 @@ class TranscriptionFailedError(SpeechProviderError):
     HTTP Status: 500 (or appropriate error code based on underlying cause)
     Raised for API failures, processing errors, or authentication issues.
     """
-    
+
     def __init__(self, message: str, audio_metadata: dict | None = None):
         """
         Initialize transcription failure error.
@@ -153,7 +153,7 @@ class SynthesisFailedError(SpeechProviderError):
     HTTP Status: 500 (or appropriate error code based on underlying cause)
     Raised for API failures, text length exceeded, or invalid parameters.
     """
-    
+
     def __init__(self, message: str, text: str | None = None):
         """
         Initialize synthesis failure error.

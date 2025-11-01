@@ -3,21 +3,25 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-import structlog
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import (
-    InterviewNotFoundException,
     InterviewCompletedException,
+    InterviewNotFoundException,
     OpenAIRateLimitException,
 )
 from app.models.candidate import Candidate
 from app.models.interview import Interview
-from app.models.interview_session import InterviewSession
 from app.models.interview_message import InterviewMessage
+from app.models.interview_session import InterviewSession
+from app.providers.openai_provider import OpenAIProvider
+from app.repositories.interview import InterviewRepository
+from app.repositories.interview_message import InterviewMessageRepository
+from app.repositories.interview_session import InterviewSessionRepository
 from app.schemas.interview import (
     InterviewResponse,
     InterviewStartRequest,
@@ -25,10 +29,6 @@ from app.schemas.interview import (
     SendMessageResponse,
 )
 from app.services.interview_engine import InterviewEngine
-from app.providers.openai_provider import OpenAIProvider
-from app.repositories.interview import InterviewRepository
-from app.repositories.interview_session import InterviewSessionRepository
-from app.repositories.interview_message import InterviewMessageRepository
 
 logger = structlog.get_logger().bind(module="interviews_api")
 
@@ -53,14 +53,14 @@ async def start_interview(
         Created interview with status "in_progress" and first AI question
     """
     correlation_id = str(uuid.uuid4())
-    
+
     logger.info(
         "start_interview_request",
         correlation_id=correlation_id,
         candidate_id=str(current_user.id),
         role_type=data.role_type
     )
-    
+
     # Create interview record with in_progress status
     interview = Interview(
         id=uuid.uuid4(),
@@ -95,7 +95,7 @@ async def start_interview(
 
     db.add(interview_session)
     await db.flush()
-    
+
     # Generate first AI question
     try:
         # Initialize repositories and services
@@ -107,13 +107,13 @@ async def start_interview(
             session_repo=session_repo,
             message_repo=message_repo
         )
-        
+
         # Generate the first question using the correct signature
         first_question = await interview_engine.assessment_engine.generate_next_question(
             session=interview_session,
             role_type=data.role_type
         )
-        
+
         # Create AI message record for first question
         ai_message = InterviewMessage(
             id=uuid.uuid4(),
@@ -124,9 +124,9 @@ async def start_interview(
             content_text=first_question["question"],
             created_at=datetime.utcnow()
         )
-        
+
         db.add(ai_message)
-        
+
         # Update session with first question
         interview_session.questions_asked_count = 1
         interview_session.conversation_memory = {
@@ -142,16 +142,16 @@ async def start_interview(
                 "token_count": 0
             }
         }
-        
+
         await db.commit()
-        
+
         logger.info(
             "interview_started_successfully",
             correlation_id=correlation_id,
             interview_id=str(interview.id),
             session_id=str(interview_session.id)
         )
-        
+
     except Exception as e:
         logger.error(
             "failed_to_generate_first_question",
@@ -198,7 +198,7 @@ async def send_interview_message(
         HTTPException 500: Internal server error
     """
     correlation_id = str(uuid.uuid4())
-    
+
     logger.info(
         "message_request_received",
         correlation_id=correlation_id,
@@ -206,16 +206,16 @@ async def send_interview_message(
         candidate_id=str(current_user.id),
         message_length=len(request.message_text)
     )
-    
+
     try:
         # Initialize repositories
         interview_repo = InterviewRepository(db)
         session_repo = InterviewSessionRepository(db)
         message_repo = InterviewMessageRepository(db)
-        
+
         # Load interview with session
         interview = await interview_repo.get_by_id_with_session(interview_id)
-        
+
         if not interview:
             logger.warning(
                 "interview_not_found",
@@ -223,7 +223,7 @@ async def send_interview_message(
                 interview_id=str(interview_id)
             )
             raise InterviewNotFoundException(f"Interview {interview_id} not found")
-        
+
         # Verify ownership
         if interview.candidate_id != current_user.id:
             logger.warning(
@@ -237,7 +237,7 @@ async def send_interview_message(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not authorized to access this interview"
             )
-        
+
         # Verify interview is in progress
         if interview.status == "completed":
             raise InterviewCompletedException(
@@ -248,7 +248,7 @@ async def send_interview_message(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Interview status must be 'in_progress', got '{interview.status}'"
             )
-        
+
         # Initialize AI provider and interview engine
         ai_provider = OpenAIProvider()
         interview_engine = InterviewEngine(
@@ -256,7 +256,7 @@ async def send_interview_message(
             session_repo=session_repo,
             message_repo=message_repo
         )
-        
+
         # Process candidate response
         result = await interview_engine.process_candidate_response(
             interview_id=interview_id,
@@ -264,7 +264,7 @@ async def send_interview_message(
             response_text=request.message_text,
             role_type=interview.role_type
         )
-        
+
         # Check if interview should be completed
         if result.get("interview_complete", False):
             logger.info(
@@ -273,21 +273,21 @@ async def send_interview_message(
                 interview_id=str(interview_id),
                 questions_asked=result["question_number"]
             )
-            
+
             # Update interview status to completed
             interview.status = "completed"
             interview.completed_at = datetime.utcnow()
-            
+
             # Calculate duration if started_at exists
             if interview.started_at:
                 duration = (interview.completed_at - interview.started_at).total_seconds()
                 interview.duration_seconds = int(duration)
-            
+
             db.add(interview)
-        
+
         # Commit all changes
         await db.commit()
-        
+
         logger.info(
             "message_processed_successfully",
             correlation_id=correlation_id,
@@ -296,7 +296,7 @@ async def send_interview_message(
             tokens_used=result.get("tokens_used", 0),
             interview_complete=result.get("interview_complete", False)
         )
-        
+
         # Return response
         return SendMessageResponse(
             message_id=result["message_id"],
@@ -306,7 +306,7 @@ async def send_interview_message(
             session_state=result["session_state"],
             interview_complete=result.get("interview_complete", False)
         )
-        
+
     except InterviewNotFoundException:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -368,10 +368,10 @@ async def get_interview_status(
     """
     interview_repo = InterviewRepository(db)
     session_repo = InterviewSessionRepository(db)
-    
+
     # Load interview
     interview = await interview_repo.get_by_id(interview_id)
-    
+
     if not interview:
         logger.warning(
             "status_check_interview_not_found",
@@ -381,7 +381,7 @@ async def get_interview_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found"
         )
-    
+
     # Verify ownership
     if interview.candidate_id != current_user.id:
         logger.warning(
@@ -393,10 +393,10 @@ async def get_interview_status(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this interview"
         )
-    
+
     # Get session if exists
     session = await session_repo.get_by_interview_id(interview_id)
-    
+
     return {
         "interview_id": str(interview_id),
         "status": interview.status,
@@ -443,39 +443,39 @@ async def get_interview_messages(
     """
     interview_repo = InterviewRepository(db)
     message_repo = InterviewMessageRepository(db)
-    
+
     # Load interview
     interview = await interview_repo.get_by_id(interview_id)
-    
+
     if not interview:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found"
         )
-    
+
     # Verify ownership
     if interview.candidate_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this interview"
         )
-    
+
     # Limit to reasonable max
     limit = min(limit, 100)
-    
+
     # Get all messages for the interview
     all_messages = await message_repo.get_by_interview_id(interview_id)
-    
+
     # Apply sequence filters if provided
     if min_sequence is not None:
         all_messages = [m for m in all_messages if m.sequence_number >= min_sequence]
     if max_sequence is not None:
         all_messages = [m for m in all_messages if m.sequence_number <= max_sequence]
-    
+
     # Apply pagination
     total_count = len(all_messages)
     messages = all_messages[skip:skip + limit]
-    
+
     return {
         "interview_id": str(interview_id),
         "total_count": total_count,

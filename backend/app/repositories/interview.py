@@ -1,6 +1,5 @@
 """Repository for Interview data access."""
 from decimal import Decimal
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -23,7 +22,7 @@ class InterviewRepository(BaseRepository[Interview]):
         """
         super().__init__(db, Interview)
 
-    async def get_by_id_with_session(self, interview_id: UUID) -> Optional[Interview]:
+    async def get_by_id_with_session(self, interview_id: UUID) -> Interview | None:
         """
         Retrieve interview with eagerly loaded session.
 

@@ -1,5 +1,6 @@
 """Pydantic schemas for speech services (STT/TTS)."""
 
+
 from pydantic import BaseModel, Field
 
 
@@ -10,14 +11,14 @@ class TranscriptionResult(BaseModel):
     Contains the transcribed text along with metadata about the transcription
     quality, duration, and processing performance.
     """
-    
+
     text: str = Field(..., description="Transcribed text from audio")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Transcription confidence score (0.0-1.0)")
     duration_seconds: float = Field(..., gt=0, description="Audio duration in seconds")
     language: str = Field(..., description="Detected or specified language code (e.g., 'en')")
     processing_time_ms: int = Field(..., ge=0, description="Time taken to process transcription in milliseconds")
     segments: list[dict] | None = Field(None, description="Detailed segment-level transcription data")
-    
+
     class Config:
         """Pydantic configuration."""
         json_schema_extra = {
@@ -46,7 +47,7 @@ class AudioMetadata(BaseModel):
     Used to validate audio quality before processing and to store
     processing details in the database.
     """
-    
+
     provider: str = Field(..., description="Speech provider used (e.g., 'openai')")
     model: str = Field(..., description="Model used for processing (e.g., 'whisper-1')")
     format: str = Field(..., description="Audio MIME type (e.g., 'audio/webm')")
@@ -56,7 +57,7 @@ class AudioMetadata(BaseModel):
     processing_time_ms: int | None = Field(None, ge=0, description="Processing time in milliseconds")
     language: str | None = Field(None, description="Audio language code")
     segments: list[dict] | None = Field(None, description="Segment-level details")
-    
+
     class Config:
         """Pydantic configuration."""
         json_schema_extra = {
@@ -77,5 +78,117 @@ class AudioMetadata(BaseModel):
                         "confidence": 0.93
                     }
                 ]
+            }
+        }
+
+
+class AudioProcessingRequest(BaseModel):
+    """
+    Request model for audio processing endpoint.
+    
+    Used for POST /api/v1/interviews/{interview_id}/audio
+    Note: The actual audio file is uploaded as multipart/form-data,
+    this model handles optional metadata parameters.
+    """
+
+    message_sequence: int | None = Field(
+        None,
+        ge=1,
+        description="Optional sequence number for message ordering"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "message_sequence": 5
+            }
+        }
+
+
+class AudioProcessingResponse(BaseModel):
+    """
+    Response model for successful audio processing.
+    
+    Contains transcription result, confidence metrics, and processing metadata.
+    Returned from POST /api/v1/interviews/{interview_id}/audio
+    """
+
+    transcription: str = Field(..., description="Transcribed text from audio")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Overall transcription confidence")
+    processing_time_ms: int = Field(..., ge=0, description="Total processing time in milliseconds")
+    audio_metadata: AudioMetadata = Field(..., description="Detailed audio processing metadata")
+    next_question_ready: bool = Field(..., description="Whether next AI question is ready")
+    message_id: str = Field(..., description="UUID of created interview message")
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "transcription": "Tell me about your React experience and how you handle state management",
+                "confidence": 0.95,
+                "processing_time_ms": 1240,
+                "audio_metadata": {
+                    "provider": "openai",
+                    "model": "whisper-1",
+                    "format": "audio/webm",
+                    "file_size_bytes": 125000,
+                    "sample_rate_hz": 16000,
+                    "confidence": 0.95,
+                    "processing_time_ms": 1200,
+                    "language": "en"
+                },
+                "next_question_ready": True,
+                "message_id": "550e8400-e29b-41d4-a716-446655440000"
+            }
+        }
+
+
+class AudioValidationError(BaseModel):
+    """
+    Error response for audio validation failures.
+    """
+
+    error: str = Field(..., description="Error code identifier")
+    message: str = Field(..., description="Human-readable error message")
+    details: dict = Field(..., description="Additional error details")
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "error": "AUDIO_VALIDATION_FAILED",
+                "message": "Audio file exceeds maximum size limit",
+                "details": {
+                    "field": "file_size",
+                    "limit_mb": 25,
+                    "actual_mb": 30
+                }
+            }
+        }
+
+
+class TranscriptionError(BaseModel):
+    """
+    Error response for transcription processing failures.
+    """
+
+    error: str = Field(..., description="Error code identifier")
+    message: str = Field(..., description="Human-readable error message")
+    details: dict = Field(..., description="Additional error details")
+    retry_after_seconds: int | None = Field(None, description="Retry delay for rate limiting")
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "error": "TRANSCRIPTION_FAILED",
+                "message": "OpenAI API temporarily unavailable",
+                "details": {
+                    "provider": "openai",
+                    "status_code": 503,
+                    "correlation_id": "req_123abc"
+                },
+                "retry_after_seconds": 30
             }
         }

@@ -1,6 +1,6 @@
 """Repository for InterviewSession data access."""
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -22,7 +22,7 @@ class InterviewSessionRepository(BaseRepository[InterviewSession]):
         """
         super().__init__(db, InterviewSession)
 
-    async def get_by_interview_id(self, interview_id: UUID) -> Optional[InterviewSession]:
+    async def get_by_interview_id(self, interview_id: UUID) -> InterviewSession | None:
         """
         Retrieve interview session by interview ID.
 
@@ -40,9 +40,9 @@ class InterviewSessionRepository(BaseRepository[InterviewSession]):
     async def update_session_state(
         self,
         session: InterviewSession,
-        conversation_memory: Optional[Dict[str, Any]] = None,
-        skill_boundaries: Optional[Dict[str, Any]] = None,
-        progression_state: Optional[Dict[str, Any]] = None
+        conversation_memory: dict[str, Any] | None = None,
+        skill_boundaries: dict[str, Any] | None = None,
+        progression_state: dict[str, Any] | None = None
     ) -> InterviewSession:
         """
         Update session state fields.
@@ -58,15 +58,15 @@ class InterviewSessionRepository(BaseRepository[InterviewSession]):
         """
         if conversation_memory is not None:
             session.conversation_memory = conversation_memory
-        
+
         if skill_boundaries is not None:
             session.skill_boundaries_identified = skill_boundaries
-        
+
         if progression_state is not None:
             session.progression_state = progression_state
-        
+
         session.last_activity_at = datetime.utcnow()
-        
+
         await self.db.flush()
         await self.db.refresh(session)
         return session
@@ -74,7 +74,7 @@ class InterviewSessionRepository(BaseRepository[InterviewSession]):
     async def update_last_activity(
         self,
         session_id: UUID,
-        timestamp: Optional[datetime] = None
+        timestamp: datetime | None = None
     ) -> None:
         """
         Update last activity timestamp.

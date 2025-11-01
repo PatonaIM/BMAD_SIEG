@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import structlog
 
@@ -49,7 +48,7 @@ class ResponseAnalysis:
     confidence_level: float
     technical_accuracy: float
     depth_of_understanding: float
-    hesitation_indicators: List[str]
+    hesitation_indicators: list[str]
     proficiency_signal: str
 
 
@@ -82,19 +81,19 @@ class ProgressiveAssessmentEngine:
             ai_provider: AI provider for completions and analysis
         """
         self.ai_provider = ai_provider
-        
+
         # Load configurable thresholds from settings
         self.warmup_min_questions = settings.warmup_min_questions
         self.warmup_confidence_threshold = settings.warmup_confidence_threshold
         self.standard_min_questions = settings.standard_min_questions
         self.standard_accuracy_threshold = settings.standard_accuracy_threshold
         self.boundary_confidence_threshold = settings.boundary_confidence_threshold
-        
+
         # Phase limits to prevent infinite loops
         self.warmup_max_questions = 5
         self.standard_max_questions = 12
         self.advanced_max_questions = 8
-        
+
         logger.info(
             "progressive_assessment_initialized",
             warmup_min=self.warmup_min_questions,
@@ -151,7 +150,7 @@ class ProgressiveAssessmentEngine:
         """
         current_phase = self.get_current_phase(session)
         progression_state = session.progression_state or {}
-        
+
         # Get questions in current phase
         phase_history = progression_state.get("phase_history", [])
         current_phase_questions = 0
@@ -159,33 +158,33 @@ class ProgressiveAssessmentEngine:
             latest_phase = phase_history[-1]
             if latest_phase.get("phase") == current_phase.value:
                 current_phase_questions = latest_phase.get("questions_count", 0)
-        
+
         # Get response quality history for current phase
         response_history = progression_state.get("response_quality_history", [])
-        
+
         # Warmup → Standard transition criteria
         if current_phase == DifficultyLevel.WARMUP:
             if current_phase_questions < self.warmup_min_questions:
                 return False
-            
+
             # Calculate average confidence for warmup phase
             warmup_responses = [
-                r for r in response_history 
+                r for r in response_history
                 if r.get("question_num", 0) <= current_phase_questions
             ]
             if not warmup_responses:
                 return False
-            
+
             avg_confidence = sum(r.get("confidence", 0) for r in warmup_responses) / len(warmup_responses)
-            
+
             # Check for critical errors (technical_accuracy < 0.6)
             has_critical_errors = any(r.get("accuracy", 1.0) < 0.6 for r in warmup_responses)
-            
+
             should_advance = (
-                avg_confidence >= self.warmup_confidence_threshold 
+                avg_confidence >= self.warmup_confidence_threshold
                 and not has_critical_errors
             )
-            
+
             logger.info(
                 "warmup_transition_check",
                 session_id=str(session.id),
@@ -195,44 +194,44 @@ class ProgressiveAssessmentEngine:
                 should_advance=should_advance
             )
             return should_advance
-        
+
         # Standard → Advanced transition criteria
         elif current_phase == DifficultyLevel.STANDARD:
             if current_phase_questions < self.standard_min_questions:
                 return False
-            
+
             # Get standard phase responses
             standard_start_idx = sum(
-                p.get("questions_count", 0) 
+                p.get("questions_count", 0)
                 for p in phase_history[:-1]
             ) if len(phase_history) > 1 else 0
-            
+
             standard_responses = [
-                r for r in response_history 
+                r for r in response_history
                 if r.get("question_num", 0) > standard_start_idx
             ]
             if not standard_responses:
                 return False
-            
+
             avg_accuracy = sum(r.get("accuracy", 0) for r in standard_responses) / len(standard_responses)
-            
+
             # Check proficiency signals
             proficiency_signals = [r.get("proficiency", "novice") for r in standard_responses[-3:]]
             high_proficiency = sum(1 for p in proficiency_signals if p in ["proficient", "expert"])
-            
+
             # Check for recent boundary detections
             boundary_detections = progression_state.get("boundary_detections", [])
             recent_boundaries = [
-                b for b in boundary_detections 
+                b for b in boundary_detections
                 if b.get("question_num", 0) > (len(response_history) - 3)
             ]
-            
+
             should_advance = (
                 avg_accuracy >= self.standard_accuracy_threshold
                 and high_proficiency >= 2
                 and len(recent_boundaries) == 0
             )
-            
+
             logger.info(
                 "standard_transition_check",
                 session_id=str(session.id),
@@ -243,7 +242,7 @@ class ProgressiveAssessmentEngine:
                 should_advance=should_advance
             )
             return should_advance
-        
+
         # Already at advanced - no further progression
         return False
 
@@ -251,7 +250,7 @@ class ProgressiveAssessmentEngine:
     async def analyze_response_quality(
         self,
         response_text: str,
-        question_context: Dict
+        question_context: dict
     ) -> ResponseAnalysis:
         """
         Analyze candidate response for quality and proficiency.
@@ -278,7 +277,7 @@ class ProgressiveAssessmentEngine:
             OpenAIProviderError: If AI analysis fails
         """
         import json
-        
+
         # Load response analysis prompt
         if not RESPONSE_ANALYSIS_PROMPT.exists():
             logger.error(
@@ -286,29 +285,29 @@ class ProgressiveAssessmentEngine:
                 prompt_path=str(RESPONSE_ANALYSIS_PROMPT)
             )
             raise FileNotFoundError(f"Response analysis prompt not found: {RESPONSE_ANALYSIS_PROMPT}")
-        
-        with open(RESPONSE_ANALYSIS_PROMPT, "r") as f:
+
+        with open(RESPONSE_ANALYSIS_PROMPT) as f:
             prompt_template = f.read()
-        
+
         # Replace placeholders (using simple string replacement to avoid format() issues with JSON in template)
         prompt = prompt_template.replace("{question}", question_context.get("question", ""))
         prompt = prompt.replace("{response}", response_text)
         prompt = prompt.replace("{role_type}", question_context.get("role_type", "general"))
         prompt = prompt.replace("{difficulty_level}", question_context.get("difficulty_level", "standard"))
-        
+
         try:
             # Call AI provider for analysis
             messages = [
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": "Please analyze the above response and provide your assessment in JSON format."}
             ]
-            
+
             logger.info(
                 "analyzing_response",
                 response_length=len(response_text),
                 difficulty=question_context.get("difficulty_level", "unknown")
             )
-            
+
             # Call AI with timeout
             analysis_json = await asyncio.wait_for(
                 self.ai_provider.generate_completion(
@@ -318,7 +317,7 @@ class ProgressiveAssessmentEngine:
                 ),
                 timeout=settings.progressive_assessment_timeout
             )
-            
+
             # Parse JSON response
             # Remove markdown code blocks if present
             analysis_json = analysis_json.strip()
@@ -329,9 +328,9 @@ class ProgressiveAssessmentEngine:
             if analysis_json.endswith("```"):
                 analysis_json = analysis_json[:-3]
             analysis_json = analysis_json.strip()
-            
+
             analysis_data = json.loads(analysis_json)
-            
+
             # Create ResponseAnalysis object
             response_analysis = ResponseAnalysis(
                 confidence_level=float(analysis_data.get("confidence_level", 0.5)),
@@ -340,7 +339,7 @@ class ProgressiveAssessmentEngine:
                 hesitation_indicators=analysis_data.get("hesitation_indicators", []),
                 proficiency_signal=analysis_data.get("proficiency_signal", "intermediate")
             )
-            
+
             logger.info(
                 "response_analyzed",
                 confidence=response_analysis.confidence_level,
@@ -348,9 +347,9 @@ class ProgressiveAssessmentEngine:
                 proficiency=response_analysis.proficiency_signal,
                 skill_area=analysis_data.get("skill_area", "unknown")
             )
-            
+
             return response_analysis
-            
+
         except json.JSONDecodeError as e:
             logger.error(
                 "response_analysis_json_parse_error",
@@ -365,7 +364,7 @@ class ProgressiveAssessmentEngine:
                 hesitation_indicators=["parse_error"],
                 proficiency_signal="intermediate"
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(
                 "response_analysis_timeout",
                 timeout_seconds=settings.progressive_assessment_timeout
@@ -419,7 +418,7 @@ class ProgressiveAssessmentEngine:
         """
         current_phase = self.get_current_phase(session)
         progression_state = session.progression_state or {}
-        
+
         # Check if should advance difficulty
         if self.should_advance_difficulty(session, analysis):
             # Determine next level
@@ -430,11 +429,11 @@ class ProgressiveAssessmentEngine:
             else:
                 # Already at advanced
                 new_difficulty = current_phase
-            
+
             # Update session difficulty level if changed
             if new_difficulty != current_phase:
                 session.current_difficulty_level = new_difficulty.value
-                
+
                 logger.info(
                     "difficulty_transition",
                     session_id=str(session.id),
@@ -442,9 +441,9 @@ class ProgressiveAssessmentEngine:
                     to_difficulty=new_difficulty.value,
                     questions_count=session.questions_asked_count
                 )
-                
+
                 return new_difficulty
-        
+
         # Stay at current level - check for stay conditions
         # If confidence drops below boundary threshold, log it
         if analysis.confidence_level < self.boundary_confidence_threshold:
@@ -456,7 +455,7 @@ class ProgressiveAssessmentEngine:
                 boundary_threshold=self.boundary_confidence_threshold,
                 reason="low_confidence"
             )
-        
+
         # Check for consecutive low accuracy (< 0.6)
         response_history = progression_state.get("response_quality_history", [])
         recent_responses = response_history[-2:] if len(response_history) >= 2 else []
@@ -469,7 +468,7 @@ class ProgressiveAssessmentEngine:
                     difficulty=current_phase.value,
                     reason="consecutive_low_accuracy"
                 )
-        
+
         return current_phase
 
     async def detect_skill_boundaries(
@@ -502,7 +501,7 @@ class ProgressiveAssessmentEngine:
         # Determine proficiency level based on analysis
         confidence = analysis.confidence_level
         accuracy = analysis.technical_accuracy
-        
+
         # Decision logic based on thresholds
         if confidence >= 0.8 and accuracy >= 0.8:
             proficiency_level = "comfortable"
@@ -513,24 +512,24 @@ class ProgressiveAssessmentEngine:
         else:
             # confidence < boundary_threshold OR accuracy < 0.5
             proficiency_level = "boundary_reached"
-        
+
         # Update skill_boundaries_identified JSONB
         if session.skill_boundaries_identified is None:
             session.skill_boundaries_identified = {}
-        
+
         session.skill_boundaries_identified[skill_area] = proficiency_level
-        
+
         # If boundary reached, add to progression_state boundary_detections
         if proficiency_level == "boundary_reached":
             progression_state = session.progression_state or {}
             if "boundary_detections" not in progression_state:
                 progression_state["boundary_detections"] = []
-            
+
             # Extract evidence from analysis
             evidence = f"Confidence: {confidence:.2f}, Accuracy: {accuracy:.2f}"
             if analysis.hesitation_indicators:
                 evidence += f", Hesitations: {', '.join(analysis.hesitation_indicators[:3])}"
-            
+
             boundary_detection = {
                 "skill": skill_area,
                 "detected_at": datetime.utcnow().isoformat(),
@@ -539,7 +538,7 @@ class ProgressiveAssessmentEngine:
             }
             progression_state["boundary_detections"].append(boundary_detection)
             session.progression_state = progression_state
-            
+
             logger.info(
                 "skill_boundary_detected",
                 session_id=str(session.id),
@@ -556,7 +555,7 @@ class ProgressiveAssessmentEngine:
                 confidence=confidence,
                 accuracy=accuracy
             )
-        
+
         return proficiency_level
 
     def is_skill_boundary_reached(
@@ -576,7 +575,7 @@ class ProgressiveAssessmentEngine:
         """
         if not session.skill_boundaries_identified:
             return False
-        
+
         proficiency = session.skill_boundaries_identified.get(skill_area)
         return proficiency == "boundary_reached"
 
@@ -584,7 +583,7 @@ class ProgressiveAssessmentEngine:
         self,
         session: InterviewSession,
         role_type: str
-    ) -> Dict:
+    ) -> dict:
         """
         Generate next interview question based on current state.
         
@@ -615,31 +614,31 @@ class ProgressiveAssessmentEngine:
             OpenAIProviderError: If question generation fails
         """
         import json
-        
+
         # Get current state
         current_difficulty = self.get_current_phase(session)
         progression_state = session.progression_state or {}
-        
+
         # Build conversation history (last 5 exchanges)
         conversation_memory = session.conversation_memory or {}
         messages = conversation_memory.get("messages", [])
         last_messages = messages[-10:] if len(messages) >= 10 else messages  # Last 5 Q&A pairs
-        
+
         conversation_history = "No previous conversation" if not last_messages else "\n".join([
             f"- {msg.get('role', 'unknown').upper()}: {msg.get('content', '')[:200]}"
             for msg in last_messages
         ])
-        
+
         # Get skills explored and boundaries
         skills_explored = progression_state.get("skills_explored", [])
         skill_boundaries = session.skill_boundaries_identified or {}
-        
+
         # Filter boundaries to show only boundary_reached
         boundary_areas = {
             skill: level for skill, level in skill_boundaries.items()
             if level == "boundary_reached"
         }
-        
+
         # Load adaptive question prompt
         if not ADAPTIVE_QUESTION_PROMPT.exists():
             logger.error(
@@ -647,10 +646,10 @@ class ProgressiveAssessmentEngine:
                 prompt_path=str(ADAPTIVE_QUESTION_PROMPT)
             )
             raise FileNotFoundError(f"Adaptive question prompt not found: {ADAPTIVE_QUESTION_PROMPT}")
-        
-        with open(ADAPTIVE_QUESTION_PROMPT, "r") as f:
+
+        with open(ADAPTIVE_QUESTION_PROMPT) as f:
             prompt_template = f.read()
-        
+
         # Replace placeholders (using simple string replacement to avoid format() issues with JSON in template)
         prompt = prompt_template.replace("{current_difficulty}", current_difficulty.value)
         prompt = prompt.replace("{role_type}", role_type)
@@ -658,21 +657,21 @@ class ProgressiveAssessmentEngine:
         prompt = prompt.replace("{conversation_history}", conversation_history)
         prompt = prompt.replace("{skills_explored}", ", ".join(skills_explored) if skills_explored else "None yet")
         prompt = prompt.replace("{skill_boundaries}", ", ".join(boundary_areas.keys()) if boundary_areas else "None identified")
-        
+
         try:
             # Call AI provider for question generation
             messages_for_ai = [
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": "Generate the next interview question in JSON format."}
             ]
-            
+
             logger.info(
                 "generating_question",
                 session_id=str(session.id),
                 difficulty=current_difficulty.value,
                 questions_asked=session.questions_asked_count
             )
-            
+
             # Call AI with timeout
             question_json = await asyncio.wait_for(
                 self.ai_provider.generate_completion(
@@ -682,7 +681,7 @@ class ProgressiveAssessmentEngine:
                 ),
                 timeout=settings.progressive_assessment_timeout
             )
-            
+
             # Parse JSON response
             question_json = question_json.strip()
             if question_json.startswith("```json"):
@@ -692,15 +691,15 @@ class ProgressiveAssessmentEngine:
             if question_json.endswith("```"):
                 question_json = question_json[:-3]
             question_json = question_json.strip()
-            
+
             question_data = json.loads(question_json)
-            
+
             # Increment questions asked count
             session.questions_asked_count += 1
-            
+
             # Update last_activity_at
             session.last_activity_at = datetime.utcnow()
-            
+
             logger.info(
                 "question_generated",
                 session_id=str(session.id),
@@ -708,9 +707,9 @@ class ProgressiveAssessmentEngine:
                 difficulty=question_data.get("difficulty_level", current_difficulty.value),
                 is_followup=question_data.get("is_followup", False)
             )
-            
+
             return question_data
-            
+
         except json.JSONDecodeError as e:
             logger.error(
                 "question_generation_json_parse_error",
@@ -721,7 +720,7 @@ class ProgressiveAssessmentEngine:
             # Return fallback generic question
             session.questions_asked_count += 1
             session.last_activity_at = datetime.utcnow()
-            
+
             return {
                 "question": f"Tell me about your experience with {role_type} development.",
                 "skill_area": "general_experience",
@@ -729,7 +728,7 @@ class ProgressiveAssessmentEngine:
                 "is_followup": False,
                 "context_notes": "Fallback question due to generation error"
             }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(
                 "question_generation_timeout",
                 session_id=str(session.id),
@@ -738,7 +737,7 @@ class ProgressiveAssessmentEngine:
             # Return fallback generic question
             session.questions_asked_count += 1
             session.last_activity_at = datetime.utcnow()
-            
+
             return {
                 "question": f"Tell me about a recent project you worked on with {role_type}.",
                 "skill_area": "general_experience",
@@ -756,7 +755,7 @@ class ProgressiveAssessmentEngine:
             # Return fallback generic question
             session.questions_asked_count += 1
             session.last_activity_at = datetime.utcnow()
-            
+
             return {
                 "question": f"What challenges have you faced in {role_type} development?",
                 "skill_area": "general_experience",
@@ -768,7 +767,7 @@ class ProgressiveAssessmentEngine:
     def update_progression_state(
         self,
         session: InterviewSession,
-        update_data: Dict
+        update_data: dict
     ) -> None:
         """
         Update progression state with new data.
@@ -800,11 +799,11 @@ class ProgressiveAssessmentEngine:
                 "skills_pending": [],
                 "boundary_detections": []
             }
-        
+
         progression_state = session.progression_state
         update_type = update_data.get("type")
         data = update_data.get("data", {})
-        
+
         if update_type == "response":
             # Add response quality to history
             response_entry = {
@@ -815,19 +814,19 @@ class ProgressiveAssessmentEngine:
                 "timestamp": datetime.utcnow().isoformat()
             }
             progression_state["response_quality_history"].append(response_entry)
-            
+
             # Update current phase questions_count
             if progression_state["phase_history"]:
                 current_phase = progression_state["phase_history"][-1]
                 current_phase["questions_count"] = current_phase.get("questions_count", 0) + 1
-            
+
             logger.debug(
                 "progression_state_response_added",
                 session_id=str(session.id),
                 question_num=response_entry["question_num"],
                 proficiency=response_entry["proficiency"]
             )
-            
+
         elif update_type == "phase_change":
             # Add new phase to history
             new_phase = data.get("phase", "warmup")
@@ -837,31 +836,31 @@ class ProgressiveAssessmentEngine:
                 "questions_count": 0
             }
             progression_state["phase_history"].append(phase_entry)
-            
+
             logger.info(
                 "progression_state_phase_changed",
                 session_id=str(session.id),
                 new_phase=new_phase,
                 phase_count=len(progression_state["phase_history"])
             )
-            
+
         elif update_type == "skill_explored":
             # Add skill to explored list if not already there
             skill = data.get("skill", "")
             if skill and skill not in progression_state["skills_explored"]:
                 progression_state["skills_explored"].append(skill)
-                
+
                 logger.debug(
                     "progression_state_skill_explored",
                     session_id=str(session.id),
                     skill=skill,
                     total_skills=len(progression_state["skills_explored"])
                 )
-        
+
         # Update session
         session.progression_state = progression_state
 
-    def get_phase_history(self, session: InterviewSession) -> List[Dict]:
+    def get_phase_history(self, session: InterviewSession) -> list[dict]:
         """
         Get phase transition history from session.
 
@@ -874,7 +873,7 @@ class ProgressiveAssessmentEngine:
         progression_state = session.progression_state or {}
         return progression_state.get("phase_history", [])
 
-    def get_skills_explored(self, session: InterviewSession) -> List[str]:
+    def get_skills_explored(self, session: InterviewSession) -> list[str]:
         """
         Get list of skills explored during interview.
 
@@ -906,11 +905,11 @@ class ProgressiveAssessmentEngine:
         progression_state = session.progression_state or {}
         phase_history = progression_state.get("phase_history", [])
         response_history = progression_state.get("response_quality_history", [])
-        
+
         # Find phase boundaries
         phase_start_idx = 0
         phase_end_idx = len(response_history)
-        
+
         for i, phase_entry in enumerate(phase_history):
             if phase_entry.get("phase") == phase:
                 # Calculate start index
@@ -920,19 +919,19 @@ class ProgressiveAssessmentEngine:
                 )
                 phase_end_idx = phase_start_idx + phase_entry.get("questions_count", 0)
                 break
-        
+
         # Get responses for this phase
         phase_responses = response_history[phase_start_idx:phase_end_idx]
-        
+
         if not phase_responses:
             return 0.0
-        
+
         # Calculate average of confidence and accuracy
         total_quality = sum(
             (r.get("confidence", 0.0) + r.get("accuracy", 0.0)) / 2.0
             for r in phase_responses
         )
-        
+
         average_quality = total_quality / len(phase_responses)
-        
+
         return average_quality

@@ -1,6 +1,6 @@
 """Pydantic schemas for interviews."""
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -40,7 +40,7 @@ class SendMessageRequest(BaseModel):
         max_length=2000,
         description="Candidate's response text (max 2000 characters)"
     )
-    audio_metadata: Optional[Dict[str, Any]] = Field(
+    audio_metadata: dict[str, Any] | None = Field(
         None,
         description="Optional audio metadata for future speech integration"
     )
@@ -76,7 +76,7 @@ class SendMessageResponse(BaseModel):
         ...,
         description="Estimated total questions for interview"
     )
-    session_state: Dict[str, Any] = Field(
+    session_state: dict[str, Any] = Field(
         ...,
         description="Current session progression state for UI"
     )

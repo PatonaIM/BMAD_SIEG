@@ -81,7 +81,7 @@ class Interview(Base):
     ai_model_used = Column(String(50), nullable=True)
     total_tokens_used = Column(Integer, default=0, nullable=False)
     cost_usd = Column(Numeric(10, 4), default=Decimal("0.0"), nullable=False)
-    
+
     # Speech services tracking (STT/TTS)
     speech_tokens_used = Column(Integer, default=0, nullable=False)  # Character count for TTS
     speech_cost_usd = Column(Numeric(10, 4), default=Decimal("0.0"), nullable=False)

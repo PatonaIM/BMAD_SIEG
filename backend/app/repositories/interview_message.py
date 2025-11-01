@@ -1,6 +1,5 @@
 """Repository for InterviewMessage data access."""
 from datetime import datetime
-from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -22,7 +21,7 @@ class InterviewMessageRepository(BaseRepository[InterviewMessage]):
         """
         super().__init__(db, InterviewMessage)
 
-    async def get_by_session_id(self, session_id: UUID) -> List[InterviewMessage]:
+    async def get_by_session_id(self, session_id: UUID) -> list[InterviewMessage]:
         """
         Retrieve all messages for an interview session.
 
@@ -39,7 +38,7 @@ class InterviewMessageRepository(BaseRepository[InterviewMessage]):
         )
         return list(result.scalars().all())
 
-    async def get_by_interview_id(self, interview_id: UUID) -> List[InterviewMessage]:
+    async def get_by_interview_id(self, interview_id: UUID) -> list[InterviewMessage]:
         """
         Retrieve all messages for an interview.
 
@@ -56,7 +55,7 @@ class InterviewMessageRepository(BaseRepository[InterviewMessage]):
         )
         return list(result.scalars().all())
 
-    async def get_latest_message(self, interview_id: UUID) -> Optional[InterviewMessage]:
+    async def get_latest_message(self, interview_id: UUID) -> InterviewMessage | None:
         """
         Get the most recent message for an interview.
 
@@ -81,8 +80,10 @@ class InterviewMessageRepository(BaseRepository[InterviewMessage]):
         message_type: str,
         content_text: str,
         sequence_number: int,
-        content_audio_url: Optional[str] = None,
-        audio_duration_seconds: Optional[int] = None
+        content_audio_url: str | None = None,
+        audio_duration_seconds: int | None = None,
+        audio_metadata: dict | None = None,
+        response_time_seconds: int | None = None
     ) -> InterviewMessage:
         """
         Create a new interview message.
@@ -95,6 +96,8 @@ class InterviewMessageRepository(BaseRepository[InterviewMessage]):
             sequence_number: Order in the conversation
             content_audio_url: Optional URL to audio file
             audio_duration_seconds: Optional duration of audio
+            audio_metadata: Optional JSONB metadata from speech processing
+            response_time_seconds: Optional response time for candidate
 
         Returns:
             Created InterviewMessage
@@ -107,13 +110,15 @@ class InterviewMessageRepository(BaseRepository[InterviewMessage]):
             sequence_number=sequence_number,
             content_audio_url=content_audio_url,
             audio_duration_seconds=audio_duration_seconds,
+            audio_metadata=audio_metadata,
+            response_time_seconds=response_time_seconds,
             created_at=datetime.utcnow()
         )
-        
+
         self.db.add(message)
         await self.db.flush()
         await self.db.refresh(message)
-        
+
         return message
 
     async def get_message_count_for_session(self, session_id: UUID) -> int:

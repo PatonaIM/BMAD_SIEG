@@ -35,20 +35,97 @@ class Settings(BaseSettings):
     openai_temperature: float = 0.7
 
     # OpenAI Speech Services Configuration (Whisper STT + TTS)
-    openai_tts_model: str = "tts-1"  # Options: "tts-1" (faster) or "tts-1-hd" (higher quality)
-    openai_tts_voice: str = "alloy"  # Options: alloy, echo, fable, onyx, nova, shimmer
-    openai_tts_speed: float = 1.0  # Speed multiplier: 0.25 to 4.0
-    openai_stt_model: str = "whisper-1"  # OpenAI Whisper model
-    openai_stt_language: str = "en"  # Language code for STT (en, es, fr, etc.)
-    
+    # ================================================================
+    # Text-to-Speech (TTS) Settings
+    # ================================================================
+    openai_tts_model: str = "tts-1"
+    """
+    OpenAI TTS model selection.
+    Options:
+    - "tts-1": Faster generation, good quality (recommended for MVP)
+    - "tts-1-hd": Higher quality, slower generation (for production)
+    Cost: $0.015 per 1,000 characters
+    """
+
+    openai_tts_voice: str = "alloy"
+    """
+    OpenAI TTS voice selection.
+    Available voices:
+    - "alloy": Neutral, professional (recommended default)
+    - "echo": Clear, expressive
+    - "fable": Warm, engaging  
+    - "onyx": Deep, authoritative
+    - "nova": Bright, energetic
+    - "shimmer": Soft, whispery
+    """
+
+    openai_tts_speed: float = 1.0
+    """
+    Speech speed multiplier (0.25 - 4.0).
+    Values:
+    - 0.5: Half speed (slower, clearer)
+    - 1.0: Normal speed (recommended)
+    - 1.5: 1.5x faster (efficient)
+    - 2.0: Double speed (for testing)
+    """
+
+    # ================================================================
+    # Speech-to-Text (STT) Settings
+    # ================================================================
+    openai_stt_model: str = "whisper-1"
+    """
+    OpenAI Whisper model for speech transcription.
+    Currently only "whisper-1" is available.
+    Cost: $0.006 per minute of audio
+    Accuracy: ~95% for clear English speech
+    """
+
+    openai_stt_language: str = "en"
+    """
+    Language code for speech transcription.
+    Supported languages: en, es, fr, de, it, pt, nl, pl, ru, ja, ko, zh
+    Setting correct language improves transcription accuracy.
+    """
+
+    # ================================================================
     # Audio Quality Constraints
-    audio_max_file_size_mb: int = 25  # OpenAI Whisper API file size limit
-    audio_min_sample_rate_hz: int = 16000  # Minimum sample rate for good transcription quality
-    audio_min_duration_seconds: float = 0.1  # Reject too-short audio clips
-    
+    # ================================================================
+    audio_max_file_size_mb: int = 25
+    """
+    Maximum audio file size in megabytes.
+    OpenAI Whisper API hard limit: 25MB
+    Typical 1-minute audio: ~1-3MB depending on quality
+    """
+
+    audio_min_sample_rate_hz: int = 16000
+    """
+    Minimum sample rate in Hz for good transcription quality.
+    16kHz is sufficient for speech recognition.
+    Higher rates (44.1kHz, 48kHz) provide better quality but larger files.
+    """
+
+    audio_min_duration_seconds: float = 0.1
+    """
+    Minimum audio duration in seconds.
+    Rejects too-short audio clips that are likely noise or accidental recordings.
+    """
+
+    # ================================================================
     # Speech API Timeouts (seconds)
-    speech_stt_timeout_seconds: int = 30  # Whisper transcription timeout
-    speech_tts_timeout_seconds: int = 15  # TTS generation timeout
+    # ================================================================
+    speech_stt_timeout_seconds: int = 30
+    """
+    Timeout for Whisper transcription requests.
+    30 seconds allows for processing of longer audio files.
+    Typical processing time: 2-5 seconds for 1-minute audio.
+    """
+
+    speech_tts_timeout_seconds: int = 15
+    """
+    Timeout for TTS generation requests.
+    15 seconds is sufficient for typical interview questions.
+    Typical processing time: 1-3 seconds for 200-character text.
+    """
 
     # Development Settings
     use_mock_ai: bool = False
@@ -62,7 +139,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
-    
+
     # CORS
     allowed_origins: str = "http://localhost:3000,http://localhost:5173"
 
@@ -72,7 +149,7 @@ class Settings(BaseSettings):
     standard_min_questions: int = 4
     standard_accuracy_threshold: float = 0.8
     boundary_confidence_threshold: float = 0.5
-    
+
     # Progressive Assessment AI Timeouts (seconds)
     progressive_assessment_timeout: int = 30  # Timeout per AI call
 

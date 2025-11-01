@@ -1,6 +1,6 @@
 """Cost calculation utilities for speech services (STT/TTS)."""
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 
 class SpeechCostCalculator:
@@ -25,13 +25,13 @@ class SpeechCostCalculator:
         tts_cost = calculator.calculate_tts_cost("..." * 833)  # 2500 chars
         print(tts_cost)  # Decimal('0.0375')
     """
-    
+
     # OpenAI Whisper pricing: $0.006 per minute
     STT_COST_PER_MINUTE = Decimal("0.006")
-    
+
     # OpenAI TTS pricing: $0.015 per 1,000 characters
     TTS_COST_PER_1K_CHARS = Decimal("0.015")
-    
+
     @classmethod
     def calculate_stt_cost(cls, duration_seconds: float) -> Decimal:
         """
@@ -60,16 +60,16 @@ class SpeechCostCalculator:
         """
         if duration_seconds <= 0:
             return Decimal("0.0000")
-        
+
         # Convert seconds to minutes
         duration_minutes = Decimal(str(duration_seconds)) / Decimal("60")
-        
+
         # Calculate cost
         cost = duration_minutes * cls.STT_COST_PER_MINUTE
-        
+
         # Round to 4 decimal places
         return cost.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
-    
+
     @classmethod
     def calculate_tts_cost(cls, text: str) -> Decimal:
         """
@@ -98,16 +98,16 @@ class SpeechCostCalculator:
         """
         if not text:
             return Decimal("0.0000")
-        
+
         # Get character count
         char_count = Decimal(str(len(text)))
-        
+
         # Calculate cost per 1000 characters
         cost = (char_count / Decimal("1000")) * cls.TTS_COST_PER_1K_CHARS
-        
+
         # Round to 4 decimal places
         return cost.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
-    
+
     @classmethod
     def calculate_total_speech_cost(
         cls,
@@ -138,6 +138,6 @@ class SpeechCostCalculator:
         """
         stt_cost = cls.calculate_stt_cost(stt_duration_seconds)
         tts_cost = cls.calculate_tts_cost(tts_text)
-        
+
         total = stt_cost + tts_cost
         return total.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)

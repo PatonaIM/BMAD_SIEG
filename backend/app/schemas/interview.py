@@ -134,3 +134,121 @@ class InterviewMessagesResponse(BaseModel):
 
     messages: list[InterviewMessageResponse]
     total_count: int
+
+
+class InterviewCompleteResponse(BaseModel):
+    """Schema for interview completion response."""
+
+    interview_id: UUID = Field(
+        ...,
+        description="UUID of the completed interview"
+    )
+    completed_at: datetime = Field(
+        ...,
+        description="Timestamp when interview was completed"
+    )
+    duration_seconds: int = Field(
+        ...,
+        description="Total interview duration in seconds"
+    )
+    questions_answered: int = Field(
+        ...,
+        description="Total number of questions answered"
+    )
+    skill_boundaries_identified: int = Field(
+        ...,
+        description="Number of skill boundaries identified during interview"
+    )
+    message: str = Field(
+        default="Interview completed successfully",
+        description="Completion confirmation message"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "interview_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "completed_at": "2025-11-01T14:30:45Z",
+                    "duration_seconds": 1845,
+                    "questions_answered": 15,
+                    "skill_boundaries_identified": 3,
+                    "message": "Interview completed successfully"
+                }
+            ]
+        }
+    )
+
+
+class TranscriptMessage(BaseModel):
+    """Schema for a single transcript message."""
+
+    sequence_number: int = Field(
+        ...,
+        description="Message sequence number in conversation"
+    )
+    message_type: str = Field(
+        ...,
+        description="Type of message: 'ai_question' or 'candidate_response'"
+    )
+    content_text: str = Field(
+        ...,
+        description="Message text content"
+    )
+    created_at: datetime = Field(
+        ...,
+        description="Timestamp when message was created"
+    )
+    audio_url: str | None = Field(
+        None,
+        description="Optional audio recording URL"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InterviewTranscriptResponse(BaseModel):
+    """Schema for complete interview transcript."""
+
+    interview_id: UUID = Field(
+        ...,
+        description="UUID of the interview"
+    )
+    started_at: datetime = Field(
+        ...,
+        description="Interview start timestamp"
+    )
+    completed_at: datetime | None = Field(
+        None,
+        description="Interview completion timestamp (null if in progress)"
+    )
+    duration_seconds: int | None = Field(
+        None,
+        description="Total interview duration in seconds (null if in progress)"
+    )
+    messages: list[TranscriptMessage] = Field(
+        ...,
+        description="List of all interview messages in chronological order"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "interview_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "started_at": "2025-11-01T14:00:00Z",
+                    "completed_at": "2025-11-01T14:30:45Z",
+                    "duration_seconds": 1845,
+                    "messages": [
+                        {
+                            "sequence_number": 1,
+                            "message_type": "ai_question",
+                            "content_text": "Let's start with React fundamentals...",
+                            "created_at": "2025-11-01T14:00:15Z",
+                            "audio_url": None
+                        }
+                    ]
+                }
+            ]
+        }
+    )

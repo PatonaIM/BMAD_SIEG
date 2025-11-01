@@ -497,6 +497,99 @@ class InterviewEngine:
 
         return False
 
+    async def complete_interview(self, interview_id: UUID) -> dict:
+        """
+        Complete an interview and calculate final metrics.
+        
+        Updates interview status to 'completed', calculates duration,
+        and compiles completion statistics.
+        
+        Args:
+            interview_id: UUID of the interview to complete
+            
+        Returns:
+            Dict containing:
+                - interview_id: UUID of completed interview
+                - completed_at: Timestamp of completion
+                - duration_seconds: Total interview duration
+                - questions_answered: Number of questions answered
+                - skill_boundaries_identified: Number of skill boundaries found
+                - message: Completion confirmation message
+                
+        Raises:
+            InterviewNotFoundException: If interview not found
+            InterviewCompletedException: If interview already completed
+            ValueError: If interview status is invalid for completion
+        """
+        logger.info(
+            "completing_interview",
+            interview_id=str(interview_id)
+        )
+        
+        # Load interview record
+        interview = await self.interview_repo.get_by_id(interview_id)
+        if not interview:
+            raise InterviewNotFoundException(interview_id=interview_id)
+        
+        # Verify interview can be completed
+        if interview.status == "completed":
+            raise InterviewCompletedException(
+                interview_id=interview_id,
+                message="Interview has already been completed"
+            )
+        
+        if interview.status not in ["in_progress", "scheduled"]:
+            raise ValueError(
+                f"Interview {interview_id} cannot be completed with status '{interview.status}'"
+            )
+        
+        # Load session for metrics
+        session = await self.session_repo.get_by_interview_id(interview_id)
+        if not session:
+            raise ValueError(f"No session found for interview {interview_id}")
+        
+        # Calculate completion timestamp and duration
+        completed_at = datetime.utcnow()
+        started_at = interview.started_at or completed_at
+        duration_seconds = int((completed_at - started_at).total_seconds())
+        
+        # Count questions answered
+        messages = await self.message_repo.get_by_interview_id(interview_id)
+        candidate_responses = [
+            msg for msg in messages
+            if msg.message_type == "candidate_response"
+        ]
+        questions_answered = len(candidate_responses)
+        
+        # Count skill boundaries identified
+        skill_boundaries = session.skill_boundaries_identified or {}
+        skill_boundaries_count = len(skill_boundaries)
+        
+        # Update interview record
+        interview.status = "completed"
+        interview.completed_at = completed_at
+        interview.duration_seconds = duration_seconds
+        
+        # Persist changes
+        await self.interview_repo.update(interview)
+        
+        logger.info(
+            "interview_completed",
+            interview_id=str(interview_id),
+            duration_seconds=duration_seconds,
+            questions_answered=questions_answered,
+            skill_boundaries=skill_boundaries_count
+        )
+        
+        return {
+            "interview_id": interview_id,
+            "completed_at": completed_at,
+            "duration_seconds": duration_seconds,
+            "questions_answered": questions_answered,
+            "skill_boundaries_identified": skill_boundaries_count,
+            "message": "Interview completed successfully"
+        }
+
     async def get_next_question(self, session_id: UUID) -> dict:
         """
         Generate next interview question based on current state.

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import type { InterviewStore, Message } from '../types/interview.types';
 
 const initialState = {
@@ -9,6 +9,8 @@ const initialState = {
   totalQuestions: 0,
   isAiTyping: false,
   status: 'not_started' as const,
+  isCompleted: false,
+  completionData: null,
 };
 
 /**
@@ -56,6 +58,12 @@ export const useInterviewStore = create<InterviewStore>()(
         ),
 
       setStatus: (status) => set({ status }, false, 'setStatus'),
+
+      setCompleted: (isCompleted: boolean) =>
+        set({ isCompleted, status: isCompleted ? 'completed' : 'in_progress' }, false, 'setCompleted'),
+
+      setCompletionData: (completionData) =>
+        set({ completionData, isCompleted: true, status: 'completed' }, false, 'setCompletionData'),
 
       reset: () => set(initialState, false, 'reset'),
     }),

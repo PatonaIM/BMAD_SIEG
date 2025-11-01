@@ -23,10 +23,13 @@ from app.repositories.interview import InterviewRepository
 from app.repositories.interview_message import InterviewMessageRepository
 from app.repositories.interview_session import InterviewSessionRepository
 from app.schemas.interview import (
+    InterviewCompleteResponse,
     InterviewResponse,
     InterviewStartRequest,
+    InterviewTranscriptResponse,
     SendMessageRequest,
     SendMessageResponse,
+    TranscriptMessage,
 )
 from app.services.interview_engine import InterviewEngine
 
@@ -492,3 +495,249 @@ async def get_interview_messages(
             for msg in messages
         ]
     }
+
+
+@router.post("/{interview_id}/complete", response_model=InterviewCompleteResponse)
+async def complete_interview(
+    interview_id: uuid.UUID,
+    current_user: Annotated[Candidate, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> InterviewCompleteResponse:
+    """
+    Mark an interview as completed and calculate final metrics.
+    
+    Updates the interview status to 'completed', calculates total duration,
+    and returns completion summary with statistics.
+
+    Args:
+        interview_id: Interview UUID to complete
+        current_user: Authenticated candidate
+        db: Database session
+
+    Returns:
+        InterviewCompleteResponse with completion data
+
+    Raises:
+        HTTPException 404: Interview not found
+        HTTPException 403: Not authorized to complete this interview
+        HTTPException 400: Interview already completed or invalid status
+        HTTPException 500: Internal server error
+    """
+    correlation_id = str(uuid.uuid4())
+    
+    logger.info(
+        "complete_interview_request",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        candidate_id=str(current_user.id)
+    )
+    
+    # Initialize repositories
+    interview_repo = InterviewRepository(db)
+    session_repo = InterviewSessionRepository(db)
+    message_repo = InterviewMessageRepository(db)
+    
+    # Load interview
+    interview = await interview_repo.get_by_id(interview_id)
+    
+    if not interview:
+        logger.warning(
+            "interview_not_found",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    # Verify ownership
+    if interview.candidate_id != current_user.id:
+        logger.warning(
+            "unauthorized_completion_attempt",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            candidate_id=str(current_user.id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to complete this interview"
+        )
+    
+    # Check if already completed
+    if interview.status == "completed":
+        logger.warning(
+            "interview_already_completed",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Interview has already been completed"
+        )
+    
+    try:
+        # Initialize AI provider and interview engine
+        ai_provider = OpenAIProvider()
+        interview_engine = InterviewEngine(
+            ai_provider=ai_provider,
+            session_repo=session_repo,
+            message_repo=message_repo,
+            interview_repo=interview_repo
+        )
+        
+        # Complete the interview
+        result = await interview_engine.complete_interview(interview_id)
+        
+        await db.commit()
+        
+        logger.info(
+            "interview_completed_successfully",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            duration_seconds=result["duration_seconds"],
+            questions_answered=result["questions_answered"]
+        )
+        
+        return InterviewCompleteResponse(**result)
+        
+    except InterviewCompletedException as e:
+        logger.warning(
+            "interview_already_completed",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            error=str(e)
+        )
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except InterviewNotFoundException as e:
+        logger.error(
+            "interview_not_found_during_completion",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            error=str(e)
+        )
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(
+            "interview_completion_failed",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            error=str(e)
+        )
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to complete interview. Please try again."
+        )
+
+
+@router.get("/{interview_id}/transcript", response_model=InterviewTranscriptResponse)
+async def get_interview_transcript(
+    interview_id: uuid.UUID,
+    current_user: Annotated[Candidate, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 100
+) -> InterviewTranscriptResponse:
+    """
+    Get complete interview transcript with all messages.
+    
+    Returns chronologically ordered messages from the interview conversation,
+    with pagination support for long transcripts.
+
+    Args:
+        interview_id: Interview UUID
+        current_user: Authenticated candidate
+        db: Database session
+        skip: Number of messages to skip (default: 0)
+        limit: Maximum messages to return (default: 100, max: 100)
+
+    Returns:
+        InterviewTranscriptResponse with interview details and messages
+
+    Raises:
+        HTTPException 404: Interview not found
+        HTTPException 403: Not authorized to access this transcript
+    """
+    correlation_id = str(uuid.uuid4())
+    
+    logger.info(
+        "get_transcript_request",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        candidate_id=str(current_user.id)
+    )
+    
+    # Initialize repositories
+    interview_repo = InterviewRepository(db)
+    message_repo = InterviewMessageRepository(db)
+    
+    # Load interview
+    interview = await interview_repo.get_by_id(interview_id)
+    
+    if not interview:
+        logger.warning(
+            "interview_not_found_for_transcript",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    # Verify ownership
+    if interview.candidate_id != current_user.id:
+        logger.warning(
+            "unauthorized_transcript_access",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            candidate_id=str(current_user.id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this transcript"
+        )
+    
+    # Get all messages
+    all_messages = await message_repo.get_by_interview_id(interview_id)
+    
+    # Apply pagination with limit cap
+    limit = min(limit, 100)
+    paginated_messages = all_messages[skip:skip + limit]
+    
+    # Convert to TranscriptMessage schema
+    transcript_messages = [
+        TranscriptMessage(
+            sequence_number=msg.sequence_number,
+            message_type=msg.message_type,
+            content_text=msg.content_text,
+            created_at=msg.created_at,
+            audio_url=msg.audio_url if hasattr(msg, 'audio_url') else None
+        )
+        for msg in paginated_messages
+    ]
+    
+    logger.info(
+        "transcript_retrieved_successfully",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        message_count=len(transcript_messages),
+        total_messages=len(all_messages)
+    )
+    
+    return InterviewTranscriptResponse(
+        interview_id=interview_id,
+        started_at=interview.started_at or datetime.utcnow(),
+        completed_at=interview.completed_at,
+        duration_seconds=interview.duration_seconds,
+        messages=transcript_messages
+    )

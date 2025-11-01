@@ -15,6 +15,15 @@ export interface Message {
   timestamp: number;
 }
 
+export interface CompletionData {
+  interview_id: string;
+  completed_at: string;
+  duration_seconds: number;
+  questions_answered: number;
+  skill_boundaries_identified: number;
+  message: string;
+}
+
 export interface InterviewState {
   sessionId: string | null;
   messages: Message[];
@@ -22,6 +31,8 @@ export interface InterviewState {
   totalQuestions: number;
   isAiTyping: boolean;
   status: InterviewStatus;
+  isCompleted: boolean;
+  completionData: CompletionData | null;
 }
 
 export interface InterviewActions {
@@ -32,6 +43,8 @@ export interface InterviewActions {
   setAiTyping: (isTyping: boolean) => void;
   updateProgress: (current: number, total: number) => void;
   setStatus: (status: InterviewStatus) => void;
+  setCompleted: (isCompleted: boolean) => void;
+  setCompletionData: (completionData: CompletionData) => void;
   reset: () => void;
 }
 

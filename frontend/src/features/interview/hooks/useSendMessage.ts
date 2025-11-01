@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
-import { sendInterviewMessage, completeInterview } from "../services/interviewService"
+import { sendInterviewMessage } from "../services/interviewService"
 import type { SendMessageResponse } from "../services/interviewService"
 import { useInterviewStore } from "../store/interviewStore"
 
@@ -44,30 +44,26 @@ export function useSendMessage({ sessionId }: UseSendMessageParams) {
       // Update progress
       updateProgress(data.question_number, data.total_questions)
 
-      console.log(`[v0] Interview progress: ${data.question_number}/${data.total_questions}`)
+      console.log(`[Interview] Progress: ${data.question_number}/${data.total_questions}`)
 
       // Hide typing indicator
       setAiTyping(false)
 
-      if (data.question_number >= data.total_questions) {
-        console.log("[v0] Interview completed - all questions answered")
+      // Check completion flag from backend (Story 1.8)
+      if (data.interview_complete) {
+        console.log("[Interview] Completion criteria met - navigating to results")
 
         // Mark interview as completed
         setStatus("completed")
 
-        // Call completion API endpoint
-        try {
-          await completeInterview(sessionId)
-          console.log("[v0] Interview completion recorded")
-        } catch (error) {
-          console.error("[v0] Failed to record completion:", error)
-        }
-
+        // Note: Backend already auto-completed the interview when completion criteria met
+        // No need to call completion endpoint again - just navigate to results
+        
         // Redirect to results page after a short delay
         setTimeout(() => {
-          console.log("[v0] Redirecting to results page")
+          console.log("[Interview] Redirecting to results page")
           router.push(`/interview/${sessionId}/results`)
-        }, 2000)
+        }, 1500)
       }
     },
 

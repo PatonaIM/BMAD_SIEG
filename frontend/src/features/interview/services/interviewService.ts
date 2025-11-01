@@ -34,9 +34,11 @@ export interface SendMessageResponse {
   ai_response: string
   question_number: number
   total_questions: number
+  interview_complete?: boolean
   session_state: {
     current_difficulty: string
     skill_boundaries: Record<string, string>
+    questions_asked?: number
   }
 }
 
@@ -93,13 +95,46 @@ export const sendInterviewMessage = async (sessionId: string, messageText: strin
 /**
  * Complete an interview
  * Endpoint: POST /api/v1/interviews/{id}/complete
- * Marks the interview as completed
+ * Marks the interview as completed and returns completion metrics
  */
-export const completeInterview = async (sessionId: string): Promise<{ success: boolean; completed_at: string }> => {
-  const response = await apiClient.post<{ success: boolean; completed_at: string }>(
-    `/interviews/${sessionId}/complete`,
-    {},
-  )
+export interface InterviewCompleteResponse {
+  interview_id: string
+  completed_at: string
+  duration_seconds: number
+  questions_answered: number
+  skill_boundaries_identified: number
+  message: string
+}
+
+export const completeInterview = async (interviewId: string): Promise<InterviewCompleteResponse> => {
+  const response = await apiClient.post<InterviewCompleteResponse>(`/interviews/${interviewId}/complete`, {})
+
+  return response
+}
+
+/**
+ * Get interview transcript
+ * Endpoint: GET /api/v1/interviews/{id}/transcript
+ * Returns full conversation history with all messages
+ */
+export interface TranscriptMessage {
+  sequence_number: number
+  message_type: "ai_question" | "candidate_response"
+  content_text: string
+  created_at: string
+  audio_url?: string | null
+}
+
+export interface InterviewTranscriptResponse {
+  interview_id: string
+  started_at: string
+  completed_at: string | null
+  duration_seconds: number | null
+  messages: TranscriptMessage[]
+}
+
+export const getInterviewTranscript = async (interviewId: string): Promise<InterviewTranscriptResponse> => {
+  const response = await apiClient.get<InterviewTranscriptResponse>(`/interviews/${interviewId}/transcript`)
 
   return response
 }

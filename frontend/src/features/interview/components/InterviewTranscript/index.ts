@@ -1,0 +1,1 @@
+export { InterviewTranscript } from "./InterviewTranscript"

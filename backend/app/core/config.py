@@ -180,6 +180,14 @@ class Settings(BaseSettings):
     # Development Settings
     use_mock_ai: bool = False
 
+    # Supabase Storage Configuration
+    supabase_url: str
+    supabase_service_key: SecretStr
+    supabase_anon_key: SecretStr | None = None
+    video_retention_days: int = 30
+    hard_delete_after_days: int = 90
+    video_storage_threshold_gb: int = 100
+
     # Authentication
     jwt_secret: SecretStr
     jwt_algorithm: str = "HS256"

@@ -3,9 +3,9 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -90,6 +90,22 @@ class Interview(Base):
     # Realtime API cost tracking
     realtime_cost_usd = Column(Numeric(10, 4), default=Decimal("0.0"), nullable=False)
 
+    # Video interview fields (Epic 02)
+    tech_check_metadata = Column(JSONB, nullable=True)  # Audio/camera test results
+    video_recording_url = Column(String, nullable=True)  # Supabase Storage path
+    video_recording_consent = Column(Boolean, default=False, nullable=False)  # GDPR consent
+    video_recording_status = Column(
+        SQLEnum(
+            "not_recorded",
+            "recording",
+            "completed",
+            "failed",
+            "deleted",
+            name="video_recording_status"
+        ),
+        nullable=True
+    )
+
     # Record timestamp
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
@@ -110,6 +126,12 @@ class Interview(Base):
     )
     assessment = relationship(
         "AssessmentResult",
+        uselist=False,
+        back_populates="interview",
+        cascade="all, delete-orphan"
+    )
+    video_recording = relationship(
+        "VideoRecording",
         uselist=False,
         back_populates="interview",
         cascade="all, delete-orphan"

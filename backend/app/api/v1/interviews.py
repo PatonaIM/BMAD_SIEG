@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, Form, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -29,7 +29,12 @@ from app.schemas.interview import (
     InterviewTranscriptResponse,
     SendMessageRequest,
     SendMessageResponse,
+    TechCheckRequest,
+    TechCheckResponse,
     TranscriptMessage,
+    VideoChunkUploadResponse,
+    VideoConsentRequest,
+    VideoConsentResponse,
 )
 from app.services.interview_engine import InterviewEngine
 
@@ -740,4 +745,363 @@ async def get_interview_transcript(
         completed_at=interview.completed_at,
         duration_seconds=interview.duration_seconds,
         messages=transcript_messages
+    )
+
+
+@router.post("/{interview_id}/tech-check", response_model=TechCheckResponse, status_code=status.HTTP_201_CREATED)
+async def submit_tech_check_results(
+    interview_id: uuid.UUID,
+    request: TechCheckRequest,
+    current_user: Annotated[Candidate, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> TechCheckResponse:
+    """
+    Store tech check results for troubleshooting.
+    
+    Saves audio and camera test results to interviews.tech_check_metadata JSONB field.
+    
+    Args:
+        interview_id: UUID of the interview
+        request: Tech check results data
+        current_user: Authenticated candidate
+        db: Database session
+        
+    Returns:
+        Success status and message
+    """
+    correlation_id = str(uuid.uuid4())
+    
+    logger.info(
+        "tech_check_submission",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        candidate_id=str(current_user.id),
+        audio_passed=request.audio_test_passed,
+        camera_passed=request.camera_test_passed
+    )
+    
+    interview_repo = InterviewRepository(db)
+    
+    # Get interview
+    interview = await interview_repo.get_by_id(interview_id)
+    if not interview:
+        logger.warning(
+            "tech_check_interview_not_found",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    # Verify ownership
+    if interview.candidate_id != current_user.id:
+        logger.warning(
+            "unauthorized_tech_check_access",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            candidate_id=str(current_user.id),
+            interview_candidate_id=str(interview.candidate_id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized"
+        )
+    
+    # Store tech check metadata
+    interview.tech_check_metadata = {
+        "audio": {
+            "permission_granted": request.audio_test_passed,
+            "test_passed": request.audio_test_passed,
+            "audio_level_detected": request.audio_metadata.get("level", 0),
+            "test_timestamp": datetime.utcnow().isoformat(),
+            "device_name": request.audio_metadata.get("device_name"),
+            "browser_info": request.browser_info
+        },
+        "camera": {
+            "permission_granted": request.camera_test_passed,
+            "test_passed": request.camera_test_passed,
+            "resolution_detected": request.camera_metadata.get("resolution"),
+            "test_timestamp": datetime.utcnow().isoformat(),
+            "device_name": request.camera_metadata.get("device_name"),
+            "browser_info": request.browser_info
+        }
+    }
+    
+    await db.commit()
+    
+    logger.info(
+        "tech_check_results_stored",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        audio_passed=request.audio_test_passed,
+        camera_passed=request.camera_test_passed
+    )
+    
+    return TechCheckResponse(
+        success=True,
+        message="Tech check results saved successfully"
+    )
+
+
+@router.post("/{interview_id}/video/upload", response_model=VideoChunkUploadResponse)
+async def upload_video_chunk(
+    interview_id: uuid.UUID,
+    current_user: Annotated[Candidate, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    chunk: UploadFile = File(...),
+    chunk_index: int = Form(...),
+    is_final: bool = Form(False)
+) -> VideoChunkUploadResponse:
+    """
+    Upload video chunk during interview recording.
+    
+    Stores chunks temporarily and concatenates on final chunk.
+    Uploads final video to Supabase Storage and updates interview metadata.
+    
+    Args:
+        interview_id: UUID of the interview
+        chunk: Video chunk file (WebM/MP4)
+        chunk_index: Zero-indexed chunk number
+        is_final: Whether this is the final chunk
+        current_user: Authenticated candidate
+        db: Database session
+        
+    Returns:
+        Upload confirmation with timestamp
+        
+    Raises:
+        404: Interview not found
+        403: Not authorized
+        507: Storage quota exceeded
+    """
+    correlation_id = str(uuid.uuid4())
+    
+    logger.info(
+        "video_chunk_upload_request",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        candidate_id=str(current_user.id),
+        chunk_index=chunk_index,
+        is_final=is_final
+    )
+    
+    interview_repo = InterviewRepository(db)
+    
+    # Get interview
+    interview = await interview_repo.get_by_id(interview_id)
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    # Verify ownership
+    if interview.candidate_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized"
+        )
+    
+    # Check video recording consent
+    if not interview.video_recording_consent:
+        logger.warning(
+            "video_upload_without_consent",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Video recording consent not granted"
+        )
+    
+    try:
+        # Read chunk data
+        chunk_data = await chunk.read()
+        
+        # Create temporary storage directory
+        import tempfile
+        import os
+        
+        temp_dir = tempfile.gettempdir()
+        interview_temp_dir = os.path.join(temp_dir, f"interview_{interview_id}")
+        os.makedirs(interview_temp_dir, exist_ok=True)
+        
+        # Save chunk temporarily
+        chunk_path = os.path.join(interview_temp_dir, f"chunk_{chunk_index}.webm")
+        with open(chunk_path, "wb") as f:
+            f.write(chunk_data)
+        
+        logger.info(
+            "video_chunk_saved_temporarily",
+            correlation_id=correlation_id,
+            chunk_index=chunk_index,
+            size_bytes=len(chunk_data)
+        )
+        
+        # If final chunk, concatenate and upload
+        if is_final:
+            from app.utils.supabase_storage import SupabaseStorageClient
+            from app.models.video_recording import VideoRecording
+            
+            # Concatenate all chunks
+            final_video_data = bytearray()
+            chunk_files = sorted([
+                f for f in os.listdir(interview_temp_dir) 
+                if f.startswith("chunk_")
+            ])
+            
+            for chunk_file in chunk_files:
+                chunk_file_path = os.path.join(interview_temp_dir, chunk_file)
+                with open(chunk_file_path, "rb") as f:
+                    final_video_data.extend(f.read())
+            
+            logger.info(
+                "video_chunks_concatenated",
+                correlation_id=correlation_id,
+                total_chunks=len(chunk_files),
+                final_size_bytes=len(final_video_data)
+            )
+            
+            # Upload to Supabase Storage
+            storage_client = SupabaseStorageClient()
+            
+            # Assuming org_id is available (for MVP, use candidate_id as org_id)
+            org_id = str(current_user.id)
+            storage_path = await storage_client.upload_video(
+                bytes(final_video_data),
+                org_id,
+                str(interview_id)
+            )
+            
+            # Update interview with storage path
+            interview.video_recording_url = storage_path
+            interview.video_recording_status = "completed"
+            
+            # Create video recording metadata
+            video_recording = VideoRecording(
+                id=uuid.uuid4(),
+                interview_id=interview_id,
+                storage_path=storage_path,
+                file_size_bytes=len(final_video_data),
+                upload_started_at=datetime.utcnow(),
+                upload_completed_at=datetime.utcnow(),
+                recording_metadata={
+                    "total_chunks": len(chunk_files),
+                    "upload_correlation_id": correlation_id
+                }
+            )
+            
+            db.add(video_recording)
+            await db.commit()
+            
+            # Clean up temporary files
+            import shutil
+            shutil.rmtree(interview_temp_dir, ignore_errors=True)
+            
+            logger.info(
+                "video_upload_completed",
+                correlation_id=correlation_id,
+                interview_id=str(interview_id),
+                storage_path=storage_path,
+                file_size_mb=round(len(final_video_data) / (1024 * 1024), 2)
+            )
+        
+        return VideoChunkUploadResponse(
+            success=True,
+            chunk_index=chunk_index,
+            uploaded_at=datetime.utcnow()
+        )
+        
+    except Exception as e:
+        logger.error(
+            "video_chunk_upload_failed",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id),
+            chunk_index=chunk_index,
+            error=str(e)
+        )
+        
+        # Check for storage quota errors
+        if "quota" in str(e).lower() or "storage" in str(e).lower():
+            raise HTTPException(
+                status_code=507,
+                detail="Storage quota exceeded. Please contact support."
+            )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Video upload failed: {str(e)}"
+        )
+
+
+@router.post("/{interview_id}/consent", response_model=VideoConsentResponse)
+async def submit_video_consent(
+    interview_id: uuid.UUID,
+    request: VideoConsentRequest,
+    current_user: Annotated[Candidate, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> VideoConsentResponse:
+    """
+    Record candidate's video recording consent (GDPR compliance).
+    
+    Args:
+        interview_id: UUID of the interview
+        request: Consent decision
+        current_user: Authenticated candidate
+        db: Database session
+        
+    Returns:
+        Consent confirmation with video recording status
+        
+    Raises:
+        404: Interview not found
+        403: Not authorized
+    """
+    correlation_id = str(uuid.uuid4())
+    
+    logger.info(
+        "video_consent_submission",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        candidate_id=str(current_user.id),
+        consent=request.video_recording_consent
+    )
+    
+    interview_repo = InterviewRepository(db)
+    
+    # Get interview
+    interview = await interview_repo.get_by_id(interview_id)
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    # Verify ownership
+    if interview.candidate_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized"
+        )
+    
+    # Update consent and status
+    interview.video_recording_consent = request.video_recording_consent
+    interview.video_recording_status = "recording" if request.video_recording_consent else "not_recorded"
+    
+    await db.commit()
+    
+    logger.info(
+        "video_consent_recorded",
+        correlation_id=correlation_id,
+        interview_id=str(interview_id),
+        consent=request.video_recording_consent,
+        status=interview.video_recording_status
+    )
+    
+    return VideoConsentResponse(
+        success=True,
+        video_recording_consent=request.video_recording_consent,
+        video_recording_status=interview.video_recording_status
     )

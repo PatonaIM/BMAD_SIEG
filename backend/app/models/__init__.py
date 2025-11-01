@@ -5,6 +5,7 @@ from app.models.interview import Interview
 from app.models.interview_message import InterviewMessage
 from app.models.interview_session import InterviewSession
 from app.models.resume import Resume
+from app.models.video_recording import VideoRecording
 
 __all__ = [
     "Candidate",
@@ -13,4 +14,5 @@ __all__ = [
     "InterviewSession",
     "InterviewMessage",
     "AssessmentResult",
+    "VideoRecording",
 ]

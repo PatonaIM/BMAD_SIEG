@@ -252,3 +252,130 @@ class InterviewTranscriptResponse(BaseModel):
             ]
         }
     )
+
+
+class TechCheckRequest(BaseModel):
+    """Schema for tech check results submission."""
+
+    audio_test_passed: bool = Field(..., description="Whether audio test passed")
+    camera_test_passed: bool = Field(..., description="Whether camera test passed")
+    audio_metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Audio test metadata (device_name, level, duration)"
+    )
+    camera_metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Camera test metadata (device_name, resolution, format)"
+    )
+    browser_info: str = Field(..., description="Browser user agent string")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "audio_test_passed": True,
+                    "camera_test_passed": True,
+                    "audio_metadata": {
+                        "device_name": "Built-in Microphone",
+                        "level": 0.75,
+                        "duration": 3.2
+                    },
+                    "camera_metadata": {
+                        "device_name": "FaceTime HD Camera",
+                        "resolution": "1280x720",
+                        "format": "video/webm"
+                    },
+                    "browser_info": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+                }
+            ]
+        }
+    )
+
+
+class TechCheckResponse(BaseModel):
+    """Schema for tech check submission response."""
+
+    success: bool = Field(..., description="Whether tech check results were saved")
+    message: str = Field(..., description="Response message")
+
+
+# ================================================================
+# Video Recording Schemas
+# ================================================================
+
+
+class VideoChunkUploadRequest(BaseModel):
+    """Schema for video chunk upload request."""
+
+    chunk_index: int = Field(..., description="Zero-indexed chunk number")
+    is_final: bool = Field(default=False, description="Whether this is the final chunk")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "chunk_index": 0,
+                    "is_final": False
+                }
+            ]
+        }
+    )
+
+
+class VideoChunkUploadResponse(BaseModel):
+    """Schema for video chunk upload response."""
+
+    success: bool = Field(..., description="Whether chunk upload succeeded")
+    chunk_index: int = Field(..., description="Chunk index that was uploaded")
+    uploaded_at: datetime = Field(..., description="Timestamp of upload")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "success": True,
+                    "chunk_index": 0,
+                    "uploaded_at": "2025-11-01T12:34:56Z"
+                }
+            ]
+        }
+    )
+
+
+class VideoConsentRequest(BaseModel):
+    """Schema for video recording consent."""
+
+    video_recording_consent: bool = Field(
+        ..., 
+        description="Whether candidate consents to video recording"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "video_recording_consent": True
+                }
+            ]
+        }
+    )
+
+
+class VideoConsentResponse(BaseModel):
+    """Schema for video consent submission response."""
+
+    success: bool = Field(..., description="Whether consent was recorded")
+    video_recording_consent: bool = Field(..., description="Consent value recorded")
+    video_recording_status: str = Field(..., description="Video recording status")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "success": True,
+                    "video_recording_consent": True,
+                    "video_recording_status": "recording"
+                }
+            ]
+        }
+    )

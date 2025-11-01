@@ -24,9 +24,10 @@ export const useStartInterview = () => {
       setSessionId(interview.id)
       setStatus(interview.status as "in_progress" | "completed")
 
-      console.log("Navigating to:", `/interview/${interview.id}`)
+      console.log("Navigating to tech check:", `/interview/${interview.id}/tech-check`)
 
-      router.push(`/interview/${interview.id}`)
+      // Redirect to tech check page first
+      router.push(`/interview/${interview.id}/tech-check`)
     },
     onError: (error: Error) => {
       console.error("Failed to start interview:", error)

@@ -250,6 +250,7 @@
 **Bucket Configuration:**
 - `resumes` bucket - Private, max 10MB per file, PDF/DOCX only
 - `audio` bucket - Private, max 5MB per file, WebM/Opus/MP3 only
+- `interview-recordings` bucket - Private, max 100MB per file, MP4/WebM video only (Story 2.8)
 
 **Upload Example:**
 ```python
@@ -271,6 +272,133 @@ async def upload_resume(file_data: bytes, candidate_id: str, filename: str):
 # Generate temporary download URL (expires in 1 hour)
 url = f"{SUPABASE_URL}/storage/v1/object/sign/resumes/{file_path}?expiresIn=3600"
 ```
+
+---
+
+### Supabase Storage - Video Interview Recordings
+
+**Status:** ✅ **Implemented** (Story 2.8)
+
+**Bucket:** `interview-recordings`
+
+**Purpose:** Store candidate video recordings from interviews for recruiter review
+
+**Bucket Configuration:**
+- **Access Type:** Private (not publicly accessible)
+- **File Size Limit:** 100MB per file
+- **Allowed MIME Types:** `video/mp4`, `video/webm`
+- **File Path Structure:** `{organization_id}/{interview_id}/recording.mp4`
+- **Encryption:** At-rest encryption enabled (Supabase default)
+- **Retention:** 30 days default (configurable per organization)
+
+**Row Level Security (RLS) Policies:**
+
+RLS policies must be configured manually in the Supabase dashboard under Storage > interview-recordings > Policies.
+
+1. **`authenticated_upload` Policy:**
+   - **Operation:** INSERT
+   - **Target Roles:** authenticated
+   - **Condition:** Users can only upload to their own organization's folder
+   - **Policy Expression:** `bucket_id = 'interview-recordings' AND (storage.foldername(name))[1] = auth.uid()::text`
+
+2. **`org_member_read` Policy:**
+   - **Operation:** SELECT
+   - **Target Roles:** authenticated
+   - **Condition:** Users can only read videos from interviews in their organization
+   - **Policy Expression:** User must belong to the same organization as the interview
+
+3. **`service_role_all` Policy:**
+   - **Operation:** ALL
+   - **Target Roles:** service_role
+   - **Purpose:** Backend service can manage all files for cleanup and admin tasks
+   - **Policy Expression:** `bucket_id = 'interview-recordings'`
+
+**Implementation Details:**
+- **Utility Class:** `SupabaseStorageClient` in `backend/app/utils/supabase_storage.py`
+- **Client Library:** `supabase-py>=2.23.0`
+- **Video Upload:** Chunked upload every 30 seconds during interview (HTTP POST)
+- **Video Access:** Signed URLs with 24-hour expiration
+- **Video Deletion:** Soft delete (mark in DB) + hard delete after 90 days
+
+**Upload Video Example:**
+```python
+from app.utils.supabase_storage import SupabaseStorageClient
+
+storage_client = SupabaseStorageClient()
+
+# Upload video chunk
+storage_path = await storage_client.upload_video_chunk(
+    video_data=video_bytes,
+    organization_id="org_123",
+    interview_id="interview_456",
+    chunk_index=0
+)
+# Returns: "org_123/interview_456/recording.mp4"
+```
+
+**Generate Signed URL Example:**
+```python
+# Generate temporary download URL (expires in 24 hours)
+signed_url = await storage_client.generate_signed_url(
+    storage_path="org_123/interview_456/recording.mp4",
+    expires_in=86400  # 24 hours in seconds
+)
+# Returns: "https://xxxxx.supabase.co/storage/v1/object/sign/interview-recordings/org_123/interview_456/recording.mp4?token=..."
+```
+
+**Delete Video Example:**
+```python
+# Delete video from storage
+success = await storage_client.delete_video(
+    storage_path="org_123/interview_456/recording.mp4"
+)
+# Returns: True if deleted, False if not found
+```
+
+**Storage Usage Monitoring:**
+```python
+# Get bucket usage statistics
+usage = await storage_client.get_bucket_usage()
+# Returns: {
+#   "total_size_bytes": 1073741824,
+#   "total_size_gb": 1.0,
+#   "file_count": 42
+# }
+```
+
+**API Endpoints:**
+- `DELETE /api/v1/videos/{interview_id}` - Soft delete video (candidate/recruiter)
+- `GET /api/v1/admin/storage/usage` - Get storage usage stats (admin only)
+
+**Environment Configuration:**
+```bash
+# Required in .env
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_SERVICE_KEY=your_service_role_key
+SUPABASE_ANON_KEY=your_anon_key  # Optional, for RLS testing
+
+# Video retention settings
+VIDEO_RETENTION_DAYS=30           # Days before soft delete
+HARD_DELETE_AFTER_DAYS=90        # Days after soft delete before permanent removal
+VIDEO_STORAGE_THRESHOLD_GB=100   # Alert threshold for storage monitoring
+```
+
+**Cost Optimization:**
+- **Automated Cleanup:** Daily cron job deletes expired videos (script: `backend/scripts/cleanup_videos.py`)
+- **Soft Delete Pattern:** Mark videos as deleted, hard delete after 90 days
+- **Storage Cost:** ~$0.021/GB/month (Supabase pricing)
+- **Target Cost:** <$0.10 per 20-minute interview (~150MB at 720p)
+
+**Error Handling:**
+- **Upload failures:** Retry with exponential backoff (3 attempts)
+- **Storage quota exceeded:** Log warning, alert admins
+- **RLS policy violations:** Return 403 Forbidden
+- **File not found:** Return 404 Not Found
+
+**See Also:**
+- Video storage implementation guide: `backend/docs/VIDEO_STORAGE.md`
+- Video cleanup service: `backend/app/services/video_cleanup_service.py`
+- Database schema: Story 2.0 (video_recordings table)
 
 ---
 

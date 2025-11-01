@@ -24,6 +24,7 @@ from app.models import (
     InterviewMessage,
     Resume,
     AssessmentResult,
+    VideoRecording,
 )
 
 # this is the Alembic Config object, which provides

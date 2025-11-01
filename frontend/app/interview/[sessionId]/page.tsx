@@ -23,6 +23,10 @@ import { AudioPlaybackQueue, AudioLevelMonitor } from "@/src/features/interview/
 import { LatencyIndicator } from "@/src/features/interview/components/LatencyIndicator"
 import { ConnectionLostBanner } from "@/src/features/interview/components/ConnectionLostBanner"
 import { AudioNotSupportedMessage } from "@/src/features/interview/components/AudioNotSupportedMessage"
+import { RecordingIndicator } from "@/src/features/interview/components/RecordingIndicator"
+import { useVideoRecorder } from "@/src/features/interview/hooks/useVideoRecorder"
+import { videoUploadService } from "@/src/features/interview/services/videoUploadService"
+import { useMediaPermissions } from "@/src/hooks/useMediaPermissions"
 import { AlertCircle, WifiOff } from "lucide-react"
 
 export default function InterviewPage() {
@@ -36,6 +40,7 @@ export default function InterviewPage() {
     totalQuestions, 
     setSessionId, 
     setStatus,
+    status,
     interviewState,
     setInterviewState,
     inputMode,
@@ -52,6 +57,9 @@ export default function InterviewPage() {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false)
   const [isAudioSupported, setIsAudioSupported] = useState(true)
   const [reconnectAttempts, setReconnectAttempts] = useState(0)
+  const [videoConsentGiven, setVideoConsentGiven] = useState(false)
+  const [isVideoRecording, setIsVideoRecording] = useState(false)
+  const [uploadedChunks, setUploadedChunks] = useState<number>(0)
   const audioPlaybackQueueRef = useRef<AudioPlaybackQueue | null>(null)
   const audioLevelMonitorRef = useRef<AudioLevelMonitor | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
@@ -60,6 +68,11 @@ export default function InterviewPage() {
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null)
 
   const audioCapture = useAudioCapture()
+  
+  // Video recording hooks
+  const mediaPermissions = useMediaPermissions()
+  const videoRecorder = useVideoRecorder()
+  const previousChunksCountRef = useRef<number>(0)
 
   // Hooks must be declared before conditional logic
   const { mutate: sendMessage, isPending } = useSendMessage({
@@ -192,6 +205,109 @@ export default function InterviewPage() {
       setShowPermissionDialog(true)
     }
   }, [inputMode, audioCapture.permissionGranted])
+
+  // Video consent is handled in tech check page, so we don't show the modal here
+  // Video recording starts automatically if consent was given and camera is available
+  useEffect(() => {
+    const startVideoRecording = async () => {
+      // Check if consent was given (from tech check) and camera is available
+      if (!isVideoRecording && sessionId && mediaPermissions.cameraStatus === 'granted' && mediaPermissions.cameraStream) {
+        try {
+          // Fetch consent status from backend
+          const apiUrl = typeof window !== 'undefined' && (window as any).ENV?.NEXT_PUBLIC_API_BASE_URL 
+            ? (window as any).ENV.NEXT_PUBLIC_API_BASE_URL 
+            : 'http://localhost:8000'
+          
+          const response = await fetch(`${apiUrl}/api/v1/interviews/${sessionId}/status`, {
+            headers: {
+              ...(localStorage.getItem('auth_token') && {
+                Authorization: `Bearer ${localStorage.getItem('auth_token')}`
+              })
+            }
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            
+            // Only start recording if consent was given in tech check
+            if (data.video_recording_consent) {
+              await videoRecorder.startRecording(mediaPermissions.cameraStream)
+              setIsVideoRecording(true)
+              setVideoConsentGiven(true)
+              console.log('✅ Video recording started (consent from tech check)')
+            }
+          }
+        } catch (error) {
+          console.error('Failed to check video consent or start recording:', error)
+          // Gracefully degrade to audio-only
+        }
+      }
+    }
+
+    startVideoRecording()
+  }, [sessionId, isVideoRecording, mediaPermissions.cameraStatus, mediaPermissions.cameraStream, videoRecorder])
+
+  // Upload video chunks as they become available (every 30 seconds)
+  useEffect(() => {
+    const uploadNewChunks = async () => {
+      if (!sessionId || !videoConsentGiven) return
+
+      const currentChunkCount = videoRecorder.videoChunks.length
+      const newChunksCount = currentChunkCount - previousChunksCountRef.current
+
+      if (newChunksCount > 0) {
+        // Upload each new chunk
+        for (let i = previousChunksCountRef.current; i < currentChunkCount; i++) {
+          const chunk = videoRecorder.videoChunks[i]
+          try {
+            await videoUploadService.uploadVideoChunk(
+              sessionId,
+              chunk,
+              i,
+              false // Not final chunk yet
+            )
+            setUploadedChunks(i + 1)
+            console.log(`✅ Uploaded video chunk ${i + 1}/${currentChunkCount}`)
+          } catch (error) {
+            console.error(`Failed to upload video chunk ${i}:`, error)
+          }
+        }
+
+        previousChunksCountRef.current = currentChunkCount
+      }
+    }
+
+    uploadNewChunks()
+  }, [sessionId, videoConsentGiven, videoRecorder.videoChunks, videoUploadService])
+
+  // Stop video recording when interview ends
+  useEffect(() => {
+    const stopVideoRecording = async () => {
+      if (isVideoRecording && status === 'completed') {
+        try {
+          await videoRecorder.stopRecording()
+          
+          // Upload final chunk if any
+          if (videoRecorder.videoChunks.length > uploadedChunks && sessionId) {
+            const lastChunk = videoRecorder.videoChunks[videoRecorder.videoChunks.length - 1]
+            await videoUploadService.uploadVideoChunk(
+              sessionId,
+              lastChunk,
+              videoRecorder.videoChunks.length - 1,
+              true // Final chunk
+            )
+          }
+          
+          setIsVideoRecording(false)
+          console.log('✅ Video recording stopped and uploaded')
+        } catch (error) {
+          console.error('Failed to stop video recording:', error)
+        }
+      }
+    }
+
+    stopVideoRecording()
+  }, [isVideoRecording, status, videoRecorder, sessionId, uploadedChunks, videoUploadService])
 
   const handleSendMessage = (messageText: string) => {
     sendMessage(messageText)
@@ -428,6 +544,9 @@ export default function InterviewPage() {
       {useRealtimeMode && inputMode === 'voice' && (
         <LatencyIndicator latency={realtime.latency} />
       )}
+      
+      {/* Video Recording Indicator */}
+      <RecordingIndicator isRecording={isVideoRecording} />
       
       {/* Microphone Permission Dialog */}
       <MicrophonePermissionDialog

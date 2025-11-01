@@ -24,11 +24,21 @@ This directory contains all project epics organized by delivery phase.
   - Audio metadata analysis
   - Graceful degradation and fallbacks
 
+- **[Epic 02: Professional Video Interview Experience](./epic-02-video-interview-experience.md)**
+  - Pre-interview tech check (audio + camera)
+  - Candidate video capture and recording
+  - AI presence visualization (animated orb)
+  - Interview UI redesign with video layout
+  - Candidate video privacy controls
+  - Real-time caption sync
+  - Video storage and cleanup infrastructure
+  - E2E testing and performance validation
+
 ### Future Epics (Planned)
-- Epic 02: Resume Processing & Feedback System
-- Epic 03: Assessment Scoring & Recruiter Dashboard
-- Epic 04: Integrity Monitoring & Red Flag Detection
-- Epic 05: ATS/HRIS Integration
+- Epic 03: Resume Processing & Feedback System
+- Epic 04: Assessment Scoring & Recruiter Dashboard
+- Epic 05: Integrity Monitoring & Red Flag Detection
+- Epic 06: ATS/HRIS Integration
 
 ---
 

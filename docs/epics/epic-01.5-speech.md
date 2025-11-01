@@ -70,7 +70,7 @@
 7. Audio caching implemented for repeated phrases to reduce costs ($0.015/1K chars)
 8. Backend endpoint serves generated audio (`GET /api/v1/interviews/{id}/audio/{message_id}`)
 
-## Story 1.5.5: Voice-Based Interview UI Enhancement
+## Story 1.5.5: Voice-Based Interview UI Enhancement (MVP)
 
 **As a** candidate,  
 **I want** an intuitive voice interview interface with clear visual feedback,  
@@ -82,12 +82,41 @@
 2. Visual states clearly differentiate: AI Speaking, AI Listening, Candidate Speaking, Processing
 3. AI speech plays automatically through browser audio
 4. Text transcript displays alongside voice (AI questions and candidate responses shown as text)
-5. Volume controls allow candidate to adjust AI voice level
-6. Replay button allows candidate to rehear last AI question
-7. "Switch to Text Mode" button available for fallback preference
-8. Loading/processing indicators show when audio is being transcribed or generated
+5. "Switch to Text Mode" button available for fallback preference
+6. Loading/processing indicators show when audio is being transcribed or generated
+7. Mobile-responsive design works on phone screens
+8. Smooth state transitions without jarring UI changes
 
-## Story 1.5.6: Hybrid Input Mode - Voice + Text
+**Note**: Volume controls and replay features deferred to post-MVP.
+
+## Story 1.5.6: GPT-4 Realtime API Voice Integration ⭐ NEW
+
+**As a** candidate,  
+**I want** a natural, real-time voice conversation with the AI interviewer,  
+**so that** the interview feels like talking to a real person with minimal latency.
+
+**Context**: Stories 1.5.3 + 1.5.4 have 26-second response latency (unacceptable). GPT-4 Realtime API provides direct speech-to-speech with <1 second latency.
+
+**Acceptance Criteria:**
+
+1. WebSocket connection established to OpenAI Realtime API on interview start
+2. Bidirectional audio streaming (candidate audio sent, AI audio received in real-time)
+3. Sub-1 second response latency for AI to begin speaking after candidate finishes
+4. Text transcript maintained alongside voice for accessibility
+5. Function calling implemented to evaluate candidate answers in real-time
+6. Voice mode toggle allows fallback to text-based chat
+7. Conversation context maintained across entire interview session
+8. Error handling gracefully manages connection drops and audio failures
+9. Session isolation - each interview maintains independent WebSocket connection
+10. Audio format handling - PCM16 audio at 24kHz (OpenAI requirement)
+11. Cost tracking - monitor API usage (~$3.80 per 20-min interview)
+12. Mobile compatibility - works on iOS Safari and Android Chrome
+
+**Performance Target**: 95% of responses <1 second (vs. 26s with Stories 1.5.3/1.5.4)
+
+**Migration Note**: Stories 1.5.3 & 1.5.4 remain as fallback for text mode.
+
+## Story 1.5.7: Hybrid Input Mode - Voice + Text
 
 **As a** candidate,  
 **I want** to speak my answers but type code examples when needed,  
@@ -103,23 +132,6 @@
 6. Transcript clearly indicates which parts were spoken vs typed
 7. Text responses processed through same AI analysis pipeline
 8. Hybrid responses stored with clear delineation (speech_part, text_part)
-
-## Story 1.5.7: WebRTC Audio Streaming Setup
-
-**As a** developer,  
-**I want** low-latency audio streaming using WebRTC,  
-**so that** voice conversations feel natural without noticeable delays.
-
-**Acceptance Criteria:**
-
-1. WebRTC peer connection established between frontend and backend
-2. Audio streams transmitted with sub-200ms latency (per NFR18)
-3. Audio quality maintains 16kHz sample rate minimum (per NFR19)
-4. Network adaptation handles varying bandwidth conditions
-5. Reconnection logic implemented for dropped connections
-6. Audio buffer management prevents choppy playback
-7. Real-time metrics monitor latency and audio quality
-8. Fallback to HTTP-based audio transfer if WebRTC fails
 
 ## Story 1.5.8: Audio Metadata Analysis for Integrity Monitoring
 
@@ -147,7 +159,8 @@
 **Acceptance Criteria:**
 
 1. Microphone access denial gracefully switches to text-only mode
-2. OpenAI API failures trigger automatic text fallback
+2. OpenAI API failures trigger automatic text fallback (Stories 1.5.3/1.5.4 as backup)
+3. Realtime API WebSocket failures fall back to text mode (Story 1.5.6)
 3. Poor audio quality detection prompts candidate to switch to text
 4. Network latency issues handled without interview disruption
 5. Clear messaging explains fallback reasons to candidate

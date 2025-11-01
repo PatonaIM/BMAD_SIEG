@@ -12,13 +12,18 @@ export interface UseAudioCaptureReturn {
   getMediaStream: () => MediaStream | null;
 }
 
+export interface UseAudioCaptureOptions {
+  externalStream?: MediaStream | null;
+}
+
 /**
  * Custom hook for audio capture using MediaRecorder API
  * Supports WebM format with Opus codec for wide browser compatibility
  * 
+ * @param options - Optional configuration including external stream
  * @returns Audio capture controls and state
  */
-export function useAudioCapture(): UseAudioCaptureReturn {
+export function useAudioCapture(options?: UseAudioCaptureOptions): UseAudioCaptureReturn {
   const [state, setState] = useState<AudioCaptureState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
@@ -26,6 +31,10 @@ export function useAudioCapture(): UseAudioCaptureReturn {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const externalStreamRef = useRef<MediaStream | null>(options?.externalStream || null);
+
+  // Update external stream ref when it changes
+  externalStreamRef.current = options?.externalStream || null;
 
   /**
    * Request microphone permission from user
@@ -76,12 +85,24 @@ export function useAudioCapture(): UseAudioCaptureReturn {
    */
   const startRecording = useCallback(async (onChunk?: (chunk: ArrayBuffer) => void): Promise<void> => {
     try {
-      // Request permission if not already granted
-      if (!permissionGranted || !streamRef.current) {
-        const granted = await requestPermission();
-        if (!granted) {
-          return;
+      // Use external stream if provided, otherwise get our own
+      let activeStream: MediaStream | null = externalStreamRef.current;
+      
+      if (!activeStream) {
+        // Request permission if not already granted
+        if (!permissionGranted || !streamRef.current) {
+          const granted = await requestPermission();
+          if (!granted) {
+            return;
+          }
         }
+        activeStream = streamRef.current;
+      }
+
+      if (!activeStream) {
+        setError('No audio stream available');
+        setState('error');
+        return;
       }
 
       // Check MediaRecorder support
@@ -110,7 +131,7 @@ export function useAudioCapture(): UseAudioCaptureReturn {
 
       // Initialize MediaRecorder
       audioChunksRef.current = [];
-      mediaRecorderRef.current = new MediaRecorder(streamRef.current!, {
+      mediaRecorderRef.current = new MediaRecorder(activeStream, {
         mimeType: supportedMimeType,
         audioBitsPerSecond: 32000,
       });
@@ -136,7 +157,8 @@ export function useAudioCapture(): UseAudioCaptureReturn {
       if (onChunk) {
         mediaRecorderRef.current.start(100); // Request data every 100ms
       } else {
-        mediaRecorderRef.current.start(); // Single blob mode
+        // For non-streaming mode, request data periodically to ensure chunks are captured
+        mediaRecorderRef.current.start(1000); // Request data every 1 second
       }
       
       setState('recording');
@@ -160,7 +182,13 @@ export function useAudioCapture(): UseAudioCaptureReturn {
    */
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
     return new Promise((resolve) => {
-      if (!mediaRecorderRef.current || state !== 'recording') {
+      if (!mediaRecorderRef.current) {
+        resolve(null);
+        return;
+      }
+
+      // Check recorder state instead of hook state
+      if (mediaRecorderRef.current.state !== 'recording') {
         resolve(null);
         return;
       }
@@ -179,7 +207,7 @@ export function useAudioCapture(): UseAudioCaptureReturn {
 
       mediaRecorderRef.current.stop();
     });
-  }, [state]);
+  }, []); // Remove state dependency
 
   return {
     state,

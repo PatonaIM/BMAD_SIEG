@@ -85,47 +85,142 @@ class AIInterviewEngine:
 
 **Responsibility:** Handle audio transcription (STT) and voice synthesis (TTS) with provider abstraction
 
+**Implementation Status:** ✅ **Completed in Story 1.5.1** (November 2025)
+
 **Key Interfaces:**
-- `transcribe_audio(audio_file, metadata) → Transcription + confidence`
-- `synthesize_speech(text, voice_config) → Audio URL`
-- `validate_audio_quality(audio_metadata) → Quality score`
-- `process_audio_stream(stream_chunks) → Real-time text`
+- `transcribe_candidate_audio(audio_data: bytes, interview_id: UUID) → TranscriptionResult`
+- `generate_ai_speech(text: str, interview_id: UUID) → bytes`
+- `store_audio_metadata(interview_id: UUID, message_id: UUID, metadata: dict)`
+- `validate_audio_quality(audio_metadata: dict) → bool`
 
 **Dependencies:**
-- `OpenAIProvider` - Whisper API for STT, TTS API for voice
-- `InterviewMessageRepository` - Store audio metadata
-- Supabase Storage or S3 - Audio file storage
-- `httpx` - Async HTTP client for OpenAI API
+- `OpenAISpeechProvider` - Whisper API for STT, TTS API for voice synthesis
+- `InterviewMessageRepository` - Store audio metadata in `audio_metadata` JSONB field
+- `SpeechCostCalculator` - Track STT/TTS costs per interview
+- `httpx.AsyncClient` - Async HTTP client for OpenAI API calls
 
 **Technology Stack:**
-- OpenAI Whisper API (primary for MVP)
-- OpenAI TTS API with `alloy` voice (neural)
-- Audio format support: WebM, Opus, MP3, WAV
-- Target sample rate: 16kHz minimum
-- Backend audio processing (never expose API keys to frontend)
+- **OpenAI Whisper API** (primary STT for MVP)
+  - Model: `whisper-1`
+  - Response format: `verbose_json` for confidence scores
+  - Language: `en` (English only for MVP)
+  - Audio formats: WAV, MP3, WebM, Opus
+  - Cost: $0.006/minute
+- **OpenAI TTS API** (primary voice synthesis for MVP)
+  - Model: `tts-1` (faster, sufficient quality)
+  - Voice: `alloy` (neutral, professional tone)
+  - Speed: 1.0 (natural pace)
+  - Output: MP3 audio
+  - Cost: $0.015/1K characters
+- **Backend audio processing** (API keys never exposed to frontend)
+- **Target sample rate:** 16kHz minimum
+- **Max file size:** 25MB (Whisper API limit)
 
-**Provider Abstraction:**
+**Provider Abstraction Layer:**
 ```python
+# backend/app/providers/speech_provider.py
 class SpeechProvider(ABC):
+    """Abstract interface for speech services (STT + TTS)"""
+    
     @abstractmethod
-    async def transcribe(self, audio_data: bytes) -> TranscriptionResult:
+    async def transcribe_audio(self, audio_data: bytes, language: str = "en") -> TranscriptionResult:
+        """Transcribe audio to text with confidence scores"""
         pass
     
     @abstractmethod
-    async def synthesize(self, text: str) -> bytes:
+    async def synthesize_speech(self, text: str, voice: str = "alloy", speed: float = 1.0) -> bytes:
+        """Generate speech audio from text"""
+        pass
+    
+    @abstractmethod
+    def get_supported_audio_formats(self) -> list[str]:
+        """Return supported audio MIME types"""
+        pass
+    
+    @abstractmethod
+    def validate_audio_quality(self, audio_metadata: dict) -> bool:
+        """Validate audio meets quality standards"""
         pass
 
+# backend/app/providers/openai_speech_provider.py
 class OpenAISpeechProvider(SpeechProvider):
-    # OpenAI Whisper + TTS implementation
+    """OpenAI implementation for Whisper (STT) and TTS"""
+    # Full implementation with retry logic, error handling, cost tracking
 
-# Future: AzureSpeechProvider, GCPSpeechProvider
+# Future providers: AzureSpeechProvider, GCPSpeechProvider
 ```
 
-**Audio Metadata Capture:**
-- Sample rate, codec, file size
-- Whisper processing time
-- Confidence scores per segment
-- Background noise levels (future)
+**Audio Metadata Storage:**
+```json
+// Stored in interview_messages.audio_metadata JSONB field
+{
+  "provider": "openai",
+  "model": "whisper-1",
+  "confidence": 0.95,
+  "sample_rate_hz": 16000,
+  "format": "audio/webm",
+  "file_size_bytes": 125000,
+  "processing_time_ms": 1200,
+  "language": "en",
+  "segments": [
+    {
+      "text": "segment text",
+      "start": 0.0,
+      "end": 2.5,
+      "confidence": 0.93
+    }
+  ]
+}
+```
+
+**Cost Tracking:**
+- **Database fields added:** `interviews.speech_tokens_used` (int), `interviews.speech_cost_usd` (Decimal)
+- **Cost calculation:** Automatic via `SpeechCostCalculator` utility
+- **Per-interview tracking:** Total speech cost separate from AI cost
+- **Breakdown:** STT cost + TTS cost tracked independently
+
+**Error Handling & Retry Logic:**
+- **429 (Rate Limit):** Exponential backoff (1s, 2s, 4s), max 3 retries
+- **500 (Server Error):** Retry with 2s delay, max 3 attempts
+- **408 (Timeout):** Retry once with 5s delay
+- **400 (Bad Request):** No retry, raise `AudioValidationError` immediately
+- **401 (Auth Error):** No retry, raise `SpeechProviderError` immediately
+- **Timeouts:** 30s for Whisper, 15s for TTS
+- **Logging:** All API errors logged with correlation IDs
+
+**Service Orchestration:**
+```python
+# backend/app/services/speech_service.py
+class SpeechService:
+    """Orchestrates speech processing with business logic"""
+    
+    async def transcribe_candidate_audio(self, audio_data: bytes, interview_id: UUID) -> TranscriptionResult:
+        # 1. Validate audio quality (sample rate, file size, duration)
+        # 2. Call speech provider (OpenAI Whisper)
+        # 3. Calculate transcription cost
+        # 4. Update database with metadata and cost
+        # 5. Log performance metrics
+        pass
+    
+    async def generate_ai_speech(self, text: str, interview_id: UUID) -> bytes:
+        # 1. Validate text length (<4096 chars for OpenAI)
+        # 2. Call speech provider (OpenAI TTS)
+        # 3. Calculate synthesis cost
+        # 4. Update database with cost
+        # 5. Return audio bytes (MP3)
+        pass
+```
+
+**Performance Targets:**
+- **Whisper transcription:** <2-3 seconds (OpenAI API latency)
+- **TTS generation:** <2-3 seconds (OpenAI API latency)
+- **Total audio round-trip:** <5 seconds target
+
+**Future Enhancements:**
+- Real-time streaming STT with Azure Speech Services
+- Audio caching for repeated TTS phrases (common questions)
+- Background noise detection and quality scoring
+- Multi-language support (Spanish, French, etc.)
 
 ---
 

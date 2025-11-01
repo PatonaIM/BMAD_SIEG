@@ -1,21 +1,12 @@
-import { Box, Typography, LinearProgress } from '@mui/material';
-import { motion } from 'framer-motion';
-import { styled } from '@mui/material/styles';
+"use client"
+
+import { Progress } from "@/components/ui/progress"
+import { motion } from "framer-motion"
 
 export interface InterviewProgressProps {
-  current: number;
-  total: number;
+  current: number
+  total: number
 }
-
-const StyledLinearProgress = styled(LinearProgress)(({ theme }) => ({
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: theme.palette.grey[200],
-  '& .MuiLinearProgress-bar': {
-    borderRadius: 4,
-    backgroundColor: theme.palette.primary.main,
-  },
-}));
 
 /**
  * InterviewProgress Component
@@ -24,45 +15,24 @@ const StyledLinearProgress = styled(LinearProgress)(({ theme }) => ({
  * - Smooth animation transitions with Framer Motion
  */
 export default function InterviewProgress({ current, total }: InterviewProgressProps) {
-  const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+  const percentage = total > 0 ? Math.round((current / total) * 100) : 0
 
   return (
-    <Box
-      sx={{
-        position: 'sticky',
-        top: 0,
-        bgcolor: 'background.paper',
-        p: 2,
-        borderBottom: '1px solid',
-        borderColor: 'grey.300',
-        zIndex: 10,
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mb: 1, fontWeight: 500 }}
-        >
+    <div className="sticky top-0 bg-background p-4 border-b border-border z-10">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <p className="text-sm text-muted-foreground font-medium mb-2">
           Question {current} of {total} ({percentage}% complete)
-        </Typography>
-        
+        </p>
+
         <motion.div
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          style={{ transformOrigin: 'left' }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          style={{ transformOrigin: "left" }}
         >
-          <StyledLinearProgress
-            variant="determinate"
-            value={percentage}
-          />
+          <Progress value={percentage} className="h-2" />
         </motion.div>
       </motion.div>
-    </Box>
-  );
+    </div>
+  )
 }

@@ -1,19 +1,20 @@
 # ===========================================
-# Frontend - React/TypeScript/Vite
+# Frontend - Next.js/TypeScript
 # ===========================================
 
 # Dependencies
 node_modules/
 
-# Build outputs
-dist/
-dist-ssr/
-build/
+# Next.js Build Outputs
+.next/
 out/
+build/
+dist/
 
-# Vite
-.vite/
-*.local
+# Environment Files (use .env.example as template)
+.env
+.env.*
+!.env.example
 
 # Testing & Coverage
 coverage/
@@ -26,6 +27,7 @@ playwright/.cache/
 .cache/
 .eslintcache
 *.tsbuildinfo
+.turbo/
 
 # Logs (frontend-specific)
 npm-debug.log*
@@ -33,3 +35,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Vercel
+.vercel

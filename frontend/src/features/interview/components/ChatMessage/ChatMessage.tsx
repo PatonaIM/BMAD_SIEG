@@ -1,11 +1,11 @@
-import { Box, Typography, Avatar, useMediaQuery, useTheme } from '@mui/material';
-import { SmartToy as AIIcon } from '@mui/icons-material';
-import { memo } from 'react';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Bot } from "lucide-react"
+import { memo } from "react"
 
 export interface ChatMessageProps {
-  role: 'ai' | 'candidate';
-  content: string;
-  timestamp: number;
+  role: "ai" | "candidate"
+  content: string
+  timestamp: number
 }
 
 /**
@@ -18,93 +18,53 @@ export interface ChatMessageProps {
  * - Memoized for performance optimization (PERF-001)
  */
 const ChatMessage = memo(function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
-  const isAI = role === 'ai';
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  
+  const isAI = role === "ai"
+
   // Format timestamp as HH:mm AM/PM
   const formatTime = (ts: number) => {
-    const date = new Date(ts);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    const date = new Date(ts)
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: true,
-    });
-  };
+    })
+  }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: isAI ? 'row' : 'row-reverse',
-        alignItems: 'flex-start',
-        gap: 1,
-        mb: 2,
-      }}
+    <div
+      className={`flex ${isAI ? "flex-row" : "flex-row-reverse"} items-start gap-2 mb-4`}
       role="article"
-      aria-label={`${isAI ? 'AI interviewer' : 'Your'} message at ${formatTime(timestamp)}`}
+      aria-label={`${isAI ? "AI interviewer" : "Your"} message at ${formatTime(timestamp)}`}
     >
       {/* Avatar - only show for AI messages */}
       {isAI && (
-        <Avatar
-          sx={{
-            bgcolor: 'primary.main',
-            width: isSmallScreen ? 36 : 40,
-            height: isSmallScreen ? 36 : 40,
-          }}
-          aria-label="AI interviewer avatar"
-        >
-          <AIIcon sx={{ fontSize: isSmallScreen ? 18 : 20 }} />
+        <Avatar className="w-9 h-9 lg:w-10 lg:h-10 bg-primary">
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            <Bot className="w-4 h-4 lg:w-5 lg:h-5" />
+          </AvatarFallback>
         </Avatar>
       )}
 
       {/* Message bubble */}
-      <Box
-        sx={{
-          maxWidth: isSmallScreen ? '80%' : '70%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 0.5,
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: isAI ? 'primary.main' : 'grey.200',
-            color: isAI ? 'primary.contrastText' : 'text.primary',
-            px: isSmallScreen ? 1.5 : 2,
-            py: isSmallScreen ? 1 : 1.5,
-            borderRadius: '8px',
-            wordBreak: 'break-word',
-          }}
+      <div className="max-w-[80%] lg:max-w-[70%] flex flex-col gap-1">
+        <div
+          className={`px-3 py-2 lg:px-4 lg:py-3 rounded-lg break-words ${
+            isAI ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+          }`}
         >
-          <Typography 
-            variant="body1"
-            sx={{
-              fontSize: isSmallScreen ? '0.9rem' : '1rem',
-            }}
-            component="p"
-          >
-            {content}
-          </Typography>
-        </Box>
+          <p className="text-sm lg:text-base">{content}</p>
+        </div>
 
         {/* Timestamp */}
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{
-            alignSelf: isAI ? 'flex-start' : 'flex-end',
-            px: 1,
-            fontSize: isSmallScreen ? '0.65rem' : '0.75rem',
-          }}
-          component="time"
+        <time
+          className={`text-xs lg:text-sm text-muted-foreground px-2 ${isAI ? "self-start" : "self-end"}`}
           dateTime={new Date(timestamp).toISOString()}
         >
           {formatTime(timestamp)}
-        </Typography>
-      </Box>
-    </Box>
-  );
-});
+        </time>
+      </div>
+    </div>
+  )
+})
 
-export default ChatMessage;
+export default ChatMessage

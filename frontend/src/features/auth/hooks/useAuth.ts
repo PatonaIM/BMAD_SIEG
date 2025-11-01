@@ -1,12 +1,14 @@
-import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
-import { useAuthStore } from '../store/authStore';
-import type { RegisterData, LoginData } from '../types/auth.types';
+"use client"
+
+import { useMutation } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
+import { authService } from "../services/authService"
+import { useAuthStore } from "../store/authStore"
+import type { RegisterData, LoginData } from "../types/auth.types"
 
 export const useRegister = () => {
-  const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const router = useRouter()
+  const setAuth = useAuthStore((state) => state.setAuth)
 
   return useMutation({
     mutationFn: (data: RegisterData) => authService.registerCandidate(data),
@@ -14,17 +16,17 @@ export const useRegister = () => {
       const user = {
         id: response.candidate_id,
         email: response.email,
-        full_name: '', // Will be populated from candidate profile if needed
-      };
-      setAuth(user, response.token);
-      navigate('/interview/start');
+        full_name: "",
+      }
+      setAuth(user, response.token)
+      router.push("/dashboard")
     },
-  });
-};
+  })
+}
 
 export const useLogin = () => {
-  const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const router = useRouter()
+  const setAuth = useAuthStore((state) => state.setAuth)
 
   return useMutation({
     mutationFn: (data: LoginData) => authService.loginCandidate(data),
@@ -32,20 +34,20 @@ export const useLogin = () => {
       const user = {
         id: response.candidate_id,
         email: response.email,
-        full_name: '', // Will be populated from candidate profile if needed
-      };
-      setAuth(user, response.token);
-      navigate('/interview/start');
+        full_name: "",
+      }
+      setAuth(user, response.token)
+      router.push("/dashboard")
     },
-  });
-};
+  })
+}
 
 export const useLogout = () => {
-  const navigate = useNavigate();
-  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const router = useRouter()
+  const clearAuth = useAuthStore((state) => state.clearAuth)
 
   return () => {
-    clearAuth();
-    navigate('/login');
-  };
-};
+    clearAuth()
+    router.push("/login")
+  }
+}

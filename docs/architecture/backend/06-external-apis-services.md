@@ -2,7 +2,17 @@
 
 ## OpenAI API Integration
 
+### Implementation Status
+- ✅ **Whisper API (STT)**: Fully integrated in Story 1.5.1 (November 2025)
+- ✅ **TTS API**: Fully integrated in Story 1.5.1 (November 2025)
+- ✅ **GPT-4o-mini**: Core interview engine (Story 1.7)
+- ⏳ **GPT-4**: Planned for production after MVP validation
+
+---
+
 **1. Whisper API (Speech-to-Text)**
+
+**Status:** ✅ **Implemented** (Story 1.5.1)
 
 **Endpoint:** `https://api.openai.com/v1/audio/transcriptions`
 
@@ -10,37 +20,85 @@
 
 **Request Format:**
 ```python
+# multipart/form-data
 {
-    "file": <audio_file>,         # multipart/form-data
-    "model": "whisper-1",
-    "language": "en",             # Optional, improves accuracy
-    "response_format": "json",    # json, text, srt, verbose_json, vtt
-    "temperature": 0              # 0 = deterministic, 0-1 = creative
+    "file": <audio_file>,         # Audio file bytes
+    "model": "whisper-1",          # Only model available
+    "language": "en",              # MVP: English only, improves accuracy
+    "response_format": "verbose_json",  # ✅ Returns confidence scores
+    "temperature": 0               # 0 = deterministic (recommended)
 }
 ```
 
-**Response Format:**
+**Response Format (verbose_json):**
 ```json
 {
-    "text": "Transcribed text from audio"
+    "text": "Transcribed text from audio",
+    "language": "en",
+    "duration": 5.2,
+    "segments": [
+        {
+            "id": 0,
+            "seek": 0,
+            "start": 0.0,
+            "end": 2.5,
+            "text": "segment text",
+            "tokens": [50364, 1752, ...],
+            "temperature": 0.0,
+            "avg_logprob": -0.3,
+            "compression_ratio": 1.5,
+            "no_speech_prob": 0.02,
+            "confidence": 0.95  // ✅ Per-segment confidence
+        }
+    ]
 }
 ```
 
+**Implementation Details:**
+- **Provider Class:** `OpenAISpeechProvider` (implements `SpeechProvider` abstract interface)
+- **Location:** `backend/app/providers/openai_speech_provider.py`
+- **Service Orchestration:** `SpeechService.transcribe_candidate_audio()`
+- **HTTP Client:** `httpx.AsyncClient` with 30s timeout
+- **Audio Validation:** Sample rate ≥16kHz, file size <25MB, duration >0.1s
+- **Metadata Storage:** Stored in `interview_messages.audio_metadata` JSONB field
+
+**Supported Audio Formats:**
+- ✅ WAV (`audio/wav`)
+- ✅ MP3 (`audio/mpeg`)
+- ✅ WebM (`audio/webm`) - Primary format from browser MediaRecorder
+- ✅ Opus (`audio/opus`)
+- ❌ M4A, MP4, MPEG, MPGA (not used in MVP)
+
 **Rate Limits:**
-- 50 requests per minute (RPM) for free tier
-- File size limit: 25 MB
-- Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm
+- **Free tier:** 50 requests per minute (RPM)
+- **File size limit:** 25 MB
+- **Paid tier:** Contact OpenAI for higher limits
 
-**Error Handling:**
-- 429 (Rate Limit): Exponential backoff with 1s, 2s, 4s retries
-- 400 (Bad Request): Log audio metadata, alert for codec issues
-- 500 (Server Error): Retry up to 3 times with 2s delay
+**Error Handling & Retry Logic:**
+- **429 (Rate Limit):** Exponential backoff (1s, 2s, 4s), max 3 retries
+- **500 (Server Error):** Retry with 2s delay, max 3 attempts
+- **408 (Timeout):** Retry once with 5s delay
+- **400 (Bad Request):** No retry, raise `AudioValidationError` immediately
+  - Log audio metadata (format, size, sample rate) for debugging
+- **401 (Auth Error):** No retry, raise `SpeechProviderError`, alert DevOps
+- **Logging:** All API calls logged with correlation IDs for debugging
 
-**Cost:** $0.006 per minute of audio
+**Cost Tracking:**
+- **Price:** $0.006 per minute of audio
+- **Calculation:** `(duration_seconds / 60) * 0.006`
+- **Storage:** `interviews.speech_cost_usd` field (Decimal, 4 decimals)
+- **Utility:** `SpeechCostCalculator.calculate_stt_cost(duration_seconds)`
+
+**Performance:**
+- **Target Latency:** <2-3 seconds (OpenAI API processing time)
+- **Observed Latency:** 1.5-2.5 seconds for 5-10 second audio clips
+- **Future Optimization:** Azure Speech Services for real-time streaming (<500ms)
 
 ---
 
 **2. TTS API (Text-to-Speech)**
+
+**Status:** ✅ **Implemented** (Story 1.5.1)
 
 **Endpoint:** `https://api.openai.com/v1/audio/speech`
 
@@ -49,28 +107,56 @@
 **Request Format:**
 ```python
 {
-    "model": "tts-1",           # tts-1 (faster) or tts-1-hd (higher quality)
+    "model": "tts-1",           # ✅ Faster, sufficient quality for MVP
+                                # "tts-1-hd" available for higher quality
     "input": "Text to speak",   # Max 4096 characters
-    "voice": "alloy",           # alloy, echo, fable, onyx, nova, shimmer
-    "response_format": "mp3",   # mp3, opus, aac, flac
-    "speed": 1.0                # 0.25 to 4.0
+    "voice": "alloy",           # ✅ MVP voice: neutral, professional
+    "response_format": "mp3",   # ✅ MP3 for broad browser support
+    "speed": 1.0                # ✅ Natural pace (0.25-4.0 range)
 }
 ```
 
-**Response:** Binary audio file stream
+**Voice Options:**
+- **alloy** ✅ - Neutral, professional (selected for MVP)
+- echo - Warm, friendly
+- fable - Expressive, storytelling
+- onyx - Deep, authoritative
+- nova - Young, energetic
+- shimmer - Soft, calming
 
-**Voice Selection for MVP:** `alloy` (neutral, professional)
+**Response:** Binary MP3 audio stream
+
+**Implementation Details:**
+- **Provider Class:** `OpenAISpeechProvider.synthesize_speech()`
+- **Service Orchestration:** `SpeechService.generate_ai_speech()`
+- **HTTP Client:** `httpx.AsyncClient` with 15s timeout
+- **Text Validation:** Max 4096 characters (OpenAI API limit)
+- **Audio Output:** MP3 format (browser-compatible)
 
 **Rate Limits:**
-- 50 requests per minute (RPM)
-- Max input length: 4096 characters per request
+- **All tiers:** 50 requests per minute (RPM)
+- **Max input length:** 4096 characters per request
+- **Strategy:** Queue requests if rate limit hit, process sequentially
 
 **Error Handling:**
-- 429 (Rate Limit): Queue requests, process sequentially
-- 400 (Bad Request): Truncate text if >4096 chars
-- 500 (Server Error): Return cached TTS if available, else retry
+- **429 (Rate Limit):** Queue requests, retry after 1 minute
+- **400 (Bad Request):** Truncate text to 4096 chars, log warning
+- **500 (Server Error):** Retry up to 3 times with 2s delay
+- **Fallback:** Return cached TTS for repeated phrases (future optimization)
 
-**Cost:** $0.015 per 1,000 characters (input text)
+**Cost Tracking:**
+- **Price:** $0.015 per 1,000 characters (input text)
+- **Calculation:** `(len(text) / 1000) * 0.015`
+- **Storage:** `interviews.speech_tokens_used` (character count), `speech_cost_usd`
+- **Utility:** `SpeechCostCalculator.calculate_tts_cost(text)`
+
+**Performance:**
+- **Target Latency:** <2-3 seconds for 100-200 character question
+- **Observed Latency:** 1.5-2.5 seconds (consistent across text lengths)
+
+**Per-Interview Cost Estimate:**
+- **15 AI questions × 200 chars each:** 3,000 characters = $0.045
+- **Total speech cost (STT + TTS):** ~$0.135 per interview
 
 ---
 

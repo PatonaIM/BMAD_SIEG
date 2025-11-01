@@ -4,13 +4,14 @@
 
 | Category | Technology | Version | Purpose | Rationale |
 |----------|-----------|---------|---------|-----------|
-| **Framework** | React | 18+ | UI framework with hooks and concurrent features | Industry standard, excellent TypeScript support, perfect for real-time interview UI |
+| **Framework** | Next.js | 16+ | Full-stack React framework with App Router | Production-grade SSR/CSR, file-based routing, excellent performance, built-in optimization |
+| **React Library** | React | 19+ | UI framework with Server Components | Industry standard, React Server Components support, excellent TypeScript integration |
 | **Language** | TypeScript | 5.0+ | Type-safe development | Prevents runtime errors, better IDE support, essential for complex state management |
-| **Build Tool** | Vite | 5.0+ | Fast development and production builds | Instant HMR, optimized for modern browsers, excellent for audio/WebRTC features |
-| **UI Library** | Material-UI (MUI) | 5.14+ | Base component library | Accessible components, customizable theming, production-ready |
-| **State Management** | Zustand + Context API | Zustand 4.4+ | Global and local state | Lightweight, minimal boilerplate, Context for simple cases |
-| **Routing** | React Router | 6.20+ | Client-side routing | Standard React routing, supports protected routes and lazy loading |
-| **Styling** | MUI Theming (Emotion) | Built-in | Component styling | Leverages existing MUI theme, CSS-in-JS with component scope |
+| **Build Tool** | Next.js Built-in (Turbopack) | Built-in | Fast development and production builds | Instant HMR, optimized builds, integrated with Next.js |
+| **Styling** | Tailwind CSS | 3.4+ | Utility-first CSS framework | Fast styling, consistent design, excellent DX, smaller bundle vs CSS-in-JS |
+| **UI Library** | Material-UI (MUI) + shadcn/ui | MUI 5.14+, shadcn latest | Component libraries | Accessible components, customizable, production-ready, modern design patterns |
+| **State Management** | Zustand + React Context | Zustand 4.4+ | Global and local state | Lightweight, minimal boilerplate, Context for simple cases |
+| **Routing** | Next.js App Router | Built-in | File-based routing with SSR/CSR | Zero configuration, automatic code splitting, middleware support |
 | **Form Handling** | React Hook Form | 7.48+ | Form state and validation | Performance optimized, minimal re-renders, integrates with validation libraries |
 | **Validation** | Zod | 3.22+ | Schema validation | Type-safe validation, works seamlessly with TypeScript and React Hook Form |
 | **Data Fetching** | TanStack Query (React Query) | 5.0+ | Server state management and caching | Auto caching, background refetching, optimistic updates, request deduplication |
@@ -20,14 +21,44 @@
 | **Testing Framework** | Vitest | 1.0+ | Unit and integration testing | Native Vite integration, Jest-compatible API, faster execution |
 | **Testing Library** | React Testing Library | 14.1+ | Component testing | Best practices for user-centric testing, accessibility focus |
 | **E2E Testing** | Playwright | 1.40+ | End-to-end testing | Cross-browser, reliable, great for audio/video testing |
-| **Component Dev** | Storybook | 7.5+ | Component development and documentation | Isolated component development, design system showcase |
 | **Animation** | Framer Motion | 10.16+ | UI animations and transitions | Declarative animations, perfect for waveform visualizers and progress indicators |
 | **Data Visualization** | Recharts | 2.10+ | Skill maps and analytics charts | React-native, customizable, good for recruiter dashboards |
 | **Code Quality** | ESLint + Prettier | Latest | Linting and formatting | Code consistency, catch errors early |
 | **Type Checking** | TypeScript ESLint | Latest | TypeScript-specific linting | Enforce TypeScript best practices |
-| **Dev Tools** | React DevTools, Redux DevTools (for Zustand) | Latest | Development debugging | State inspection, performance profiling |
+| **Dev Tools** | React DevTools, TanStack Query DevTools | Latest | Development debugging | State inspection, performance profiling, query debugging |
 
 ## Key Technology Decisions
+
+### **Next.js 16 App Router over Vite + React Router**
+**Migration Rationale (v2.0):**
+- **SEO Critical**: Server-rendered pages enable search engine indexing (job listings, company profiles)
+- **Performance**: 40-60% faster initial page load with SSR vs client-only SPA
+- **Automatic Code Splitting**: Route-based splitting without manual configuration
+- **File-Based Routing**: `app/` directory structure eliminates routing configuration
+- **Production Ecosystem**: Vercel deployment, preview URLs, edge functions
+- **React Server Components**: Reduced JavaScript bundle size for non-interactive pages
+- **Image Optimization**: Built-in next/image component with automatic optimization
+- **API Routes**: Backend integration within same codebase (optional, we use separate backend)
+
+**Implementation Patterns:**
+- Server Components (default): Layouts, static pages, SEO-critical content
+- Client Components ("use client"): Forms, state management, real-time features, audio processing
+- Hybrid Pages: Server-rendered shell + client-side interactivity
+
+**Migration Impact:**
+- Navigation: `useNavigate()` → `useRouter()` from `next/navigation`
+- Links: `<Link to>` → `<Link href>`
+- Environment Variables: `VITE_*` → `NEXT_PUBLIC_*`
+- Preserved: API client, React Query hooks, Zustand stores (no changes)
+
+### **Tailwind CSS over MUI Emotion (Styling Evolution)**
+**Added in v2.0:**
+- **Utility-First Approach**: Faster styling iteration vs CSS-in-JS
+- **Smaller Bundles**: No runtime CSS-in-JS overhead
+- **Design Tokens**: Consistent spacing, colors, typography via Tailwind config
+- **shadcn/ui Integration**: Pre-built accessible components with Tailwind
+- **MUI Coexistence**: Keep MUI for complex components (DataGrid, DatePicker)
+- **Performance**: No styled-components re-renders or theme prop drilling
 
 **TanStack Query over Axios/Redux:**
 - Eliminates need for manual API state management (loading, error, data)
@@ -84,5 +115,35 @@
 - Audio metadata capture for integrity monitoring
 - Flexible provider switching (OpenAI, Azure, GCP) without frontend changes
 - Better monitoring and cost tracking
+
+## Mock API Mode for UI Development
+
+**New in v2.0:** `NEXT_PUBLIC_MOCK_API` Feature Flag
+
+**Purpose:** Enable UI/UX development and testing without backend dependency
+
+**Implementation:**
+```typescript
+// src/config/env.ts
+export const env = {
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1',
+  mockApi: process.env.NEXT_PUBLIC_MOCK_API === 'true',
+};
+
+// src/services/api/client.ts
+if (env.mockApi) {
+  await mockDelay(300); // Simulate network latency
+  return getMockResponse<T>(endpoint, method);
+}
+```
+
+**Benefits:**
+- UI development without running backend server
+- Faster iteration on design and interactions
+- Demo-ready builds for stakeholders
+- E2E testing with predictable data
+- Parallel frontend/backend development
+
+**Mock Data:** `src/services/api/mocks/mockData.ts` contains sample responses
 
 ---

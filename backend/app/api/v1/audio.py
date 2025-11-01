@@ -636,7 +636,7 @@ async def process_audio(
 
 @router.get(
     "/{interview_id}/audio/{message_id}",
-    response_class=None,
+    response_class=StreamingResponse,
     summary="Get TTS audio for AI message",
     description="Retrieve or generate text-to-speech audio for an AI interview question",
     responses={

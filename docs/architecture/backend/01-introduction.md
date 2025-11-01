@@ -37,6 +37,7 @@ Core technology stack choices documented in the "Tech Stack" section are definit
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2025-10-28 | 1.0 | Initial backend architecture document creation | Winston (Architect) |
+| 2025-11-01 | 1.1 | Added Speech Services integration (Story 1.5.1): OpenAI Whisper STT/TTS provider abstraction, cost tracking, audio metadata persistence | Winston (Architect) |
 
 ---
 

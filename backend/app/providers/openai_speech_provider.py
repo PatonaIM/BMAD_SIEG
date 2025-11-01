@@ -368,20 +368,28 @@ class OpenAISpeechProvider(SpeechProvider):
         text: str,
         voice: str = "alloy",
         speed: float = 1.0
-    ) -> bytes:
+    ) -> tuple[bytes, dict]:
         """
         Generate speech audio from text using OpenAI TTS API.
         
-        Makes a JSON POST request to TTS API and returns MP3 audio bytes.
-        Includes retry logic for transient failures.
+        Makes a JSON POST request to TTS API and returns MP3 audio bytes
+        along with generation metadata for tracking and caching.
+        Includes retry logic with exponential backoff for transient failures.
         
         Args:
             text: Text to convert to speech (max 4096 chars)
             voice: Voice ID (alloy, echo, fable, onyx, nova, shimmer)
-            speed: Speech speed multiplier (0.25-4.0)
+            speed: Speech speed multiplier (0.25-4.0, default 0.95 for clarity)
         
         Returns:
-            bytes: MP3 audio file bytes
+            tuple[bytes, dict]: (MP3 audio bytes, metadata dict with:
+                - file_size_bytes: Size of generated audio
+                - generation_time_ms: Time taken to generate
+                - character_count: Length of input text
+                - model: TTS model used
+                - voice: Voice used
+                - speed: Speed setting used
+            )
         
         Raises:
             SynthesisFailedError: API error, text too long, or invalid parameters
@@ -437,14 +445,27 @@ class OpenAISpeechProvider(SpeechProvider):
                 audio_bytes = response.content
                 processing_time_ms = int((time.time() - start_time) * 1000)
 
+                # Build metadata
+                metadata = {
+                    "file_size_bytes": len(audio_bytes),
+                    "generation_time_ms": processing_time_ms,
+                    "character_count": len(text),
+                    "model": settings.openai_tts_model,
+                    "voice": voice,
+                    "speed": speed,
+                }
+
                 logger.info(
                     "synthesis_complete",
                     audio_size_bytes=len(audio_bytes),
                     processing_time_ms=processing_time_ms,
+                    character_count=len(text),
+                    voice=voice,
+                    speed=speed,
                     attempt=attempt + 1,
                 )
 
-                return audio_bytes
+                return audio_bytes, metadata
 
             except httpx.HTTPStatusError as e:
                 last_exception = e

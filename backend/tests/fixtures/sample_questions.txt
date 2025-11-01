@@ -1,0 +1,10 @@
+Tell me about your experience with React and how you handle state management.
+Can you explain the difference between SQL and NoSQL databases?
+Describe a challenging bug you encountered and how you resolved it.
+What is your approach to writing unit tests for a REST API?
+How do you handle authentication and authorization in web applications?
+Explain the concept of closures in JavaScript with an example.
+What are your strategies for optimizing application performance?
+Have you worked with Docker or Kubernetes? Describe your experience.
+How do you stay updated with new technologies and best practices?
+Tell me about a time when you had to refactor legacy code.

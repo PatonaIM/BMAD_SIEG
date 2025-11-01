@@ -11,6 +11,7 @@ from app.providers.speech_provider import SpeechProvider
 from app.repositories.interview import InterviewRepository
 from app.repositories.interview_message import InterviewMessageRepository
 from app.schemas.speech import TranscriptionResult
+from app.services.audio_cache_service import AudioCacheService
 from app.utils.cost_calculator import SpeechCostCalculator
 
 logger = structlog.get_logger().bind(service="speech_service")
@@ -114,6 +115,7 @@ class SpeechService:
         self,
         speech_provider: SpeechProvider,
         db: AsyncSession,
+        audio_cache: AudioCacheService | None = None,
     ):
         """
         Initialize Speech Service with dependencies.
@@ -121,12 +123,14 @@ class SpeechService:
         Args:
             speech_provider: Speech provider implementation (e.g., OpenAISpeechProvider)
             db: Database session for persistence
+            audio_cache: Optional audio cache service for TTS caching (creates default if None)
         """
         self.speech_provider = speech_provider
         self.db = db
         self.interview_repo = InterviewRepository(db)
         self.message_repo = InterviewMessageRepository(db)
         self.cost_calculator = SpeechCostCalculator()
+        self.audio_cache = audio_cache or AudioCacheService()
 
         logger.info("speech_service_initialized")
 
@@ -229,31 +233,48 @@ class SpeechService:
         text: str,
         interview_id: UUID,
         voice: str = "alloy",
-        speed: float = 1.0
-    ) -> bytes:
+        speed: float = 0.95
+    ) -> tuple[bytes, dict]:
         """
-        Generate speech audio from AI question text with cost tracking.
+        Generate speech audio from AI question text with caching and cost tracking.
         
-        Calls speech provider for TTS, calculates cost, and updates
+        Checks cache first for existing audio. If not cached, calls speech provider
+        for TTS generation, caches the result, calculates cost, and updates
         interview cost tracking in database.
         
         Args:
-            text: Text to convert to speech
+            text: Text to convert to speech (max 4096 chars)
             interview_id: Interview UUID for cost tracking
-            voice: Voice ID (default: "alloy")
-            speed: Speech speed multiplier (default: 1.0)
+            voice: Voice ID (default: "alloy" for professional tone)
+            speed: Speech speed multiplier (default: 0.95 for clarity)
         
         Returns:
-            bytes: MP3 audio file bytes
+            tuple[bytes, dict]: (MP3 audio bytes, metadata dict with:
+                - provider: "openai"
+                - model: "tts-1"
+                - voice: Voice used
+                - speed: Speed used
+                - generation_time_ms: Generation time
+                - character_count: Text length
+                - audio_format: "audio/mpeg"
+                - file_size_bytes: Audio size
+                - cached: Whether from cache
+                - cost_usd: Generation cost
+            )
         
         Raises:
             SynthesisFailedError: If speech synthesis fails
         
         Side Effects:
             - Updates interview.speech_tokens_used (character count)
-            - Updates interview.speech_cost_usd in database
-            - Logs synthesis metrics
+            - Updates interview.speech_cost_usd in database (only for new generations)
+            - Caches generated audio
+            - Logs synthesis and cache metrics
         """
+        import time
+        
+        start_time = time.time()
+        
         logger.info(
             "generating_ai_speech",
             interview_id=str(interview_id),
@@ -262,8 +283,33 @@ class SpeechService:
             speed=speed,
         )
 
-        # Generate speech using provider
-        audio_bytes = await self.speech_provider.synthesize_speech(
+        # Check cache first
+        cache_key = self.audio_cache.get_cache_key(text, voice, speed)
+        cached_audio = await self.audio_cache.get_cached_audio(cache_key)
+        
+        if cached_audio:
+            # Cache hit! Return cached audio without API call
+            processing_time_ms = int((time.time() - start_time) * 1000)
+            
+            # Update metadata to include cache hit info
+            metadata = cached_audio.metadata.copy()
+            metadata["cached"] = True
+            metadata["cache_age_seconds"] = cached_audio.age_seconds()
+            metadata["retrieval_time_ms"] = processing_time_ms
+            
+            logger.info(
+                "ai_speech_from_cache",
+                interview_id=str(interview_id),
+                audio_size_bytes=len(cached_audio.audio_bytes),
+                cache_age_seconds=cached_audio.age_seconds(),
+                character_count=len(text),
+                retrieval_time_ms=processing_time_ms,
+            )
+            
+            return cached_audio.audio_bytes, metadata
+
+        # Cache miss - generate new audio
+        audio_bytes, provider_metadata = await self.speech_provider.synthesize_speech(
             text=text,
             voice=voice,
             speed=speed
@@ -279,15 +325,35 @@ class SpeechService:
             additional_tokens=len(text)  # Track character count
         )
 
+        # Build complete metadata
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        metadata = {
+            "provider": "openai",
+            "model": provider_metadata.get("model", "tts-1"),
+            "voice": voice,
+            "speed": speed,
+            "generation_time_ms": provider_metadata.get("generation_time_ms", processing_time_ms),
+            "character_count": len(text),
+            "audio_format": "audio/mpeg",
+            "file_size_bytes": len(audio_bytes),
+            "cached": False,
+            "cost_usd": float(tts_cost),
+        }
+
+        # Cache the generated audio
+        await self.audio_cache.cache_audio(cache_key, audio_bytes, metadata)
+
         logger.info(
             "ai_speech_generated",
             interview_id=str(interview_id),
             audio_size_bytes=len(audio_bytes),
             tts_cost_usd=float(tts_cost),
             character_count=len(text),
+            generation_time_ms=metadata["generation_time_ms"],
+            cached=False,
         )
 
-        return audio_bytes
+        return audio_bytes, metadata
 
     def validate_transcription_quality(
         self,

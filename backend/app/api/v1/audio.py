@@ -1,12 +1,15 @@
 """Audio processing API endpoints for interview speech-to-text."""
 
 import asyncio
+import hashlib
 import time
 from collections.abc import Callable
+from io import BytesIO
 from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
@@ -627,5 +630,362 @@ async def process_audio(
                 "error": "AUDIO_PROCESSING_ERROR",
                 "message": "Unexpected error during audio processing",
                 "details": {"correlation_id": correlation_id}
+            }
+        )
+
+
+@router.get(
+    "/{interview_id}/audio/{message_id}",
+    response_class=None,
+    summary="Get TTS audio for AI message",
+    description="Retrieve or generate text-to-speech audio for an AI interview question",
+    responses={
+        200: {
+            "description": "MP3 audio file",
+            "content": {"audio/mpeg": {}},
+            "headers": {
+                "Cache-Control": {"description": "Caching directives"},
+                "ETag": {"description": "Entity tag for caching"},
+                "Content-Length": {"description": "Audio file size in bytes"},
+            }
+        },
+        404: {"description": "Message not found"},
+        422: {"description": "Text too long for TTS"},
+        429: {"description": "OpenAI rate limit exceeded"},
+        500: {"description": "TTS generation failed"},
+        503: {"description": "OpenAI service unavailable"}
+    },
+    tags=["audio", "tts"]
+)
+async def get_interview_audio(
+    interview_id: UUID,
+    message_id: UUID,
+    voice: str = "alloy",
+    speed: float = 0.95,
+    current_user: Candidate = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    speech_service: SpeechService = Depends(get_speech_service)
+):
+    """
+    Get or generate TTS audio for an AI interview message.
+    
+    This endpoint retrieves the text content of an AI question message and
+    generates speech audio using OpenAI TTS. Audio is cached to reduce costs
+    and improve performance. The same message text + voice + speed combination
+    will return cached audio on subsequent requests.
+    
+    Features:
+    - Audio caching (24-hour TTL) for cost optimization
+    - Browser-cacheable responses with ETag support
+    - Automatic retry with exponential backoff for transient failures
+    - Performance monitoring and SLA tracking
+    - Cost tracking per interview
+    
+    Performance SLAs:
+    - Cache hit: <50ms
+    - New generation: <3 seconds
+    - Success rate: >95%
+    
+    Query Parameters:
+    - voice: TTS voice (alloy, echo, fable, onyx, nova, shimmer)
+    - speed: Speech speed (0.25-4.0, default: 0.95 for clarity)
+    
+    Returns:
+    - 200: MP3 audio stream with caching headers
+    - 404: Message not found or not an AI message
+    - 422: Text exceeds 4096 character limit
+    - 429: OpenAI rate limit exceeded (includes retry_after)
+    - 500: TTS generation failed
+    - 503: OpenAI service temporarily unavailable
+    """
+    correlation_id = f"tts_{interview_id}_{message_id}_{int(time.time())}"
+    
+    logger.info(
+        "get_interview_audio_request",
+        interview_id=str(interview_id),
+        message_id=str(message_id),
+        voice=voice,
+        speed=speed,
+        user_id=str(current_user.id),
+        correlation_id=correlation_id
+    )
+    
+    try:
+        start_time = time.time()
+        
+        # Validate interview access
+        interview_repo = InterviewRepository(db)
+        interview = await interview_repo.get_by_id(interview_id)
+        
+        if not interview:
+            logger.warning(
+                "interview_not_found",
+                interview_id=str(interview_id),
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "INTERVIEW_NOT_FOUND",
+                    "message": f"Interview {interview_id} not found"
+                }
+            )
+        
+        # Verify user has access to this interview
+        if interview.candidate_id != current_user.id:
+            logger.warning(
+                "interview_access_denied",
+                interview_id=str(interview_id),
+                candidate_id=str(current_user.id),
+                interview_candidate_id=str(interview.candidate_id),
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error": "ACCESS_DENIED",
+                    "message": "You do not have access to this interview"
+                }
+            )
+        
+        # Retrieve message
+        message_repo = InterviewMessageRepository(db)
+        message = await message_repo.get_by_id(message_id)
+        
+        if not message:
+            logger.warning(
+                "message_not_found",
+                message_id=str(message_id),
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "MESSAGE_NOT_FOUND",
+                    "message": f"Message {message_id} not found"
+                }
+            )
+        
+        # Verify message belongs to this interview
+        if message.interview_id != interview_id:
+            logger.warning(
+                "message_interview_mismatch",
+                message_id=str(message_id),
+                message_interview_id=str(message.interview_id),
+                requested_interview_id=str(interview_id),
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "MESSAGE_NOT_FOUND",
+                    "message": "Message not found in this interview"
+                }
+            )
+        
+        # Verify this is an AI message (not candidate response)
+        if message.message_type != "ai_question":
+            logger.warning(
+                "invalid_message_type",
+                message_id=str(message_id),
+                message_type=message.message_type,
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "error": "INVALID_MESSAGE_TYPE",
+                    "message": "TTS audio only available for AI questions"
+                }
+            )
+        
+        # Get message text
+        text = message.content_text
+        
+        if not text or not text.strip():
+            logger.error(
+                "empty_message_text",
+                message_id=str(message_id),
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "error": "EMPTY_MESSAGE_TEXT",
+                    "message": "Message has no text content"
+                }
+            )
+        
+        # Validate text length
+        if len(text) > 4096:
+            logger.warning(
+                "text_too_long",
+                message_id=str(message_id),
+                text_length=len(text),
+                max_length=4096,
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "error": "TEXT_TOO_LONG",
+                    "message": f"Text exceeds OpenAI TTS limit of 4096 characters (got {len(text)})",
+                    "details": {
+                        "text_length": len(text),
+                        "max_length": 4096
+                    }
+                }
+            )
+        
+        # Generate or retrieve cached audio
+        try:
+            audio_bytes, metadata = await speech_service.generate_ai_speech(
+                text=text,
+                interview_id=interview_id,
+                voice=voice,
+                speed=speed
+            )
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Handle rate limiting
+            if "429" in error_msg or "rate_limit" in error_msg.lower():
+                logger.warning(
+                    "tts_rate_limited",
+                    interview_id=str(interview_id),
+                    message_id=str(message_id),
+                    correlation_id=correlation_id
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail={
+                        "error": "RATE_LIMIT_EXCEEDED",
+                        "message": "OpenAI TTS rate limit exceeded",
+                        "details": {
+                            "correlation_id": correlation_id
+                        },
+                        "retry_after_seconds": 30
+                    }
+                )
+            
+            # Handle service unavailable
+            if "503" in error_msg or "service unavailable" in error_msg.lower():
+                logger.error(
+                    "tts_service_unavailable",
+                    interview_id=str(interview_id),
+                    message_id=str(message_id),
+                    correlation_id=correlation_id
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail={
+                        "error": "SERVICE_UNAVAILABLE",
+                        "message": "OpenAI TTS service temporarily unavailable",
+                        "details": {
+                            "correlation_id": correlation_id
+                        },
+                        "retry_after_seconds": 60
+                    }
+                )
+            
+            # Generic generation failure
+            logger.error(
+                "tts_generation_failed",
+                interview_id=str(interview_id),
+                message_id=str(message_id),
+                error=error_msg,
+                correlation_id=correlation_id
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "error": "TTS_GENERATION_FAILED",
+                    "message": "Failed to generate audio",
+                    "details": {
+                        "correlation_id": correlation_id
+                    }
+                }
+            )
+        
+        # Update message with audio URL if not already set
+        audio_url = f"/api/v1/interviews/{interview_id}/audio/{message_id}"
+        if not message.content_audio_url:
+            message.content_audio_url = audio_url
+            message.audio_metadata = metadata
+            await db.commit()
+            
+            logger.info(
+                "message_audio_url_updated",
+                message_id=str(message_id),
+                audio_url=audio_url,
+                correlation_id=correlation_id
+            )
+        
+        # Calculate processing time
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        
+        # Check SLA (3 seconds for new generation, 50ms for cache hit)
+        sla_threshold = 50 if metadata.get("cached") else 3000
+        if processing_time_ms > sla_threshold:
+            logger.warning(
+                "tts_sla_violation",
+                interview_id=str(interview_id),
+                message_id=str(message_id),
+                processing_time_ms=processing_time_ms,
+                sla_threshold_ms=sla_threshold,
+                cached=metadata.get("cached"),
+                correlation_id=correlation_id
+            )
+        
+        # Generate ETag for caching (hash of text + voice + speed)
+        etag_content = f"{text}|{voice}|{speed}"
+        etag = hashlib.sha256(etag_content.encode()).hexdigest()
+        
+        logger.info(
+            "tts_audio_retrieved",
+            interview_id=str(interview_id),
+            message_id=str(message_id),
+            audio_size_bytes=len(audio_bytes),
+            processing_time_ms=processing_time_ms,
+            cached=metadata.get("cached"),
+            voice=voice,
+            speed=speed,
+            correlation_id=correlation_id
+        )
+        
+        # Return audio as streaming response with caching headers
+        return StreamingResponse(
+            BytesIO(audio_bytes),
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "public, max-age=86400",  # 24 hours
+                "ETag": f'"{etag}"',
+                "Content-Length": str(len(audio_bytes)),
+                "X-Audio-Cached": str(metadata.get("cached", False)),
+                "X-Processing-Time-Ms": str(processing_time_ms),
+                "X-Correlation-Id": correlation_id
+            }
+        )
+        
+    except HTTPException:
+        raise
+    
+    except Exception as e:
+        logger.error(
+            "get_interview_audio_error",
+            interview_id=str(interview_id),
+            message_id=str(message_id),
+            error=str(e),
+            error_type=type(e).__name__,
+            correlation_id=correlation_id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "AUDIO_RETRIEVAL_ERROR",
+                "message": "Unexpected error retrieving audio",
+                "details": {
+                    "correlation_id": correlation_id
+                }
             }
         )

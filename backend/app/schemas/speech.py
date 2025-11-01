@@ -192,3 +192,113 @@ class TranscriptionError(BaseModel):
                 "retry_after_seconds": 30
             }
         }
+
+
+class TTSGenerationRequest(BaseModel):
+    """
+    Request model for text-to-speech generation.
+    
+    Used for POST /api/v1/interviews/{interview_id}/messages/{message_id}/generate-audio
+    to trigger on-demand TTS generation with custom parameters.
+    """
+
+    text: str = Field(
+        ...,
+        min_length=1,
+        max_length=4096,
+        description="Text to convert to speech (max 4096 characters per OpenAI limit)"
+    )
+    voice: str = Field(
+        default="alloy",
+        description="Voice to use for TTS (alloy, echo, fable, onyx, nova, shimmer)"
+    )
+    speed: float = Field(
+        default=0.95,
+        ge=0.25,
+        le=4.0,
+        description="Speech rate (0.25 to 4.0, default: 0.95 for clarity)"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "text": "Tell me about your experience with React and state management.",
+                "voice": "alloy",
+                "speed": 0.95
+            }
+        }
+
+
+class TTSGenerationResponse(BaseModel):
+    """
+    Response model for successful TTS generation.
+    
+    Contains audio URL, generation metadata, and performance metrics.
+    Returned from POST /api/v1/interviews/{interview_id}/messages/{message_id}/generate-audio
+    """
+
+    audio_url: str = Field(
+        ...,
+        description="URL to access generated audio file (GET endpoint)"
+    )
+    generation_time_ms: int = Field(
+        ...,
+        ge=0,
+        description="Time taken to generate audio in milliseconds"
+    )
+    audio_metadata: dict = Field(
+        ...,
+        description="Detailed TTS metadata (provider, model, voice, speed, cost, etc.)"
+    )
+    cached: bool = Field(
+        ...,
+        description="Whether audio was served from cache (true) or newly generated (false)"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "audio_url": "/api/v1/interviews/550e8400-e29b-41d4-a716-446655440000/audio/123e4567-e89b-12d3-a456-426614174000",
+                "generation_time_ms": 1240,
+                "audio_metadata": {
+                    "provider": "openai",
+                    "model": "tts-1",
+                    "voice": "alloy",
+                    "speed": 0.95,
+                    "character_count": 125,
+                    "audio_format": "audio/mpeg",
+                    "file_size_bytes": 45000,
+                    "cached": False,
+                    "cost_usd": 0.001875
+                },
+                "cached": False
+            }
+        }
+
+
+class TTSError(BaseModel):
+    """
+    Error response for TTS generation failures.
+    """
+
+    error: str = Field(..., description="Error code identifier")
+    message: str = Field(..., description="Human-readable error message")
+    details: dict = Field(..., description="Additional error details")
+    retry_after_seconds: int | None = Field(None, description="Retry delay for rate limiting")
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "error": "TTS_GENERATION_FAILED",
+                "message": "Failed to generate audio after 3 retry attempts",
+                "details": {
+                    "message_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "text_length": 125,
+                    "retry_attempts": 3
+                },
+                "retry_after_seconds": None
+            }
+        }

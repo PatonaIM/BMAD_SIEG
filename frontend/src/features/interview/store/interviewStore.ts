@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { devtools } from 'zustand/middleware';
 import type { InterviewStore, Message } from '../types/interview.types';
 
 const initialState = {
@@ -11,6 +11,23 @@ const initialState = {
   status: 'not_started' as const,
   isCompleted: false,
   completionData: null,
+  // Audio recording state
+  isRecording: false,
+  audioPermissionGranted: false,
+  recordingError: null,
+  // Voice interview state
+  interviewState: 'ai_listening' as const,
+  inputMode: (typeof window !== 'undefined' 
+    ? (localStorage.getItem('interview_input_mode') as 'voice' | 'text') 
+    : 'voice') || 'voice',
+  currentAudioUrl: null,
+  // Realtime mode state
+  useRealtimeMode: typeof window !== 'undefined' 
+    ? (localStorage.getItem('interview_realtime_mode') !== 'false') 
+    : true,
+  connectionState: 'disconnected' as const,
+  realtimeLatency: null,
+  audioLevel: 0,
 };
 
 /**
@@ -64,6 +81,45 @@ export const useInterviewStore = create<InterviewStore>()(
 
       setCompletionData: (completionData) =>
         set({ completionData, isCompleted: true, status: 'completed' }, false, 'setCompletionData'),
+
+      // Audio recording actions
+      setRecording: (isRecording: boolean) =>
+        set({ isRecording }, false, 'setRecording'),
+
+      setAudioPermission: (granted: boolean) =>
+        set({ audioPermissionGranted: granted }, false, 'setAudioPermission'),
+
+      setRecordingError: (error: string | null) =>
+        set({ recordingError: error }, false, 'setRecordingError'),
+
+      // Voice interview actions
+      setInterviewState: (interviewState) =>
+        set({ interviewState }, false, 'setInterviewState'),
+
+      setInputMode: (inputMode) =>
+        set({ inputMode }, false, 'setInputMode'),
+
+      setCurrentAudioUrl: (currentAudioUrl) =>
+        set({ currentAudioUrl }, false, 'setCurrentAudioUrl'),
+
+      // Realtime mode actions
+      toggleRealtimeMode: () =>
+        set((state) => {
+          const newMode = !state.useRealtimeMode;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('interview_realtime_mode', String(newMode));
+          }
+          return { useRealtimeMode: newMode };
+        }, false, 'toggleRealtimeMode'),
+
+      setConnectionState: (connectionState) =>
+        set({ connectionState }, false, 'setConnectionState'),
+
+      updateLatency: (realtimeLatency) =>
+        set({ realtimeLatency }, false, 'updateLatency'),
+
+      setAudioLevel: (audioLevel) =>
+        set({ audioLevel }, false, 'setAudioLevel'),
 
       reset: () => set(initialState, false, 'reset'),
     }),

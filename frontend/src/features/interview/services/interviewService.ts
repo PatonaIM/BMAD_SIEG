@@ -32,6 +32,7 @@ export interface SendMessageRequest {
 export interface SendMessageResponse {
   message_id: string
   ai_response: string
+  audio_url?: string | null
   question_number: number
   total_questions: number
   interview_complete?: boolean

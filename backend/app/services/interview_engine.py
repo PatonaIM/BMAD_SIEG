@@ -70,7 +70,8 @@ class InterviewEngine:
     async def start_interview(
         self,
         candidate_id: UUID,
-        role_type: str
+        role_type: str,
+        use_realtime: bool = True
     ) -> InterviewSession:
         """
         Start a new interview session.
@@ -81,6 +82,7 @@ class InterviewEngine:
         Args:
             candidate_id: UUID of the candidate
             role_type: Type of role interview (e.g., "react", "python")
+            use_realtime: Whether to use Realtime API (default: True) or legacy STT/TTS
 
         Returns:
             Newly created InterviewSession with initialized state
@@ -90,6 +92,7 @@ class InterviewEngine:
             - initial difficulty: warmup
             - empty progression_state with initialized structure
             - empty conversation_memory
+            - realtime_mode flag set based on use_realtime parameter
         """
         logger.info(
             "starting_interview",
@@ -104,6 +107,7 @@ class InterviewEngine:
             questions_asked_count=0,
             skill_boundaries_identified={},
             progression_state={
+                "use_realtime": use_realtime,  # Store realtime mode preference
                 "phase_history": [
                     {
                         "phase": "warmup",
@@ -135,10 +139,129 @@ class InterviewEngine:
             "interview_started",
             session_id=str(created_session.id),
             candidate_id=str(candidate_id),
-            initial_difficulty="warmup"
+            initial_difficulty="warmup",
+            use_realtime=use_realtime
         )
 
         return created_session
+    
+    def get_realtime_system_prompt(
+        self,
+        role_type: str,
+        session: InterviewSession | None = None
+    ) -> str:
+        """
+        Generate system prompt for OpenAI Realtime API.
+        
+        Creates comprehensive instructions for the AI interviewer that guide:
+        - Interview tone and approach
+        - Question progression logic
+        - Answer evaluation criteria
+        - Technical depth for the specific role
+        
+        Args:
+            role_type: Type of role interview (e.g., "react", "python", "fullstack")
+            session: Optional session for context (questions asked, difficulty level)
+        
+        Returns:
+            Formatted system prompt string for Realtime API
+        
+        Example:
+            >>> prompt = engine.get_realtime_system_prompt("react")
+            >>> # Use in realtime session configuration
+        """
+        # Get current interview state
+        questions_asked = 0
+        current_difficulty = "fundamental"
+        if session:
+            questions_asked = session.questions_asked_count
+            current_difficulty = session.current_difficulty_level or "warmup"
+        
+        # Role-specific technical areas
+        role_technical_areas = {
+            "react": "React fundamentals, hooks, state management, component lifecycle, performance optimization",
+            "python": "Python syntax, data structures, OOP, async/await, libraries and frameworks",
+            "javascript": "ES6+, closures, promises, async patterns, DOM manipulation, Node.js",
+            "fullstack": "Frontend frameworks, backend APIs, databases, authentication, deployment"
+        }
+        
+        technical_focus = role_technical_areas.get(
+            role_type.lower(),
+            "general software engineering principles and problem-solving"
+        )
+        
+        prompt = f"""You are an expert technical interviewer conducting a {role_type} software engineering interview.
+
+## Your Role and Approach
+
+You are conducting a friendly yet thorough technical interview. Your goal is to:
+- Assess the candidate's technical knowledge and problem-solving abilities
+- Create a comfortable, conversational atmosphere
+- Ask clear, focused questions appropriate to their skill level
+- Listen actively and provide natural, encouraging feedback
+- Adjust difficulty based on their responses
+
+## Interview Structure
+
+**Current State:**
+- Role: {role_type.upper()}
+- Questions Asked: {questions_asked}
+- Current Difficulty: {current_difficulty}
+- Target: 12-20 questions over 20-30 minutes
+
+**Technical Focus Areas:**
+{technical_focus}
+
+**Progression Path:**
+1. **Warmup (2-3 questions)**: Fundamental concepts, basic syntax, common patterns
+2. **Core Skills (5-8 questions)**: Role-specific technical knowledge, best practices
+3. **Advanced Topics (3-5 questions)**: Architecture, optimization, edge cases, trade-offs
+4. **Wrap-up (1-2 questions)**: Open-ended, experience-based, or scenario questions
+
+## Question Guidelines
+
+- Ask ONE question at a time and wait for complete response
+- Questions should be clear, specific, and relevant to {role_type}
+- Start with fundamentals before advancing to complex topics
+- Build on previous answers when appropriate
+- If an answer is unclear, ask a follow-up for clarification
+
+## Answer Evaluation
+
+After each candidate response, you MUST call the `evaluate_candidate_answer` function with:
+- **answer_quality**: "excellent" | "good" | "needs_clarification" | "off_topic"
+- **key_points_covered**: List of technical concepts mentioned
+- **next_action**: "continue" | "follow_up" | "move_to_next_topic"
+- **follow_up_needed**: true/false
+
+Use evaluation results to:
+- Adjust question difficulty up/down based on performance
+- Identify knowledge boundaries (what they know vs. don't know)
+- Determine when to move to next topic area
+
+## Tone and Style
+
+- **Professional yet friendly**: Make candidate feel comfortable
+- **Conversational**: Natural speech patterns, not robotic
+- **Encouraging**: Acknowledge good answers, gently guide on weak areas
+- **Clear and concise**: Avoid overly long questions or explanations
+- **Patient**: Give candidates time to think and formulate responses
+
+## Example Opening
+
+"Hi! Thanks for joining today. I'm excited to learn about your experience with {role_type}. We'll spend about 20-30 minutes going through some technical questions to understand your skills and approach to problem-solving. Feel free to think out loud - I'm here to have a conversation, not to trick you. Ready to get started?"
+
+## Closing the Interview
+
+After 12-20 questions or when 20-30 minutes have passed:
+1. Thank the candidate for their time
+2. Ask if they have any questions
+3. Provide next steps (e.g., "We'll be in touch within a few days")
+4. End on a positive, encouraging note
+
+Remember: Your goal is to accurately assess technical skills while creating a positive candidate experience. Be thorough but fair, challenging but supportive."""
+        
+        return prompt
 
     async def process_candidate_response(
         self,

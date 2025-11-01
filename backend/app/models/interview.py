@@ -29,6 +29,7 @@ class Interview(Base):
         cost_usd: Estimated AI cost in USD
         speech_tokens_used: Total character count for TTS (cost tracking)
         speech_cost_usd: Estimated speech services cost in USD (STT + TTS)
+        realtime_cost_usd: Estimated Realtime API cost in USD (audio input/output)
         created_at: Timestamp of record creation
         candidate: Related Candidate record
         resume: Related Resume record
@@ -85,6 +86,9 @@ class Interview(Base):
     # Speech services tracking (STT/TTS)
     speech_tokens_used = Column(Integer, default=0, nullable=False)  # Character count for TTS
     speech_cost_usd = Column(Numeric(10, 4), default=Decimal("0.0"), nullable=False)
+
+    # Realtime API cost tracking
+    realtime_cost_usd = Column(Numeric(10, 4), default=Decimal("0.0"), nullable=False)
 
     # Record timestamp
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)

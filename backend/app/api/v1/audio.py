@@ -273,8 +273,12 @@ async def validate_audio_file(audio_file: UploadFile) -> None:
             }
         )
 
-    # Check MIME type
-    if audio_file.content_type not in ALLOWED_MIME_TYPES:
+    # Check MIME type (strip codec parameters if present)
+    content_type = audio_file.content_type or ""
+    # Handle cases like "audio/webm;codecs=opus" by taking only the base type
+    base_content_type = content_type.split(';')[0].strip()
+    
+    if base_content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -617,19 +621,24 @@ async def process_audio(
         )
 
     except Exception as e:
+        import traceback
         logger.error(
             "audio_processing_error",
             interview_id=str(interview_id),
             correlation_id=correlation_id,
             error=str(e),
-            error_type=type(e).__name__
+            error_type=type(e).__name__,
+            traceback=traceback.format_exc()
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "error": "AUDIO_PROCESSING_ERROR",
                 "message": "Unexpected error during audio processing",
-                "details": {"correlation_id": correlation_id}
+                "details": {
+                    "correlation_id": correlation_id,
+                    "error_detail": str(e)
+                }
             }
         )
 

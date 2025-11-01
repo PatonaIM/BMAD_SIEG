@@ -17,7 +17,7 @@ interface UseSendMessageParams {
  * Detects completion and redirects to results page
  */
 export function useSendMessage({ sessionId }: UseSendMessageParams) {
-  const { addMessage, setAiTyping, updateProgress, setStatus } = useInterviewStore()
+  const { addMessage, setAiTyping, updateProgress, setStatus, setCurrentAudioUrl } = useInterviewStore()
   const router = useRouter()
 
   return useMutation<SendMessageResponse, Error, string>({
@@ -45,6 +45,15 @@ export function useSendMessage({ sessionId }: UseSendMessageParams) {
       updateProgress(data.question_number, data.total_questions)
 
       console.log(`[Interview] Progress: ${data.question_number}/${data.total_questions}`)
+
+      // Set audio URL if available (Story 1.5.5)
+      if (data.audio_url) {
+        console.log('[Interview] AI audio available:', data.audio_url)
+        setCurrentAudioUrl(data.audio_url)
+      } else {
+        console.log('[Interview] No audio URL, text-only response')
+        setCurrentAudioUrl(null)
+      }
 
       // Hide typing indicator
       setAiTyping(false)

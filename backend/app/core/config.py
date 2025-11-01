@@ -127,6 +127,56 @@ class Settings(BaseSettings):
     Typical processing time: 1-3 seconds for 200-character text.
     """
 
+    # ================================================================
+    # OpenAI Realtime API Configuration
+    # ================================================================
+    enable_realtime_api: bool = True
+    """
+    Feature flag to enable/disable OpenAI Realtime API.
+    When True: Use Realtime API for voice interviews (low latency)
+    When False: Fall back to STT/TTS pipeline (Stories 1.5.3/1.5.4)
+    
+    Advantages of Realtime API:
+    - Sub-1 second response latency vs. 10-15s with STT/TTS
+    - Natural conversation flow with interruption support
+    - Single WebSocket connection vs. multiple HTTP calls
+    
+    Trade-offs:
+    - 2.5x higher cost ($3.80 vs $1.50 per 20-min interview)
+    - Beta API (may have breaking changes)
+    - Requires WebSocket support in infrastructure
+    
+    Default: True (production-ready as of v1.5.6)
+    """
+
+    realtime_api_model: str = "gpt-4o-realtime-preview-2024-10-01"
+    """
+    OpenAI Realtime API model.
+    Current: gpt-4o-realtime-preview-2024-10-01 (beta)
+    Update this when GA version is released.
+    """
+
+    realtime_voice: str = "alloy"
+    """
+    Voice for Realtime API audio output.
+    Options: alloy, echo, fable, onyx, nova, shimmer
+    Default: alloy (matches TTS default for consistency)
+    """
+
+    realtime_temperature: float = 0.7
+    """
+    Conversation temperature for Realtime API.
+    Range: 0.0 (deterministic) to 1.0 (creative)
+    Default: 0.7 (balanced, conversational)
+    """
+
+    realtime_max_response_tokens: int = 1000
+    """
+    Maximum tokens per AI response in Realtime API.
+    Typical interview question: 50-200 tokens
+    Default: 1000 (allows for detailed explanations)
+    """
+
     # Development Settings
     use_mock_ai: bool = False
 

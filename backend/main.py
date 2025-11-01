@@ -22,7 +22,7 @@ from app.core.exceptions import (
     OpenAIRateLimitException,
     ContextWindowExceededException,
 )
-from app.api.v1 import auth, interviews, audio
+from app.api.v1 import auth, interviews, audio, realtime
 
 # Configure structured logging
 structlog.configure(
@@ -83,6 +83,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(interviews.router, prefix="/api/v1")
 app.include_router(audio.router, prefix="/api/v1")
+app.include_router(realtime.router, prefix="/api/v1")
 
 
 # Error handlers for custom exceptions

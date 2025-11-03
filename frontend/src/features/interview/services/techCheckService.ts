@@ -35,7 +35,7 @@ export async function submitTechCheckResults(
 ): Promise<TechCheckResponse> {
   try {
     const response = await apiClient.post<TechCheckResponse>(
-      `/api/v1/interviews/${interviewId}/tech-check`,
+      `/interviews/${interviewId}/tech-check`,
       results
     );
     return response;

@@ -122,7 +122,11 @@ export function useRealtimeInterview(
           break
           
         case 'error':
-          console.error('Realtime API error:', message)
+          console.error('Realtime API error:', {
+            error: message.error,
+            errorMessage: message.message,
+            fullMessage: message
+          })
           const apiError = new Error(message.message || 'Unknown error')
           setError(apiError)
           onError?.(apiError)
@@ -166,9 +170,17 @@ export function useRealtimeInterview(
    * Connect to WebSocket server
    */
   const connect = useCallback(async () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.warn('WebSocket already connected')
-      return
+    // If already connected or connecting, disconnect first
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+      console.warn('WebSocket already exists, closing it first...')
+      try {
+        wsRef.current.close(1000, 'Reconnecting')
+      } catch (e) {
+        console.warn('Error closing existing WebSocket:', e)
+      }
+      wsRef.current = null
+      // Wait a bit for cleanup
+      await new Promise(resolve => setTimeout(resolve, 100))
     }
     
     setConnectionState('connecting')

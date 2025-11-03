@@ -1,0 +1,180 @@
+/**
+ * AI Presence Orb Styles
+ * 
+ * CSS animations for idle, listening, thinking, and speaking states
+ * Optimized for 60fps on desktop, 30fps on mobile
+ */
+
+.ai-presence-orb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Main orb core with gradient */
+.orb-core {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    oklch(0.62 0.18 285),
+    oklch(0.72 0.15 165)
+  );
+  box-shadow: 0 4px 20px rgba(161, 106, 232, 0.4);
+  transition: transform 300ms ease-in-out, opacity 300ms ease-in-out;
+  will-change: transform;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Static fallback orb */
+.orb-core.static {
+  background: radial-gradient(
+    circle at 30% 30%,
+    oklch(0.62 0.18 285),
+    oklch(0.72 0.15 165)
+  );
+  opacity: 0.8;
+}
+
+/* Dark mode adjustments */
+.dark .orb-core {
+  background: radial-gradient(
+    circle at 30% 30%,
+    oklch(0.68 0.2 285),
+    oklch(0.75 0.17 165)
+  );
+  box-shadow: 0 4px 20px rgba(161, 106, 232, 0.6);
+}
+
+/* ===== IDLE STATE: Pulsing Animation ===== */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.orb-core.state-idle {
+  animation: pulse 3.5s ease-in-out infinite;
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.5;
+  animation: pulse 3.5s ease-in-out infinite;
+}
+
+/* ===== LISTENING STATE: Ripple Effect ===== */
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.ripple {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  animation: ripple 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ripple-1 {
+  animation-delay: 0s;
+}
+
+.ripple-2 {
+  animation-delay: 0.6s;
+}
+
+.ripple-3 {
+  animation-delay: 1.2s;
+}
+
+/* ===== THINKING STATE: Circular Progress ===== */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.thinking-spinner {
+  position: absolute;
+  width: 110%;
+  height: 110%;
+  animation: spin 1.5s linear infinite;
+}
+
+/* ===== SPEAKING STATE: Waveform Canvas ===== */
+.waveform-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ===== STATE TRANSITIONS ===== */
+.orb-core.state-listening,
+.orb-core.state-thinking,
+.orb-core.state-speaking {
+  transition: transform 400ms ease-in-out, opacity 400ms ease-in-out;
+}
+
+/* Smooth opacity transitions between states */
+.ripple,
+.thinking-spinner,
+.waveform-canvas {
+  transition: opacity 300ms ease-in-out;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Reduce ripple count on mobile for better performance */
+  .ripple-3 {
+    display: none;
+  }
+  
+  /* Slightly reduce shadow complexity */
+  .orb-core {
+    box-shadow: 0 3px 15px rgba(161, 106, 232, 0.3);
+  }
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .orb-core,
+  .pulse-ring,
+  .ripple,
+  .thinking-spinner {
+    animation: none;
+  }
+  
+  .orb-core.state-idle {
+    opacity: 0.9;
+  }
+}

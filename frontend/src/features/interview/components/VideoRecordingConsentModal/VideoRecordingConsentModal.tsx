@@ -5,7 +5,6 @@
  * Displays before interview starts (after tech check)
  */
 
-import { useState } from 'react'
 import { Video, Shield, Clock, Users, ArrowLeft } from 'lucide-react'
 import {
   Dialog,
@@ -16,7 +15,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export interface VideoRecordingConsentModalProps {
   open: boolean
@@ -40,12 +38,8 @@ export function VideoRecordingConsentModal({
   onGoBack,
   isSubmitting = false
 }: VideoRecordingConsentModalProps) {
-  const [selectedChoice, setSelectedChoice] = useState<'video' | 'audio' | null>(null)
-
-  const handleSubmit = () => {
-    if (selectedChoice) {
-      onConsent(selectedChoice === 'video')
-    }
+  const handleAccept = () => {
+    onConsent(true)
   }
 
   const handleClose = () => {
@@ -64,7 +58,7 @@ export function VideoRecordingConsentModal({
             Video Recording Consent
           </DialogTitle>
           <DialogDescription className="text-base">
-            We'd like to record this interview. Your choice will not affect your evaluation.
+            This interview will be recorded with audio and video for review purposes.
           </DialogDescription>
         </DialogHeader>
 
@@ -104,44 +98,6 @@ export function VideoRecordingConsentModal({
               </p>
             </div>
           </div>
-
-          {/* Choice Selection */}
-          <Alert className="mt-6">
-            <AlertDescription>
-              <p className="font-medium mb-3">Please select one option:</p>
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedChoice('video')}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                    selectedChoice === 'video'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium">I Consent to Video Recording</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Interview will be recorded with audio and video
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedChoice('audio')}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                    selectedChoice === 'audio'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium">Audio Only (No Video)</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Only audio will be recorded, no video
-                  </div>
-                </button>
-              </div>
-            </AlertDescription>
-          </Alert>
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row">
@@ -150,17 +106,18 @@ export function VideoRecordingConsentModal({
               onClick={onGoBack}
               variant="outline"
               className="w-full sm:w-auto"
+              disabled={isSubmitting}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Tech Check
             </Button>
           )}
           <Button
-            onClick={handleSubmit}
-            disabled={!selectedChoice || isSubmitting}
+            onClick={handleAccept}
+            disabled={isSubmitting}
             className="w-full sm:flex-1"
           >
-            {isSubmitting ? 'Saving...' : 'Continue to Interview'}
+            {isSubmitting ? 'Starting Interview...' : 'I Consent - Start Interview'}
           </Button>
         </DialogFooter>
       </DialogContent>

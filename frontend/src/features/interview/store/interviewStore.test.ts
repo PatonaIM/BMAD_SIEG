@@ -110,4 +110,33 @@ describe('InterviewStore', () => {
     expect(state.isAiTyping).toBe(false);
     expect(state.status).toBe('not_started');
   });
+
+  // Story 2.5: Camera state tests
+  it('initializes camera enabled state from localStorage', () => {
+    const state = useInterviewStore.getState();
+    // Default should be true
+    expect(state.cameraEnabled).toBe(true);
+  });
+
+  it('sets camera enabled state', () => {
+    const { setCameraEnabled } = useInterviewStore.getState();
+    
+    setCameraEnabled(false);
+    expect(useInterviewStore.getState().cameraEnabled).toBe(false);
+    
+    setCameraEnabled(true);
+    expect(useInterviewStore.getState().cameraEnabled).toBe(true);
+  });
+
+  it('persists camera state to localStorage', () => {
+    const { setCameraEnabled } = useInterviewStore.getState();
+    
+    // Set to false
+    setCameraEnabled(false);
+    expect(localStorage.getItem('interview_camera_enabled')).toBe('false');
+    
+    // Set to true
+    setCameraEnabled(true);
+    expect(localStorage.getItem('interview_camera_enabled')).toBe('true');
+  });
 });

@@ -125,10 +125,14 @@ export class AudioPlaybackQueue {
   private isPlaying: boolean = false
   private nextStartTime: number = 0
   private sampleRate: number
+  private onPlaybackStart?: () => void
+  private onPlaybackEnd?: () => void
   
-  constructor(sampleRate: number = 24000) {
+  constructor(sampleRate: number = 24000, callbacks?: { onPlaybackStart?: () => void, onPlaybackEnd?: () => void }) {
     this.audioContext = new AudioContext({ sampleRate })
     this.sampleRate = sampleRate
+    this.onPlaybackStart = callbacks?.onPlaybackStart
+    this.onPlaybackEnd = callbacks?.onPlaybackEnd
   }
   
   /**
@@ -186,7 +190,16 @@ export class AudioPlaybackQueue {
   private playNext(): void {
     if (this.queue.length === 0) {
       this.isPlaying = false
+      // Call onPlaybackEnd when queue is empty
+      if (this.onPlaybackEnd) {
+        this.onPlaybackEnd()
+      }
       return
+    }
+    
+    // Call onPlaybackStart when starting to play first chunk
+    if (!this.isPlaying && this.onPlaybackStart) {
+      this.onPlaybackStart()
     }
     
     this.isPlaying = true

@@ -168,7 +168,18 @@ class OpenAIRealtimeProvider:
             connection_id=id(websocket)
         )
         
-        # Send session.update event
+        # First, consume the session.created event that OpenAI sends immediately after connection
+        initial_response = await websocket.recv()
+        initial_data = json.loads(initial_response)
+        
+        if initial_data.get("type") != "session.created":
+            logger.warning(
+                "unexpected_initial_session_event",
+                response_type=initial_data.get("type"),
+                expected="session.created"
+            )
+        
+        # Now send session.update event to configure the session
         event = {
             "type": "session.update",
             "session": session_config

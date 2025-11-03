@@ -9,13 +9,8 @@ import { useSendMessage } from "@/src/features/interview/hooks/useSendMessage"
 import { useInterviewMessages } from "@/src/features/interview/hooks/useInterview"
 import { useAudioUpload } from "@/src/features/interview/hooks/useAudioUpload"
 import InterviewProgress from "@/src/features/interview/components/InterviewProgress/InterviewProgress"
-import InterviewChat from "@/src/features/interview/components/InterviewChat/InterviewChat"
-import ChatInput from "@/src/features/interview/components/ChatInput/ChatInput"
-import TypingIndicator from "@/src/features/interview/components/TypingIndicator/TypingIndicator"
 import { InterviewStateIndicator } from "@/src/features/interview/components/InterviewStateIndicator"
 import { InputModeToggle, type InputMode } from "@/src/features/interview/components/InputModeToggle"
-import { PushToTalkButton } from "@/src/features/interview/components/PushToTalkButton"
-import { AudioPlayback } from "@/src/features/interview/components/AudioPlayback"
 import { MicrophonePermissionDialog } from "@/src/features/interview/components/MicrophonePermissionDialog"
 import { useAudioCapture } from "@/src/features/interview/hooks/useAudioCapture"
 import { useRealtimeInterview } from "@/src/features/interview/hooks/useRealtimeInterview"
@@ -23,11 +18,18 @@ import { AudioPlaybackQueue, AudioLevelMonitor } from "@/src/features/interview/
 import { LatencyIndicator } from "@/src/features/interview/components/LatencyIndicator"
 import { ConnectionLostBanner } from "@/src/features/interview/components/ConnectionLostBanner"
 import { AudioNotSupportedMessage } from "@/src/features/interview/components/AudioNotSupportedMessage"
-import { RecordingIndicator } from "@/src/features/interview/components/RecordingIndicator"
+import { type OrbState } from "@/src/features/interview/components/AIPresenceOrb"
 import { useVideoRecorder } from "@/src/features/interview/hooks/useVideoRecorder"
 import { videoUploadService } from "@/src/features/interview/services/videoUploadService"
 import { useMediaPermissions } from "@/src/hooks/useMediaPermissions"
-import { AlertCircle, WifiOff } from "lucide-react"
+import { AlertCircle } from "lucide-react"
+// Story 2.4: New video layout components
+import { VideoGridLayout } from "@/src/features/interview/components/VideoGridLayout"
+import { AITile } from "@/src/features/interview/components/AITile"
+import { CandidateTile } from "@/src/features/interview/components/CandidateTile"
+import { InterviewControls } from "@/src/features/interview/components/InterviewControls"
+// Story 2.5: Recording warning toast
+import { RecordingWarningToast } from "@/src/features/interview/components/RecordingWarningToast"
 
 export default function InterviewPage() {
   const params = useParams()
@@ -52,6 +54,18 @@ export default function InterviewPage() {
     audioLevel,
     setAudioLevel,
     addMessage,
+    // Story 2.4: Caption and self-view state
+    currentCaption,
+    setCurrentCaption,
+    captionsEnabled,
+    setCaptionsEnabled,
+    showCaption,
+    setShowCaption,
+    selfViewVisible,
+    setSelfViewVisible,
+    // Story 2.5: Camera enabled state
+    cameraEnabled,
+    setCameraEnabled,
   } = useInterviewStore()
 
   const [showPermissionDialog, setShowPermissionDialog] = useState(false)
@@ -60,12 +74,17 @@ export default function InterviewPage() {
   const [videoConsentGiven, setVideoConsentGiven] = useState(false)
   const [isVideoRecording, setIsVideoRecording] = useState(false)
   const [uploadedChunks, setUploadedChunks] = useState<number>(0)
+  // Story 2.4: Control button states
+  const [isMuted, setIsMuted] = useState(false)
+  const [isCameraOn, setIsCameraOn] = useState(cameraEnabled)
   const audioPlaybackQueueRef = useRef<AudioPlaybackQueue | null>(null)
   const audioLevelMonitorRef = useRef<AudioLevelMonitor | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioLevelThrottleRef = useRef<number>(0)
   const audioContextRef = useRef<AudioContext | null>(null)
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null)
+  // Story 2.4: Caption timing ref
+  const captionTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const audioCapture = useAudioCapture()
   
@@ -73,6 +92,22 @@ export default function InterviewPage() {
   const mediaPermissions = useMediaPermissions()
   const videoRecorder = useVideoRecorder()
   const previousChunksCountRef = useRef<number>(0)
+
+  // Map interview state to orb state
+  const getOrbState = (): OrbState => {
+    switch (interviewState) {
+      case 'ai_listening':
+        return 'idle'
+      case 'ai_speaking':
+        return 'speaking'
+      case 'candidate_speaking':
+        return 'listening'
+      case 'processing':
+        return 'thinking'
+      default:
+        return 'idle'
+    }
+  }
 
   // Hooks must be declared before conditional logic
   const { mutate: sendMessage, isPending } = useSendMessage({
@@ -95,7 +130,16 @@ export default function InterviewPage() {
       },
       onAudioChunk: async (audioData: string) => {
         if (!audioPlaybackQueueRef.current) {
-          audioPlaybackQueueRef.current = new AudioPlaybackQueue()
+          audioPlaybackQueueRef.current = new AudioPlaybackQueue(24000, {
+            onPlaybackStart: () => {
+              console.log('🔊 AI audio playback started')
+              setInterviewState('ai_speaking')
+            },
+            onPlaybackEnd: () => {
+              console.log('🔇 AI audio playback ended')
+              setInterviewState('ai_listening')
+            }
+          })
         }
         await audioPlaybackQueueRef.current.enqueueBase64(audioData)
       },
@@ -117,17 +161,6 @@ export default function InterviewPage() {
     setConnectionState(realtime.connectionState)
   }, [realtime.connectionState, setConnectionState])
 
-  // Initialize audio playback queue
-  useEffect(() => {
-    if (useRealtimeMode && inputMode === 'voice') {
-      audioPlaybackQueueRef.current = new AudioPlaybackQueue()
-      return () => {
-        audioPlaybackQueueRef.current?.close()
-        audioPlaybackQueueRef.current = null
-      }
-    }
-  }, [useRealtimeMode, inputMode])
-
   // Connect/disconnect realtime WebSocket when mode changes
   useEffect(() => {
     // Don't connect until interview messages are loaded
@@ -139,6 +172,11 @@ export default function InterviewPage() {
     
     return () => {
       realtime.disconnect()
+      // Cleanup audio playback queue on unmount
+      if (audioPlaybackQueueRef.current) {
+        audioPlaybackQueueRef.current.close()
+        audioPlaybackQueueRef.current = null
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useRealtimeMode, inputMode, sessionId, isLoading])
@@ -154,9 +192,28 @@ export default function InterviewPage() {
     checkAudioSupport()
   }, [])
 
-  // Initialize audio level monitor
+  // Auto-request microphone permission when in realtime voice mode
   useEffect(() => {
-    if (useRealtimeMode && inputMode === 'voice' && audioCapture.permissionGranted) {
+    const requestMicPermission = async () => {
+      if (useRealtimeMode && inputMode === 'voice' && !audioCapture.permissionGranted) {
+        console.log('🎤 Requesting microphone permission...')
+        const granted = await audioCapture.requestPermission()
+        if (!granted) {
+          console.error('❌ Microphone permission denied')
+          setShowPermissionDialog(true)
+        } else {
+          console.log('✅ Microphone permission granted')
+        }
+      }
+    }
+    requestMicPermission()
+  }, [useRealtimeMode, inputMode, audioCapture])
+
+  // Initialize audio level monitor AND start continuous audio streaming for Server VAD
+  useEffect(() => {
+    if (useRealtimeMode && inputMode === 'voice' && connectionState === 'connected' && audioCapture.permissionGranted) {
+      console.log('🎤 Starting continuous audio streaming for Server VAD...')
+      
       audioLevelMonitorRef.current = new AudioLevelMonitor()
       
       // Get media stream from audio capture
@@ -174,14 +231,83 @@ export default function InterviewPage() {
             audioLevelThrottleRef.current = now
           }
         })
+        
+        // Start continuous audio streaming for Server VAD
+        // Create audio context with native sample rate
+        const audioContext = new AudioContext()
+        const source = audioContext.createMediaStreamSource(stream)
+        
+        // Create script processor for raw PCM data
+        const processor = audioContext.createScriptProcessor(8192, 1, 1)
+        
+        // Calculate resampling ratio (e.g., 48000 Hz → 24000 Hz = 2:1)
+        const sourceSampleRate = audioContext.sampleRate
+        const targetSampleRate = 24000
+        const ratio = sourceSampleRate / targetSampleRate
+        
+        console.log(`🎤 Audio resampling: ${sourceSampleRate}Hz → ${targetSampleRate}Hz (ratio: ${ratio})`)
+        
+        let chunkCount = 0
+        processor.onaudioprocess = (e) => {
+          chunkCount++
+          if (chunkCount === 1) {
+            console.log('✅ Started sending audio chunks to backend')
+          }
+          
+          const inputData = e.inputBuffer.getChannelData(0) // Float32Array
+          
+          // Simple downsampling: take every Nth sample
+          const outputLength = Math.floor(inputData.length / ratio)
+          const resampledData = new Float32Array(outputLength)
+          
+          for (let i = 0; i < outputLength; i++) {
+            const sourceIndex = Math.floor(i * ratio)
+            resampledData[i] = inputData[sourceIndex]
+          }
+          
+          // Convert Float32 to Int16 (PCM16)
+          const pcm16 = new Int16Array(resampledData.length)
+          for (let i = 0; i < resampledData.length; i++) {
+            const s = Math.max(-1, Math.min(1, resampledData[i]))
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
+          }
+          
+          // Send to WebSocket (Server VAD will detect when you speak)
+          realtime.sendAudioChunk(pcm16.buffer)
+          
+          if (chunkCount % 100 === 0) {
+            console.log(`📤 Sent ${chunkCount} audio chunks (Server VAD active)`)
+          }
+        }
+        
+        source.connect(processor)
+        processor.connect(audioContext.destination)
+        
+        // Store references for cleanup
+        audioContextRef.current = audioContext
+        audioProcessorRef.current = processor
+        
+        console.log('✅ Continuous audio streaming active - Server VAD will detect when you speak')
       }
       
       return () => {
+        console.log('🛑 Stopping continuous audio streaming')
         audioLevelMonitorRef.current?.stop()
         audioLevelMonitorRef.current = null
+        
+        // Clean up audio streaming
+        if (audioProcessorRef.current) {
+          audioProcessorRef.current.disconnect()
+          audioProcessorRef.current = null
+        }
+        if (audioContextRef.current) {
+          audioContextRef.current.close()
+          audioContextRef.current = null
+        }
       }
     }
-  }, [useRealtimeMode, inputMode, audioCapture.permissionGranted, audioCapture])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useRealtimeMode, inputMode, connectionState, audioCapture.permissionGranted])
 
   // Track reconnection attempts
   useEffect(() => {
@@ -205,6 +331,23 @@ export default function InterviewPage() {
       setShowPermissionDialog(true)
     }
   }, [inputMode, audioCapture.permissionGranted])
+
+  // Story 2.5: Sync camera state from store
+  useEffect(() => {
+    setIsCameraOn(cameraEnabled)
+  }, [cameraEnabled])
+
+  // Story 2.5: Request camera permission when page loads (if camera enabled)
+  useEffect(() => {
+    const requestCameraAccess = async () => {
+      if (cameraEnabled && mediaPermissions.cameraStatus === 'idle') {
+        console.log('📹 Requesting camera permission...')
+        await mediaPermissions.requestCamera()
+      }
+    }
+
+    requestCameraAccess()
+  }, [cameraEnabled, mediaPermissions])
 
   // Video consent is handled in tech check page, so we don't show the modal here
   // Video recording starts automatically if consent was given and camera is available
@@ -308,6 +451,42 @@ export default function InterviewPage() {
 
     stopVideoRecording()
   }, [isVideoRecording, status, videoRecorder, sessionId, uploadedChunks, videoUploadService])
+
+  // Story 2.4: Caption sync logic - update caption when AI speaks
+  useEffect(() => {
+    if (interviewState === 'ai_speaking') {
+      // AI is speaking - show caption immediately
+      const lastAiMessage = messages
+        .filter(m => m.role === 'ai')
+        .pop()
+      
+      if (lastAiMessage) {
+        // Clear any existing timer
+        if (captionTimerRef.current) {
+          clearTimeout(captionTimerRef.current)
+          captionTimerRef.current = null
+        }
+        
+        setCurrentCaption(lastAiMessage.content)
+        setShowCaption(true)
+      }
+    } else if (currentCaption && (interviewState === 'ai_listening' || interviewState === 'processing' || interviewState === 'candidate_speaking')) {
+      // AI finished speaking - start 3-second fade-out timer
+      if (!captionTimerRef.current) {
+        captionTimerRef.current = setTimeout(() => {
+          setShowCaption(false)
+          captionTimerRef.current = null
+        }, 3000)
+      }
+    }
+    
+    return () => {
+      if (captionTimerRef.current) {
+        clearTimeout(captionTimerRef.current)
+        captionTimerRef.current = null
+      }
+    }
+  }, [interviewState, messages, currentCaption, setCurrentCaption, setShowCaption])
 
   const handleSendMessage = (messageText: string) => {
     sendMessage(messageText)
@@ -470,6 +649,54 @@ export default function InterviewPage() {
     setInputMode('text')
   }
 
+  // Story 2.4: Control handlers
+  const handleToggleMute = () => {
+    setIsMuted(!isMuted)
+    // TODO: Actually mute/unmute the microphone stream
+    if (mediaStreamRef.current) {
+      const audioTracks = mediaStreamRef.current.getAudioTracks()
+      audioTracks.forEach(track => {
+        track.enabled = isMuted // Toggle enabled state
+      })
+    }
+  }
+
+  const handleToggleCamera = () => {
+    const newCameraState = !cameraEnabled
+    setCameraEnabled(newCameraState)
+    
+    // Update local UI state
+    setIsCameraOn(newCameraState)
+    
+    // Stop/start video recording based on camera state
+    if (!newCameraState && isVideoRecording) {
+      // Turning off - stop recording
+      videoRecorder.stopRecording()
+      setIsVideoRecording(false)
+    } else if (newCameraState && mediaPermissions.cameraStream && videoConsentGiven) {
+      // Turning on - start recording
+      videoRecorder.startRecording(mediaPermissions.cameraStream)
+      setIsVideoRecording(true)
+    }
+  }
+
+  const handleEndInterview = () => {
+    // Show confirmation dialog before ending
+    if (window.confirm('Are you sure you want to end the interview?')) {
+      setStatus('completed')
+      // Navigate to completion page or dashboard
+      window.location.href = '/dashboard'
+    }
+  }
+
+  const handleToggleCaptions = () => {
+    setCaptionsEnabled(!captionsEnabled)
+  }
+
+  const handleToggleSelfView = () => {
+    setSelfViewVisible(!selfViewVisible)
+  }
+
   if (!sessionId) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -522,7 +749,13 @@ export default function InterviewPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-muted/30 touch-manipulation">
+    <>
+      {/* Story 2.5: Recording Warning Toast */}
+      <RecordingWarningToast 
+        sessionId={sessionId || ''}
+        isRecording={isVideoRecording && cameraEnabled}
+      />
+
       {/* Connection Lost Banner */}
       <ConnectionLostBanner
         show={useRealtimeMode && inputMode === 'voice' && connectionState === 'disconnected' && reconnectAttempts === 0}
@@ -545,9 +778,6 @@ export default function InterviewPage() {
         <LatencyIndicator latency={realtime.latency} />
       )}
       
-      {/* Video Recording Indicator */}
-      <RecordingIndicator isRecording={isVideoRecording} />
-      
       {/* Microphone Permission Dialog */}
       <MicrophonePermissionDialog
         show={showPermissionDialog}
@@ -555,105 +785,55 @@ export default function InterviewPage() {
         onPermissionDenied={handlePermissionDenied}
       />
 
-      {/* Audio Playback (hidden component) */}
-      <AudioPlayback
-        audioUrl={currentAudioUrl}
-        onPlaybackStart={handleAudioPlaybackStart}
-        onPlaybackEnd={handleAudioPlaybackEnd}
-        onPlaybackError={handleAudioPlaybackError}
-      />
+      {/* Story 2.4: New Video Grid Layout */}
+      <VideoGridLayout audioOnlyMode={!cameraEnabled}>
+        {/* AI Tile - Large tile with orb, captions, and state indicators */}
+        <AITile
+          className="ai-tile"
+          orbState={getOrbState()}
+          audioLevel={audioLevel}
+          caption={currentCaption}
+          showCaption={showCaption}
+          captionsEnabled={captionsEnabled}
+          onToggleCaptions={handleToggleCaptions}
+          connectionState={connectionState}
+          isRecording={isVideoRecording}
+        />
 
-      {/* Progress Bar */}
+        {/* Candidate Tile - Video preview with toggle (hidden in audio-only mode) */}
+        {cameraEnabled && (
+          <CandidateTile
+            className="candidate-tile"
+            videoStream={mediaPermissions.cameraStream}
+            isVisible={selfViewVisible}
+            onToggleVisibility={handleToggleSelfView}
+            isRecording={isVideoRecording}
+          />
+        )}
+
+        {/* Interview Controls - Mute, camera, end interview */}
+        <InterviewControls
+          className="interview-controls"
+          isMuted={isMuted}
+          isCameraOn={isCameraOn}
+          onToggleMute={handleToggleMute}
+          onToggleCamera={handleToggleCamera}
+          onEndInterview={handleEndInterview}
+        />
+      </VideoGridLayout>
+
+      {/* Progress Bar (overlay on video layout) */}
       {totalQuestions > 0 && (
-        <div className="border-b bg-background">
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20 }} className="bg-background/95 backdrop-blur-sm">
           <InterviewProgress current={currentQuestion} total={totalQuestions} />
         </div>
       )}
 
-      {/* Interview State Indicator & Mode Toggle */}
-      <div className="bg-background border-b p-3 md:p-4 space-y-2 md:space-y-3">
-        {/* Connection status for realtime mode */}
-        {useRealtimeMode && inputMode === 'voice' && (
-          <div className="flex items-center gap-2 text-xs">
-            {connectionState === 'connecting' && (
-              <span className="flex items-center gap-1 text-yellow-600">
-                <span className="animate-pulse">●</span> Connecting...
-              </span>
-            )}
-            {connectionState === 'connected' && (
-              <span className="flex items-center gap-1 text-green-600">
-                <span>●</span> Connected
-                {realtime.latency !== null && (
-                  <span className="text-muted-foreground ml-2">
-                    {realtime.latency}ms
-                  </span>
-                )}
-              </span>
-            )}
-            {connectionState === 'error' && (
-              <span className="flex items-center gap-1 text-red-600">
-                <WifiOff className="w-3 h-3" /> Connection Error
-              </span>
-            )}
-          </div>
-        )}
-        
+      {/* Hidden: Interview State Indicator & Mode Toggle (for debugging/accessibility) */}
+      <div style={{ position: 'fixed', bottom: 100, left: 16, zIndex: 20 }} className="bg-background/95 backdrop-blur-sm rounded-lg p-2 text-xs">
         <InterviewStateIndicator state={interviewState} />
         <InputModeToggle mode={inputMode} onModeChange={handleInputModeChange} />
       </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 overflow-hidden">
-        <InterviewChat messages={messages} isTyping={isAiTyping} />
-
-        {isAiTyping && (
-          <div className="px-4">
-            <TypingIndicator isVisible={isAiTyping} />
-          </div>
-        )}
-      </div>
-
-      {/* Input Area */}
-      <div className="border-t bg-background p-3 md:p-4">
-        {inputMode === 'voice' ? (
-          <div className="flex flex-col items-center gap-3">
-            {/* Audio level indicator for realtime mode */}
-            {useRealtimeMode && audioLevel > 0 && (
-              <div className="w-full max-w-md">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Mic Level:</span>
-                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-green-500 transition-all duration-100"
-                      style={{ width: `${audioLevel * 100}%` }}
-                    />
-                  </div>
-                  <span>{Math.round(audioLevel * 100)}%</span>
-                </div>
-              </div>
-            )}
-            
-            <div className="flex justify-center min-h-20 items-center w-full">
-              <PushToTalkButton
-                state={audioCapture.state}
-                error={audioCapture.error}
-                onMouseDown={handleAudioRecordStart}
-                onMouseUp={handleAudioRecordStop}
-                onTouchStart={handleAudioRecordStart}
-                onTouchEnd={handleAudioRecordStop}
-                disabled={isPending || isAudioUploading || isAiTyping || interviewState === 'ai_speaking' || (useRealtimeMode && connectionState !== 'connected')}
-                className="w-full max-w-md"
-              />
-            </div>
-          </div>
-        ) : (
-          <ChatInput
-            onSubmit={handleSendMessage}
-            disabled={isPending || isAiTyping}
-            placeholder="Type your response..."
-          />
-        )}
-      </div>
-    </div>
+    </>
   )
 }

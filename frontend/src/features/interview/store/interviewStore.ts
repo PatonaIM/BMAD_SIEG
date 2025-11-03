@@ -28,6 +28,19 @@ const initialState = {
   connectionState: 'disconnected' as const,
   realtimeLatency: null,
   audioLevel: 0,
+  // Caption state (Story 2.4)
+  currentCaption: null,
+  captionsEnabled: typeof window !== 'undefined'
+    ? (localStorage.getItem('interview_captions_enabled') !== 'false')
+    : true,
+  showCaption: false,
+  selfViewVisible: typeof window !== 'undefined'
+    ? (localStorage.getItem('interview_self_view_visible') !== 'false')
+    : true,
+  // Camera enabled state (Story 2.5)
+  cameraEnabled: typeof window !== 'undefined'
+    ? (localStorage.getItem('interview_camera_enabled') !== 'false')
+    : true,
 };
 
 /**
@@ -120,6 +133,34 @@ export const useInterviewStore = create<InterviewStore>()(
 
       setAudioLevel: (audioLevel) =>
         set({ audioLevel }, false, 'setAudioLevel'),
+
+      // Caption actions (Story 2.4)
+      setCurrentCaption: (currentCaption) =>
+        set({ currentCaption }, false, 'setCurrentCaption'),
+
+      setCaptionsEnabled: (captionsEnabled) => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('interview_captions_enabled', String(captionsEnabled));
+        }
+        return set({ captionsEnabled }, false, 'setCaptionsEnabled');
+      },
+
+      setShowCaption: (showCaption) =>
+        set({ showCaption }, false, 'setShowCaption'),
+
+      setSelfViewVisible: (selfViewVisible) => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('interview_self_view_visible', String(selfViewVisible));
+        }
+        return set({ selfViewVisible }, false, 'setSelfViewVisible');
+      },
+
+      setCameraEnabled: (cameraEnabled) => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('interview_camera_enabled', String(cameraEnabled));
+        }
+        return set({ cameraEnabled }, false, 'setCameraEnabled');
+      },
 
       reset: () => set(initialState, false, 'reset'),
     }),

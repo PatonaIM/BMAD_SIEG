@@ -201,17 +201,23 @@ async def realtime_connect(
         # Rate limiting: Check if interview already has active connection
         if interview_id in active_connections:
             logger.warning(
-                "rate_limit_exceeded",
+                "closing_existing_connection",
                 interview_id=str(interview_id),
                 correlation_id=correlation_id
             )
-            await websocket.send_json({
-                "type": "error",
-                "error": "RATE_LIMIT_EXCEEDED",
-                "message": "Interview already has an active realtime connection"
-            })
-            await websocket.close(code=1008)  # Policy violation
-            return
+            # Close the existing connection to allow new one
+            try:
+                old_ws = active_connections[interview_id]
+                await old_ws.close(code=1000, reason="New connection established")
+            except Exception as e:
+                logger.warning(
+                    "failed_to_close_old_connection",
+                    error=str(e),
+                    correlation_id=correlation_id
+                )
+            finally:
+                # Remove old connection from tracking
+                del active_connections[interview_id]
         
         # Register active connection
         active_connections[interview_id] = websocket
@@ -305,6 +311,25 @@ async def realtime_connect(
             "interview_id": str(interview_id),
             "message": "Realtime connection established"
         })
+        
+        # Trigger AI to speak first with greeting
+        # This initiates the interview conversation
+        try:
+            await openai_provider.create_response(openai_ws)
+            
+            logger.info(
+                "initial_ai_greeting_triggered",
+                interview_id=str(interview_id),
+                correlation_id=correlation_id
+            )
+        except Exception as e:
+            logger.error(
+                "failed_to_trigger_initial_greeting",
+                interview_id=str(interview_id),
+                error=str(e),
+                error_type=type(e).__name__,
+                correlation_id=correlation_id
+            )
         
         # Create bidirectional message forwarding tasks
         client_to_openai_task = asyncio.create_task(

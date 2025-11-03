@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Check, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Check, AlertCircle, Info } from 'lucide-react';
 import { AudioTestStep } from '@/src/features/interview/components/TechCheck/AudioTestStep';
 import { CameraTestStep } from '@/src/features/interview/components/TechCheck/CameraTestStep';
 import { VideoRecordingConsentModal } from '@/src/features/interview/components/VideoRecordingConsentModal';
@@ -235,28 +236,39 @@ export default function TechCheckPage() {
 
         {/* Success Message and Continue Button - shown when both tests pass */}
         {audioTestPassed && cameraTestPassed && (
-          <Card className="p-6 border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Check className="h-6 w-6 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-green-900 dark:text-green-100 text-lg">
-                    All Checks Passed!
-                  </h3>
-                  <p className="text-sm text-green-800 dark:text-green-200 mt-1">
-                    Your audio and camera are working perfectly. You're ready to start the interview.
-                  </p>
+          <>
+            {/* Story 2.5: Recording privacy notice */}
+            <Alert className="border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                This interview will be recorded with audio and video. 
+                You can disable your camera at any time during the interview if needed.
+              </AlertDescription>
+            </Alert>
+
+            <Card className="p-6 border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Check className="h-6 w-6 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-green-900 dark:text-green-100 text-lg">
+                      All Checks Passed!
+                    </h3>
+                    <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+                      Your audio and camera are working perfectly. You're ready to start the interview.
+                    </p>
+                  </div>
                 </div>
+                <Button
+                  onClick={handleContinue}
+                  size="lg"
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  Continue to Interview
+                </Button>
               </div>
-              <Button
-                onClick={handleContinue}
-                size="lg"
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                Continue to Interview
-              </Button>
-            </div>
-          </Card>
+            </Card>
+          </>
         )}
 
         {/* Both Tests Side by Side */}

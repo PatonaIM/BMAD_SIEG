@@ -50,6 +50,13 @@ export interface InterviewState {
   connectionState: ConnectionState;
   realtimeLatency: number | null;
   audioLevel: number;
+  // Caption state (Story 2.4)
+  currentCaption: string | null;
+  captionsEnabled: boolean;
+  showCaption: boolean;
+  selfViewVisible: boolean;
+  // Camera state (Story 2.5)
+  cameraEnabled: boolean;
 }
 
 export interface InterviewActions {
@@ -76,6 +83,13 @@ export interface InterviewActions {
   setConnectionState: (state: ConnectionState) => void;
   updateLatency: (latency: number) => void;
   setAudioLevel: (level: number) => void;
+  // Caption actions (Story 2.4)
+  setCurrentCaption: (text: string | null) => void;
+  setCaptionsEnabled: (enabled: boolean) => void;
+  setShowCaption: (show: boolean) => void;
+  setSelfViewVisible: (visible: boolean) => void;
+  // Camera actions (Story 2.5)
+  setCameraEnabled: (enabled: boolean) => void;
 }
 
 export type InterviewStore = InterviewState & InterviewActions;

@@ -2,6 +2,10 @@
 
 An AI-powered technical interview platform designed for recruitment firms to efficiently assess technical candidates through natural speech-to-speech interviews.
 
+> **📚 For complete system documentation, architecture, and development guide:**  
+> **→ [Read the Complete System Documentation](./docs/COMPLETE-SYSTEM-DOCUMENTATION.md)** ←  
+> This comprehensive guide covers everything: AI interview flow, tech stack, API reference, troubleshooting, and more.
+
 ## 🎯 Project Overview
 
 Teamified Candidates Portal enables recruitment consultants to conduct scalable, consistent, and fair technical assessments using AI-driven conversational interviews. The platform evaluates candidates across multiple technical domains (React, Python, JavaScript, Full-Stack) while providing detailed skill mapping and integrity indicators.

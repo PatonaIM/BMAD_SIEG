@@ -21,6 +21,7 @@
 - [16. Error Handling & Recovery](./16-error-handling-recovery.md)
 - [17. Build & Deployment Configuration](./17-build-deployment-configuration.md)
 - [18. Future Sections](./18-future-sections-to-be-documented-during-implementation.md)
+- [19. Migration Guide: Vite → Next.js](./19-migration-vite-to-nextjs.md)
 - [Document Completion](./document-completion.md)
 
 ---

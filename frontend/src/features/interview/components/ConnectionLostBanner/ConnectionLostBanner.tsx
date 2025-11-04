@@ -2,10 +2,10 @@
  * ConnectionLostBanner Component
  * 
  * Displays a banner when realtime WebSocket connection is lost,
- * with option to retry connection or switch to text mode.
+ * with option to retry connection.
  */
 
-import { AlertTriangle, RotateCw, MessageSquare } from 'lucide-react'
+import { AlertTriangle, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface ConnectionLostBannerProps {
@@ -13,8 +13,8 @@ export interface ConnectionLostBannerProps {
   show: boolean
   /** Retry connection callback */
   onRetry: () => void
-  /** Switch to text mode callback */
-  onSwitchToText: () => void
+  /** Switch to text mode callback (deprecated - kept for compatibility) */
+  onSwitchToText?: () => void
   /** Reconnection attempt count */
   attemptCount?: number
 }
@@ -25,7 +25,6 @@ export interface ConnectionLostBannerProps {
  * Features:
  * - Clear error indication with icon
  * - Retry button with attempt counter
- * - Fallback to text mode option
  * - Responsive layout
  * 
  * @example
@@ -33,7 +32,6 @@ export interface ConnectionLostBannerProps {
  * <ConnectionLostBanner
  *   show={connectionState === 'disconnected'}
  *   onRetry={() => realtime.connect()}
- *   onSwitchToText={() => setInputMode('text')}
  *   attemptCount={3}
  * />
  * ```
@@ -41,7 +39,6 @@ export interface ConnectionLostBannerProps {
 export function ConnectionLostBanner({
   show,
   onRetry,
-  onSwitchToText,
   attemptCount = 0,
 }: ConnectionLostBannerProps) {
   if (!show) return null
@@ -73,22 +70,13 @@ export function ConnectionLostBanner({
           <div className="flex items-center gap-2 ml-8 sm:ml-0">
             <Button
               size="sm"
-              variant="outline"
+              variant="default"
               onClick={onRetry}
               disabled={attemptCount > 0}
-              className="bg-white dark:bg-gray-800"
-            >
-              <RotateCw className="h-4 w-4 mr-1.5" />
-              Retry
-            </Button>
-            <Button
-              size="sm"
-              variant="default"
-              onClick={onSwitchToText}
               className="bg-yellow-600 hover:bg-yellow-700 text-white"
             >
-              <MessageSquare className="h-4 w-4 mr-1.5" />
-              Use Text Mode
+              <RotateCw className="h-4 w-4 mr-1.5" />
+              {attemptCount > 0 ? 'Reconnecting...' : 'Retry Connection'}
             </Button>
           </div>
         </div>

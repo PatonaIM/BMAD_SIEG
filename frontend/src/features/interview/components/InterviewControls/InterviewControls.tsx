@@ -1,28 +1,29 @@
 /**
  * Interview Controls Component
  * 
- * Minimal control bar with mute, camera toggle, and end interview buttons
- * Supports keyboard shortcuts (Space, C)
+ * Minimal control bar with show/hide self-view and end interview buttons
+ * Camera always records, but candidate can choose to see themselves or not
+ * Supports keyboard shortcuts (V for view, Enter for done speaking)
  */
 
 import { useEffect, useCallback } from 'react'
-import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react'
+import { Eye, EyeOff, PhoneOff, Check } from 'lucide-react'
 
 export interface InterviewControlsProps {
-  isMuted: boolean
-  isCameraOn: boolean
-  onToggleMute: () => void
-  onToggleCamera: () => void
+  isSelfViewVisible: boolean
+  onToggleSelfView: () => void
   onEndInterview: () => void
+  onDoneSpeaking?: () => void
+  showDoneSpeaking?: boolean
   className?: string
 }
 
 export function InterviewControls({
-  isMuted,
-  isCameraOn,
-  onToggleMute,
-  onToggleCamera,
+  isSelfViewVisible,
+  onToggleSelfView,
   onEndInterview,
+  onDoneSpeaking,
+  showDoneSpeaking = false,
   className = ''
 }: InterviewControlsProps) {
   // Keyboard shortcuts handler
@@ -33,16 +34,16 @@ export function InterviewControls({
       return
     }
 
-    // Space: Toggle mute
-    if (e.code === 'Space') {
-      e.preventDefault()
-      onToggleMute()
-    }
-
-    // V: Toggle video/camera (Story 2.5)
+    // V: Toggle self-view visibility
     if (e.code === 'KeyV') {
       e.preventDefault()
-      onToggleCamera()
+      onToggleSelfView()
+    }
+
+    // Enter: Done speaking (manual turn completion)
+    if (e.code === 'Enter' && showDoneSpeaking && onDoneSpeaking) {
+      e.preventDefault()
+      onDoneSpeaking()
     }
 
     // Escape: Focus on end interview button
@@ -51,7 +52,7 @@ export function InterviewControls({
       const endButton = document.querySelector('.end-interview-button') as HTMLButtonElement
       endButton?.focus()
     }
-  }, [onToggleMute, onToggleCamera])
+  }, [onToggleSelfView, onDoneSpeaking, showDoneSpeaking])
 
   // Register keyboard shortcuts
   useEffect(() => {
@@ -68,40 +69,42 @@ export function InterviewControls({
         bg-white/5 backdrop-blur-md rounded-2xl shadow-lg border border-white/10
         ${className}
       `}
+      style={{ gridArea: 'controls' }}
       role="toolbar"
       aria-label="Interview Controls"
     >
-      {/* Mute/Unmute button */}
+      {/* Show/Hide Self-View button */}
       <button
-        onClick={onToggleMute}
+        onClick={onToggleSelfView}
         className={`
           flex items-center justify-center w-14 h-14 rounded-full 
           transition-all duration-150 hover:scale-105 active:scale-95 shadow-md
-          ${isMuted 
-            ? 'bg-red-500 hover:bg-red-600 text-white' 
-            : 'bg-white/90 hover:bg-white text-gray-800'}
+          ${isSelfViewVisible 
+            ? 'bg-white/90 hover:bg-white text-gray-800' 
+            : 'bg-gray-500 hover:bg-gray-600 text-white'}
         `}
-        aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
-        title={isMuted ? 'Unmute (Space)' : 'Mute (Space)'}
+        aria-label={isSelfViewVisible ? 'Hide self-view' : 'Show self-view'}
+        title={isSelfViewVisible ? 'Hide self-view (V)' : 'Show self-view (V)'}
       >
-        {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
+        {isSelfViewVisible ? <Eye size={24} /> : <EyeOff size={24} />}
       </button>
 
-      {/* Camera toggle button */}
-      <button
-        onClick={onToggleCamera}
-        className={`
-          flex items-center justify-center w-14 h-14 rounded-full 
-          transition-all duration-150 hover:scale-105 active:scale-95 shadow-md
-          ${!isCameraOn 
-            ? 'bg-red-500 hover:bg-red-600 text-white' 
-            : 'bg-white/90 hover:bg-white text-gray-800'}
-        `}
-        aria-label={isCameraOn ? 'Turn camera off' : 'Turn camera on'}
-        title={isCameraOn ? 'Turn camera off (V)' : 'Turn camera on (V)'}
-      >
-        {isCameraOn ? <Video size={24} /> : <VideoOff size={24} />}
-      </button>
+      {/* Done Speaking button - Manual turn completion */}
+      {showDoneSpeaking && onDoneSpeaking && (
+        <button
+          onClick={onDoneSpeaking}
+          className="
+            flex items-center gap-2 px-4 py-3 rounded-full 
+            bg-green-500 hover:bg-green-600 text-white font-medium
+            transition-all duration-150 hover:scale-105 active:scale-95 shadow-md
+          "
+          aria-label="Done speaking"
+          title="Signal you're done speaking (Enter)"
+        >
+          <Check size={20} />
+          <span className="text-sm">Done Speaking</span>
+        </button>
+      )}
 
       {/* End interview button */}
       <button

@@ -295,14 +295,67 @@ async def realtime_connect(
         
         # Connect to OpenAI Realtime API
         openai_provider = OpenAIRealtimeProvider()
-        openai_ws = await openai_provider.connect(session_config)
         
-        logger.info(
-            "realtime_session_established",
-            interview_id=str(interview_id),
-            session_id=str(session.id),
-            correlation_id=correlation_id
-        )
+        try:
+            logger.info(
+                "attempting_openai_connection",
+                interview_id=str(interview_id),
+                correlation_id=correlation_id
+            )
+            
+            openai_ws = await asyncio.wait_for(
+                openai_provider.connect(session_config),
+                timeout=45.0  # 45 second timeout for OpenAI connection
+            )
+            
+            logger.info(
+                "realtime_session_established",
+                interview_id=str(interview_id),
+                session_id=str(session.id),
+                correlation_id=correlation_id
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "openai_connection_timeout",
+                interview_id=str(interview_id),
+                correlation_id=correlation_id
+            )
+            await websocket.send_json({
+                "type": "error",
+                "error": "CONNECTION_TIMEOUT",
+                "message": "Failed to connect to OpenAI Realtime API - connection timed out"
+            })
+            await websocket.close(code=1011)
+            return
+        except (ConnectionError, TimeoutError) as e:
+            logger.error(
+                "openai_connection_failed",
+                interview_id=str(interview_id),
+                error=str(e),
+                correlation_id=correlation_id
+            )
+            await websocket.send_json({
+                "type": "error",
+                "error": "CONNECTION_FAILED",
+                "message": f"Failed to connect to OpenAI Realtime API: {str(e)}"
+            })
+            await websocket.close(code=1011)
+            return
+        except Exception as e:
+            logger.error(
+                "openai_connection_unexpected_error",
+                interview_id=str(interview_id),
+                error=str(e),
+                error_type=type(e).__name__,
+                correlation_id=correlation_id
+            )
+            await websocket.send_json({
+                "type": "error",
+                "error": "INTERNAL_ERROR",
+                "message": "An unexpected error occurred while connecting to AI service"
+            })
+            await websocket.close(code=1011)
+            return
         
         # Send connection success message to client
         await websocket.send_json({

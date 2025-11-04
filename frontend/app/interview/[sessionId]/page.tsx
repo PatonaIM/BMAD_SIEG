@@ -8,14 +8,11 @@ import { useInterviewStore } from "@/src/features/interview/store/interviewStore
 import { useSendMessage } from "@/src/features/interview/hooks/useSendMessage"
 import { useInterviewMessages } from "@/src/features/interview/hooks/useInterview"
 import { useAudioUpload } from "@/src/features/interview/hooks/useAudioUpload"
-import InterviewProgress from "@/src/features/interview/components/InterviewProgress/InterviewProgress"
 import { InterviewStateIndicator } from "@/src/features/interview/components/InterviewStateIndicator"
-import { InputModeToggle, type InputMode } from "@/src/features/interview/components/InputModeToggle"
 import { MicrophonePermissionDialog } from "@/src/features/interview/components/MicrophonePermissionDialog"
 import { useAudioCapture } from "@/src/features/interview/hooks/useAudioCapture"
 import { useRealtimeInterview } from "@/src/features/interview/hooks/useRealtimeInterview"
 import { AudioPlaybackQueue, AudioLevelMonitor } from "@/src/features/interview/utils/audioProcessing"
-import { LatencyIndicator } from "@/src/features/interview/components/LatencyIndicator"
 import { ConnectionLostBanner } from "@/src/features/interview/components/ConnectionLostBanner"
 import { AudioNotSupportedMessage } from "@/src/features/interview/components/AudioNotSupportedMessage"
 import { type OrbState } from "@/src/features/interview/components/AIPresenceOrb"
@@ -30,6 +27,9 @@ import { CandidateTile } from "@/src/features/interview/components/CandidateTile
 import { InterviewControls } from "@/src/features/interview/components/InterviewControls"
 // Story 2.5: Recording warning toast
 import { RecordingWarningToast } from "@/src/features/interview/components/RecordingWarningToast"
+// Story 2.6: Caption sync hook and history modal
+import { useCaptionSync } from "@/src/features/interview/hooks/useCaptionSync"
+import { CaptionHistory } from "@/src/features/interview/components/CaptionHistory"
 
 export default function InterviewPage() {
   const params = useParams()
@@ -37,17 +37,11 @@ export default function InterviewPage() {
 
   const { 
     messages, 
-    isAiTyping, 
-    currentQuestion, 
-    totalQuestions, 
     setSessionId, 
     setStatus,
     status,
     interviewState,
     setInterviewState,
-    inputMode,
-    setInputMode,
-    currentAudioUrl,
     useRealtimeMode,
     connectionState,
     setConnectionState,
@@ -55,17 +49,12 @@ export default function InterviewPage() {
     setAudioLevel,
     addMessage,
     // Story 2.4: Caption and self-view state
-    currentCaption,
-    setCurrentCaption,
     captionsEnabled,
     setCaptionsEnabled,
-    showCaption,
-    setShowCaption,
     selfViewVisible,
     setSelfViewVisible,
-    // Story 2.5: Camera enabled state
+    // Story 2.5: Camera always on (for recording), just toggle self-view visibility
     cameraEnabled,
-    setCameraEnabled,
   } = useInterviewStore()
 
   const [showPermissionDialog, setShowPermissionDialog] = useState(false)
@@ -74,19 +63,28 @@ export default function InterviewPage() {
   const [videoConsentGiven, setVideoConsentGiven] = useState(false)
   const [isVideoRecording, setIsVideoRecording] = useState(false)
   const [uploadedChunks, setUploadedChunks] = useState<number>(0)
-  // Story 2.4: Control button states
-  const [isMuted, setIsMuted] = useState(false)
-  const [isCameraOn, setIsCameraOn] = useState(cameraEnabled)
+  // Story 2.6: Caption history modal state
+  const [showCaptionHistory, setShowCaptionHistory] = useState(false)
+  // Track if minimum speaking duration has been met (for Done Speaking button)
+  const [canCompleteSpeaking, setCanCompleteSpeaking] = useState(false)
   const audioPlaybackQueueRef = useRef<AudioPlaybackQueue | null>(null)
   const audioLevelMonitorRef = useRef<AudioLevelMonitor | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioLevelThrottleRef = useRef<number>(0)
   const audioContextRef = useRef<AudioContext | null>(null)
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null)
-  // Story 2.4: Caption timing ref
-  const captionTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // Track when user started speaking (for minimum duration check)
+  const speakingStartTimeRef = useRef<number | null>(null)
+  // Track when AI last stopped speaking (to prevent false positives from speaker feedback)
+  const aiLastStoppedSpeakingRef = useRef<number>(0)
 
   const audioCapture = useAudioCapture()
+  
+  // Story 2.6: Caption sync hook
+  const captionSync = useCaptionSync({
+    interviewState,
+    enabled: captionsEnabled
+  })
   
   // Video recording hooks
   const mediaPermissions = useMediaPermissions()
@@ -95,6 +93,7 @@ export default function InterviewPage() {
 
   // Map interview state to orb state
   const getOrbState = (): OrbState => {
+    console.log('🔄 Current interview state:', interviewState)
     switch (interviewState) {
       case 'ai_listening':
         return 'idle'
@@ -123,32 +122,49 @@ export default function InterviewPage() {
     sessionId || '',
     {
       onTranscript: (transcript) => {
+        // Add to messages
         addMessage({ 
           role: transcript.role === 'user' ? 'candidate' : 'ai', 
           content: transcript.text 
         })
+        
+        // Story 2.6: Pass to caption sync
+        captionSync.onTranscript(transcript)
       },
       onAudioChunk: async (audioData: string) => {
+        console.log('🎵 Received audio chunk from backend, size:', audioData.length)
         if (!audioPlaybackQueueRef.current) {
+          console.log('🎵 Creating new AudioPlaybackQueue with callbacks')
           audioPlaybackQueueRef.current = new AudioPlaybackQueue(24000, {
             onPlaybackStart: () => {
               console.log('🔊 AI audio playback started')
               setInterviewState('ai_speaking')
+              // Reset speaking timer when AI starts talking to prevent false "Done Speaking" button
+              speakingStartTimeRef.current = null
             },
             onPlaybackEnd: () => {
               console.log('🔇 AI audio playback ended')
               setInterviewState('ai_listening')
+              // Reset speaking timer when transitioning to listening
+              speakingStartTimeRef.current = null
+              // Track when AI stopped speaking to prevent false positives from audio feedback
+              aiLastStoppedSpeakingRef.current = Date.now()
             }
           })
         }
         await audioPlaybackQueueRef.current.enqueueBase64(audioData)
+        console.log('🎵 Audio chunk enqueued successfully')
       },
       onError: (error: Error) => {
         console.error('Realtime connection error:', error)
         setConnectionState('error')
       },
       onConnected: () => {
+        console.log('✅ WebSocket connected - AI will speak first')
         setConnectionState('connected')
+        // Set state to 'ai_speaking' since AI always greets first
+        // This prevents showing "Your Turn to Speak" prematurely
+        setInterviewState('ai_speaking')
       },
       onDisconnected: () => {
         setConnectionState('disconnected')
@@ -164,7 +180,7 @@ export default function InterviewPage() {
   // Connect/disconnect realtime WebSocket when mode changes
   useEffect(() => {
     // Don't connect until interview messages are loaded
-    if (useRealtimeMode && inputMode === 'voice' && sessionId && !isLoading) {
+    if (useRealtimeMode && sessionId && !isLoading) {
       realtime.connect()
     } else {
       realtime.disconnect()
@@ -179,7 +195,7 @@ export default function InterviewPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useRealtimeMode, inputMode, sessionId, isLoading])
+  }, [useRealtimeMode, sessionId, isLoading])
   
   // Check audio support on mount
   useEffect(() => {
@@ -195,7 +211,7 @@ export default function InterviewPage() {
   // Auto-request microphone permission when in realtime voice mode
   useEffect(() => {
     const requestMicPermission = async () => {
-      if (useRealtimeMode && inputMode === 'voice' && !audioCapture.permissionGranted) {
+      if (useRealtimeMode && !audioCapture.permissionGranted) {
         console.log('🎤 Requesting microphone permission...')
         const granted = await audioCapture.requestPermission()
         if (!granted) {
@@ -207,11 +223,11 @@ export default function InterviewPage() {
       }
     }
     requestMicPermission()
-  }, [useRealtimeMode, inputMode, audioCapture])
+  }, [useRealtimeMode, audioCapture])
 
   // Initialize audio level monitor AND start continuous audio streaming for Server VAD
   useEffect(() => {
-    if (useRealtimeMode && inputMode === 'voice' && connectionState === 'connected' && audioCapture.permissionGranted) {
+    if (useRealtimeMode && connectionState === 'connected' && audioCapture.permissionGranted) {
       console.log('🎤 Starting continuous audio streaming for Server VAD...')
       
       audioLevelMonitorRef.current = new AudioLevelMonitor()
@@ -229,6 +245,29 @@ export default function InterviewPage() {
           if (now - audioLevelThrottleRef.current >= THROTTLE_MS) {
             setAudioLevel(level)
             audioLevelThrottleRef.current = now
+            
+            // Detect when user starts speaking based on audio level
+            const SPEAKING_THRESHOLD = 0.02
+            const AI_COOLDOWN_MS = 1000 // Wait 1 second after AI stops speaking
+            const timeSinceAIStopped = now - aiLastStoppedSpeakingRef.current
+            
+            // CRITICAL: Only auto-detect speaking start when AI is listening (not speaking/processing)
+            // This prevents false positives from AI audio bleeding into the microphone
+            // ALSO: Only set candidate_speaking if we haven't already set a speaking start time
+            // ALSO: Wait for cooldown period after AI stops to prevent speaker feedback false positives
+            if (
+              level > SPEAKING_THRESHOLD && 
+              interviewState === 'ai_listening' && 
+              !speakingStartTimeRef.current &&
+              timeSinceAIStopped >= AI_COOLDOWN_MS
+            ) {
+              console.log('🗣️ User started speaking (audio level detected)')
+              speakingStartTimeRef.current = Date.now()
+              setInterviewState('candidate_speaking')
+              setCanCompleteSpeaking(false) // Reset until minimum duration is met
+            }
+            // NOTE: We do NOT auto-transition back to ai_listening
+            // User must click "Done Speaking" button to commit audio and end their turn
           }
         })
         
@@ -307,7 +346,29 @@ export default function InterviewPage() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useRealtimeMode, inputMode, connectionState, audioCapture.permissionGranted])
+  }, [useRealtimeMode, connectionState, audioCapture.permissionGranted])
+
+  // Monitor speaking duration to enable "Done Speaking" button after minimum time
+  useEffect(() => {
+    if (interviewState === 'candidate_speaking' && speakingStartTimeRef.current) {
+      const MIN_SPEAKING_DURATION_MS = 1500
+      const checkDuration = () => {
+        const speakingDuration = Date.now() - (speakingStartTimeRef.current || 0)
+        if (speakingDuration >= MIN_SPEAKING_DURATION_MS) {
+          setCanCompleteSpeaking(true)
+        }
+      }
+      
+      // Check immediately and then every 100ms
+      checkDuration()
+      const intervalId = setInterval(checkDuration, 100)
+      
+      return () => clearInterval(intervalId)
+    } else {
+      // Reset when not speaking
+      setCanCompleteSpeaking(false)
+    }
+  }, [interviewState])
 
   // Track reconnection attempts
   useEffect(() => {
@@ -327,27 +388,22 @@ export default function InterviewPage() {
 
   // Handle audio permission
   useEffect(() => {
-    if (inputMode === 'voice' && !audioCapture.permissionGranted) {
+    if (!audioCapture.permissionGranted) {
       setShowPermissionDialog(true)
     }
-  }, [inputMode, audioCapture.permissionGranted])
+  }, [audioCapture.permissionGranted])
 
-  // Story 2.5: Sync camera state from store
-  useEffect(() => {
-    setIsCameraOn(cameraEnabled)
-  }, [cameraEnabled])
-
-  // Story 2.5: Request camera permission when page loads (if camera enabled)
+  // Story 2.5: Request camera permission when page loads (camera always on for recording)
   useEffect(() => {
     const requestCameraAccess = async () => {
-      if (cameraEnabled && mediaPermissions.cameraStatus === 'idle') {
+      if (mediaPermissions.cameraStatus === 'idle') {
         console.log('📹 Requesting camera permission...')
         await mediaPermissions.requestCamera()
       }
     }
 
     requestCameraAccess()
-  }, [cameraEnabled, mediaPermissions])
+  }, [mediaPermissions])
 
   // Video consent is handled in tech check page, so we don't show the modal here
   // Video recording starts automatically if consent was given and camera is available
@@ -452,51 +508,15 @@ export default function InterviewPage() {
     stopVideoRecording()
   }, [isVideoRecording, status, videoRecorder, sessionId, uploadedChunks, videoUploadService])
 
-  // Story 2.4: Caption sync logic - update caption when AI speaks
-  useEffect(() => {
-    if (interviewState === 'ai_speaking') {
-      // AI is speaking - show caption immediately
-      const lastAiMessage = messages
-        .filter(m => m.role === 'ai')
-        .pop()
-      
-      if (lastAiMessage) {
-        // Clear any existing timer
-        if (captionTimerRef.current) {
-          clearTimeout(captionTimerRef.current)
-          captionTimerRef.current = null
-        }
-        
-        setCurrentCaption(lastAiMessage.content)
-        setShowCaption(true)
-      }
-    } else if (currentCaption && (interviewState === 'ai_listening' || interviewState === 'processing' || interviewState === 'candidate_speaking')) {
-      // AI finished speaking - start 3-second fade-out timer
-      if (!captionTimerRef.current) {
-        captionTimerRef.current = setTimeout(() => {
-          setShowCaption(false)
-          captionTimerRef.current = null
-        }, 3000)
-      }
-    }
-    
-    return () => {
-      if (captionTimerRef.current) {
-        clearTimeout(captionTimerRef.current)
-        captionTimerRef.current = null
-      }
-    }
-  }, [interviewState, messages, currentCaption, setCurrentCaption, setShowCaption])
+  // Story 2.6: Old caption sync logic removed - now handled by useCaptionSync hook
+  // The caption timing is managed by the useCaptionSync hook which handles:
+  // - Filtering user captions (only shows AI)
+  // - Text segmentation for long captions
+  // - Fade-in/fade-out timing based on AI speaking state
+  // - Caption history for accessibility
 
   const handleSendMessage = (messageText: string) => {
     sendMessage(messageText)
-  }
-
-  const handleInputModeChange = (mode: InputMode) => {
-    setInputMode(mode)
-    if (mode === 'voice' && !audioCapture.permissionGranted) {
-      setShowPermissionDialog(true)
-    }
   }
 
   const handleAudioRecordStart = async () => {
@@ -646,38 +666,8 @@ export default function InterviewPage() {
 
   const handlePermissionDenied = () => {
     setShowPermissionDialog(false)
-    setInputMode('text')
-  }
-
-  // Story 2.4: Control handlers
-  const handleToggleMute = () => {
-    setIsMuted(!isMuted)
-    // TODO: Actually mute/unmute the microphone stream
-    if (mediaStreamRef.current) {
-      const audioTracks = mediaStreamRef.current.getAudioTracks()
-      audioTracks.forEach(track => {
-        track.enabled = isMuted // Toggle enabled state
-      })
-    }
-  }
-
-  const handleToggleCamera = () => {
-    const newCameraState = !cameraEnabled
-    setCameraEnabled(newCameraState)
-    
-    // Update local UI state
-    setIsCameraOn(newCameraState)
-    
-    // Stop/start video recording based on camera state
-    if (!newCameraState && isVideoRecording) {
-      // Turning off - stop recording
-      videoRecorder.stopRecording()
-      setIsVideoRecording(false)
-    } else if (newCameraState && mediaPermissions.cameraStream && videoConsentGiven) {
-      // Turning on - start recording
-      videoRecorder.startRecording(mediaPermissions.cameraStream)
-      setIsVideoRecording(true)
-    }
+    // In voice-only mode, we can't proceed without microphone
+    console.error('Microphone permission denied - interview cannot proceed')
   }
 
   const handleEndInterview = () => {
@@ -695,6 +685,36 @@ export default function InterviewPage() {
 
   const handleToggleSelfView = () => {
     setSelfViewVisible(!selfViewVisible)
+  }
+
+  const handleDoneSpeaking = () => {
+    try {
+      console.log('🎯 Done Speaking button clicked, current state:', interviewState)
+      
+      // Check if user has been speaking for at least 1.5 seconds
+      // OpenAI requires at least 100ms of audio, but we need buffer time
+      const MIN_SPEAKING_DURATION_MS = 1500
+      if (speakingStartTimeRef.current) {
+        const speakingDuration = Date.now() - speakingStartTimeRef.current
+        if (speakingDuration < MIN_SPEAKING_DURATION_MS) {
+          console.warn(`⚠️ Speaking duration too short (${speakingDuration}ms), need at least ${MIN_SPEAKING_DURATION_MS}ms. Ignoring click.`)
+          return // Don't commit if too short
+        }
+      } else {
+        console.warn('⚠️ No speaking start time recorded, ignoring Done Speaking click')
+        return
+      }
+      
+      // Signal to backend that user is done speaking
+      realtime.commitAudio()
+      // Transition to processing state (waiting for AI response)
+      setInterviewState('processing')
+      speakingStartTimeRef.current = null
+      setCanCompleteSpeaking(false)
+      console.log('✅ User signaled done speaking, state set to processing (waiting for AI response)')
+    } catch (error) {
+      console.error('❌ Error in handleDoneSpeaking:', error)
+    }
   }
 
   if (!sessionId) {
@@ -758,25 +778,15 @@ export default function InterviewPage() {
 
       {/* Connection Lost Banner */}
       <ConnectionLostBanner
-        show={useRealtimeMode && inputMode === 'voice' && connectionState === 'disconnected' && reconnectAttempts === 0}
+        show={useRealtimeMode && connectionState === 'disconnected' && reconnectAttempts === 0}
         onRetry={() => realtime.connect()}
-        onSwitchToText={() => {
-          setInputMode('text')
-          realtime.disconnect()
-        }}
         attemptCount={reconnectAttempts}
       />
 
       {/* Audio Not Supported Message */}
       <AudioNotSupportedMessage
-        show={!isAudioSupported && inputMode === 'voice'}
-        onSwitchToText={() => setInputMode('text')}
+        show={!isAudioSupported}
       />
-
-      {/* Latency Indicator (realtime mode only) */}
-      {useRealtimeMode && inputMode === 'voice' && (
-        <LatencyIndicator latency={realtime.latency} />
-      )}
       
       {/* Microphone Permission Dialog */}
       <MicrophonePermissionDialog
@@ -786,22 +796,22 @@ export default function InterviewPage() {
       />
 
       {/* Story 2.4: New Video Grid Layout */}
-      <VideoGridLayout audioOnlyMode={!cameraEnabled}>
+      <VideoGridLayout selfViewVisible={selfViewVisible}>
         {/* AI Tile - Large tile with orb, captions, and state indicators */}
         <AITile
           className="ai-tile"
           orbState={getOrbState()}
           audioLevel={audioLevel}
-          caption={currentCaption}
-          showCaption={showCaption}
+          caption={captionSync.currentCaption}
+          showCaption={captionSync.isVisible}
           captionsEnabled={captionsEnabled}
           onToggleCaptions={handleToggleCaptions}
           connectionState={connectionState}
           isRecording={isVideoRecording}
         />
 
-        {/* Candidate Tile - Video preview with toggle (hidden in audio-only mode) */}
-        {cameraEnabled && (
+        {/* Candidate Tile - Only render when self-view is visible */}
+        {selfViewVisible && (
           <CandidateTile
             className="candidate-tile"
             videoStream={mediaPermissions.cameraStream}
@@ -811,28 +821,27 @@ export default function InterviewPage() {
           />
         )}
 
-        {/* Interview Controls - Mute, camera, end interview */}
+        {/* Interview Controls - Show/hide self-view and end interview */}
         <InterviewControls
           className="interview-controls"
-          isMuted={isMuted}
-          isCameraOn={isCameraOn}
-          onToggleMute={handleToggleMute}
-          onToggleCamera={handleToggleCamera}
+          isSelfViewVisible={selfViewVisible}
+          onToggleSelfView={handleToggleSelfView}
           onEndInterview={handleEndInterview}
+          onDoneSpeaking={handleDoneSpeaking}
+          showDoneSpeaking={interviewState === 'candidate_speaking' && canCompleteSpeaking}
         />
       </VideoGridLayout>
 
-      {/* Progress Bar (overlay on video layout) */}
-      {totalQuestions > 0 && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20 }} className="bg-background/95 backdrop-blur-sm">
-          <InterviewProgress current={currentQuestion} total={totalQuestions} />
-        </div>
-      )}
+      {/* Story 2.6: Caption History Modal */}
+      <CaptionHistory
+        captions={captionSync.captionHistory}
+        open={showCaptionHistory}
+        onOpenChange={setShowCaptionHistory}
+      />
 
-      {/* Hidden: Interview State Indicator & Mode Toggle (for debugging/accessibility) */}
-      <div style={{ position: 'fixed', bottom: 100, left: 16, zIndex: 20 }} className="bg-background/95 backdrop-blur-sm rounded-lg p-2 text-xs">
+      {/* Interview State Indicator - Shows whose turn it is to speak */}
+      <div style={{ position: 'fixed', bottom: 100, left: 16, zIndex: 20 }} className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg">
         <InterviewStateIndicator state={interviewState} />
-        <InputModeToggle mode={inputMode} onModeChange={handleInputModeChange} />
       </div>
     </>
   )

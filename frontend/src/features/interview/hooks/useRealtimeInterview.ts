@@ -125,13 +125,20 @@ export function useRealtimeInterview(
           console.error('Realtime API error:', {
             error: message.error,
             errorMessage: message.message,
+            errorCode: message.code,
             fullMessage: message
           })
-          const apiError = new Error(message.message || 'Unknown error')
+          
+          // Show user-friendly error message
+          const errorMessage = message.message || message.error || 'Unknown error occurred'
+          const apiError = new Error(errorMessage)
           setError(apiError)
           onError?.(apiError)
           
-          if (message.error === 'RATE_LIMIT_EXCEEDED' || message.error === 'INTERVIEW_NOT_ACTIVE') {
+          // Check if we should stop reconnecting
+          if (message.error === 'RATE_LIMIT_EXCEEDED' || 
+              message.error === 'INTERVIEW_NOT_ACTIVE' ||
+              message.code === 'invalid_request_error') {
             // Don't reconnect for these errors
             setConnectionState('error')
           }
@@ -199,7 +206,7 @@ export function useRealtimeInterview(
       // Add JWT token as query parameter for WebSocket authentication
       const wsUrl = `${protocol}//${host}/api/v1/interviews/${interviewId}/realtime/connect?token=${encodeURIComponent(token)}`
       
-      console.log('Connecting to realtime WebSocket...')
+      console.log('🔌 Connecting to realtime WebSocket:', wsUrl.replace(token, 'TOKEN_REDACTED'))
       
       // Create WebSocket connection
       const ws = new WebSocket(wsUrl)
@@ -286,9 +293,17 @@ export function useRealtimeInterview(
    */
   const commitAudio = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'audio_commit'
-      }))
+      console.log('📤 Committing audio buffer...')
+      try {
+        wsRef.current.send(JSON.stringify({
+          type: 'audio_commit'
+        }))
+        console.log('✅ Audio commit sent')
+      } catch (error) {
+        console.error('❌ Error sending audio commit:', error)
+      }
+    } else {
+      console.warn('⚠️ Cannot commit audio: WebSocket not connected')
     }
   }, [])
 

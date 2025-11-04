@@ -41,13 +41,11 @@ export function CandidateTile({
   return (
     <div 
       className={`
-        relative w-full h-full min-h-[200px] rounded-xl overflow-hidden bg-black 
+        relative w-full h-full rounded-xl overflow-hidden bg-black 
         shadow-lg border-2 border-white/10
-        md:max-w-[300px] md:max-h-[375px]
-        max-md:w-[120px] max-md:h-[160px] max-md:min-h-0 max-md:rounded-lg
         ${className}
       `}
-      style={{ gridArea: 'candidate-tile', alignSelf: 'end' }}
+      style={{ gridArea: 'candidate-tile' }}
       role="region"
       aria-label="Your Camera"
     >

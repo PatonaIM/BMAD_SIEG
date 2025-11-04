@@ -8,12 +8,23 @@ from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 
 # Create async engine with connection pooling
+# IMPORTANT: Using small pool sizes to avoid exhausting Supabase Session Pooler limits
+# Supabase Session mode has hard limit on concurrent connections
 engine = create_async_engine(
     settings.database_url,
-    pool_size=10,           # Concurrent connections
-    max_overflow=20,        # Burst capacity
+    pool_size=3,            # Small base pool (Supabase free tier limit)
+    max_overflow=7,         # Total 10 connections max
     pool_pre_ping=True,     # Health checks before using connection
+    pool_recycle=300,       # Recycle connections after 5 minutes (prevent stale)
+    pool_timeout=10,        # Timeout after 10s if no connection available
     echo=False,             # Set to True for SQL logging
+    connect_args={
+        "statement_cache_size": 0,  # Required for pgbouncer compatibility
+        "server_settings": {
+            "application_name": "teamified_backend",
+            "jit": "off"  # Disable JIT for connection pooler
+        }
+    }
 )
 
 # Session factory for creating database sessions

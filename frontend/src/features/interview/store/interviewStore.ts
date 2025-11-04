@@ -16,11 +16,8 @@ const initialState = {
   audioPermissionGranted: false,
   recordingError: null,
   // Voice interview state
-  interviewState: 'ai_listening' as const,
-  inputMode: (typeof window !== 'undefined' 
-    ? (localStorage.getItem('interview_input_mode') as 'voice' | 'text') 
-    : 'voice') || 'voice',
-  currentAudioUrl: null,
+  // Initial state is 'processing' because AI speaks first (greeting)
+  interviewState: 'processing' as const,
   // Realtime mode state
   useRealtimeMode: typeof window !== 'undefined' 
     ? (localStorage.getItem('interview_realtime_mode') !== 'false') 
@@ -108,12 +105,6 @@ export const useInterviewStore = create<InterviewStore>()(
       // Voice interview actions
       setInterviewState: (interviewState) =>
         set({ interviewState }, false, 'setInterviewState'),
-
-      setInputMode: (inputMode) =>
-        set({ inputMode }, false, 'setInputMode'),
-
-      setCurrentAudioUrl: (currentAudioUrl) =>
-        set({ currentAudioUrl }, false, 'setCurrentAudioUrl'),
 
       // Realtime mode actions
       toggleRealtimeMode: () =>

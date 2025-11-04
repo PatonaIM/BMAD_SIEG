@@ -116,6 +116,8 @@ class OpenAIRealtimeProvider:
         
         try:
             # Establish WebSocket connection
+            logger.info("attempting_websocket_handshake")
+            
             websocket = await asyncio.wait_for(
                 websockets.connect(
                     url,
@@ -128,18 +130,29 @@ class OpenAIRealtimeProvider:
             )
             
             logger.info(
-                "realtime_connection_established",
+                "websocket_handshake_complete",
                 connection_id=id(websocket)
             )
             
             # Initialize session with configuration
+            logger.info("attempting_session_initialization")
             await self._initialize_session(websocket, session_config)
+            logger.info("session_initialization_complete")
             
             return websocket
             
-        except asyncio.TimeoutError:
-            logger.error("realtime_connection_timeout")
-            raise TimeoutError("Connection to OpenAI Realtime API timed out")
+        except asyncio.TimeoutError as e:
+            logger.error(
+                "realtime_connection_timeout",
+                timeout_seconds=self.connection_timeout
+            )
+            raise TimeoutError(f"Connection to OpenAI Realtime API timed out after {self.connection_timeout}s")
+        except ConnectionError as e:
+            logger.error(
+                "realtime_connection_error",
+                error=str(e)
+            )
+            raise
         except Exception as e:
             logger.error(
                 "realtime_connection_failed",
@@ -168,39 +181,67 @@ class OpenAIRealtimeProvider:
             connection_id=id(websocket)
         )
         
-        # First, consume the session.created event that OpenAI sends immediately after connection
-        initial_response = await websocket.recv()
-        initial_data = json.loads(initial_response)
-        
-        if initial_data.get("type") != "session.created":
-            logger.warning(
-                "unexpected_initial_session_event",
-                response_type=initial_data.get("type"),
-                expected="session.created"
-            )
-        
-        # Now send session.update event to configure the session
-        event = {
-            "type": "session.update",
-            "session": session_config
-        }
-        
-        await websocket.send(json.dumps(event))
-        
-        # Wait for session.updated confirmation
-        response = await websocket.recv()
-        response_data = json.loads(response)
-        
-        if response_data.get("type") == "session.updated":
+        try:
+            # First, consume the session.created event that OpenAI sends immediately after connection
+            logger.info("waiting_for_session_created_event")
+            initial_response = await asyncio.wait_for(websocket.recv(), timeout=10)
+            initial_data = json.loads(initial_response)
+            
             logger.info(
-                "realtime_session_initialized",
-                connection_id=id(websocket)
+                "received_initial_event",
+                event_type=initial_data.get("type")
             )
-        else:
-            logger.warning(
-                "unexpected_session_response",
-                response_type=response_data.get("type")
+            
+            if initial_data.get("type") != "session.created":
+                logger.warning(
+                    "unexpected_initial_session_event",
+                    response_type=initial_data.get("type"),
+                    expected="session.created"
+                )
+            
+            # Now send session.update event to configure the session
+            event = {
+                "type": "session.update",
+                "session": session_config
+            }
+            
+            logger.info("sending_session_update")
+            await websocket.send(json.dumps(event))
+            
+            # Wait for session.updated confirmation
+            logger.info("waiting_for_session_updated_confirmation")
+            response = await asyncio.wait_for(websocket.recv(), timeout=10)
+            response_data = json.loads(response)
+            
+            logger.info(
+                "received_update_response",
+                event_type=response_data.get("type")
             )
+            
+            if response_data.get("type") == "session.updated":
+                logger.info(
+                    "realtime_session_initialized",
+                    connection_id=id(websocket)
+                )
+            else:
+                logger.warning(
+                    "unexpected_session_response",
+                    response_type=response_data.get("type")
+                )
+        
+        except asyncio.TimeoutError as e:
+            logger.error("session_initialization_timeout")
+            raise TimeoutError("Session initialization timed out waiting for OpenAI response")
+        except json.JSONDecodeError as e:
+            logger.error("invalid_json_from_openai", error=str(e))
+            raise ConnectionError("Received invalid JSON from OpenAI Realtime API")
+        except Exception as e:
+            logger.error(
+                "session_initialization_failed",
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            raise
     
     async def send_audio_chunk(
         self,
@@ -285,9 +326,14 @@ class OpenAIRealtimeProvider:
             }
         }
         
+        logger.info(
+            "sending_response_create_event",
+            connection_id=id(websocket)
+        )
+        
         await websocket.send(json.dumps(event))
         
-        logger.debug(
+        logger.info(
             "response_creation_requested",
             connection_id=id(websocket)
         )

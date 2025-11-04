@@ -25,7 +25,6 @@ export interface CompletionData {
 }
 
 export type InterviewFlowState = 'ai_speaking' | 'ai_listening' | 'candidate_speaking' | 'processing';
-export type InputMode = 'voice' | 'text';
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface InterviewState {
@@ -43,8 +42,6 @@ export interface InterviewState {
   recordingError: string | null;
   // Voice interview state
   interviewState: InterviewFlowState;
-  inputMode: InputMode;
-  currentAudioUrl: string | null;
   // Realtime mode state
   useRealtimeMode: boolean;
   connectionState: ConnectionState;
@@ -76,8 +73,6 @@ export interface InterviewActions {
   setRecordingError: (error: string | null) => void;
   // Voice interview actions
   setInterviewState: (state: InterviewFlowState) => void;
-  setInputMode: (mode: InputMode) => void;
-  setCurrentAudioUrl: (url: string | null) => void;
   // Realtime mode actions
   toggleRealtimeMode: () => void;
   setConnectionState: (state: ConnectionState) => void;

@@ -2,10 +2,9 @@
  * Video Grid Layout Component
  * 
  * Google Meet-style grid layout for video interview
- * - Desktop: AI tile (60%) + candidate tile (30%) side-by-side
- * - Tablet: Same grid scaled down
- * - Mobile: AI full-screen + candidate floating overlay
- * - Audio-only: AI tile centered, candidate tile hidden
+ * - With self-view: AI tile (60%) + candidate tile (40%) side-by-side
+ * - Without self-view: AI tile (100% width)
+ * - Controls always at bottom spanning full width
  */
 
 import { ReactNode } from 'react'
@@ -13,30 +12,30 @@ import { ReactNode } from 'react'
 export interface VideoGridLayoutProps {
   children: ReactNode
   className?: string
-  audioOnlyMode?: boolean
+  selfViewVisible?: boolean
 }
 
-export function VideoGridLayout({ children, className = '', audioOnlyMode = false }: VideoGridLayoutProps) {
+export function VideoGridLayout({ children, className = '', selfViewVisible = true }: VideoGridLayoutProps) {
   return (
     <main 
       className={`
         grid h-screen w-screen bg-background overflow-hidden
-        ${audioOnlyMode 
-          ? 'grid-cols-1 grid-rows-[1fr_auto] gap-4 p-4' 
-          : 'md:grid-cols-[65%_1fr] md:grid-rows-[1fr_auto] md:gap-3 md:p-3 lg:grid-cols-[60%_1fr] lg:gap-4 lg:p-4'
+        ${selfViewVisible 
+          ? 'md:grid-cols-[60%_1fr] md:grid-rows-[1fr_auto] md:gap-3 md:p-3 lg:gap-4 lg:p-4' 
+          : 'grid-cols-1 grid-rows-[1fr_auto] gap-4 p-4'
         }
         ${className}
       `}
       style={{
-        gridTemplateAreas: audioOnlyMode 
-          ? '"ai-tile" "controls"'
-          : `
+        gridTemplateAreas: selfViewVisible 
+          ? `
             "ai-tile candidate-tile"
-            "ai-tile controls"
+            "controls controls"
           `
+          : '"ai-tile" "controls"'
       }}
       role="main"
-      aria-label={audioOnlyMode ? "Audio-Only Interview Layout" : "Video Interview Layout"}
+      aria-label={selfViewVisible ? "Video Interview Layout" : "Full Screen Interview Layout"}
     >
       {children}
     </main>

@@ -2,18 +2,17 @@
  * AudioNotSupportedMessage Component
  * 
  * Displays a message when browser doesn't support audio features,
- * with instructions to continue in text mode or use a supported browser.
+ * with instructions to use a supported browser.
  */
 
-import { MicOff, Chrome, Globe, MessageSquare } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { MicOff, Chrome, Globe } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 
 export interface AudioNotSupportedMessageProps {
   /** Whether message is visible */
   show: boolean
-  /** Switch to text mode callback */
-  onSwitchToText: () => void
+  /** Switch to text mode callback (deprecated - kept for compatibility) */
+  onSwitchToText?: () => void
   /** Optional custom message */
   customMessage?: string
 }
@@ -24,20 +23,17 @@ export interface AudioNotSupportedMessageProps {
  * Features:
  * - Clear explanation of the issue
  * - Browser compatibility information
- * - Text mode fallback option
  * - Responsive layout
  * 
  * @example
  * ```tsx
  * <AudioNotSupportedMessage
  *   show={!isAudioSupported}
- *   onSwitchToText={() => setInputMode('text')}
  * />
  * ```
  */
 export function AudioNotSupportedMessage({
   show,
-  onSwitchToText,
   customMessage,
 }: AudioNotSupportedMessageProps) {
   if (!show) return null
@@ -84,18 +80,13 @@ export function AudioNotSupportedMessage({
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="space-y-2">
-          <Button
-            onClick={onSwitchToText}
-            className="w-full"
-            size="lg"
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Continue with Text Chat
-          </Button>
-          <p className="text-xs text-center text-muted-foreground">
-            You can still complete the interview by typing your responses.
+        {/* Instructions */}
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground mb-2">
+            Please try one of the supported browsers to continue with your voice interview.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Make sure you have granted microphone permissions when prompted.
           </p>
         </div>
       </Card>

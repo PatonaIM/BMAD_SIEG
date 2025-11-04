@@ -157,9 +157,9 @@ class RealtimeInterviewService:
             },
             "turn_detection": {
                 "type": "server_vad",
-                "threshold": 0.5,
+                "threshold": 0.4,  # Lower = more sensitive to speech
                 "prefix_padding_ms": 300,
-                "silence_duration_ms": 500
+                "silence_duration_ms": 500  # 500ms = faster turn detection, more natural
             },
             "tools": tools,
             "instructions": instructions,
@@ -337,7 +337,19 @@ class RealtimeInterviewService:
             
             if latest_candidate_msg:
                 # Update message metadata with evaluation
-                metadata = latest_candidate_msg.metadata or {}
+                # Access the message_metadata column (not .metadata)
+                import json
+                
+                if latest_candidate_msg.message_metadata:
+                    # Convert JSONB to dict - use json.loads if it's a string, or direct access
+                    try:
+                        metadata = json.loads(latest_candidate_msg.message_metadata) if isinstance(latest_candidate_msg.message_metadata, str) else dict(latest_candidate_msg.message_metadata)
+                    except (TypeError, json.JSONDecodeError):
+                        # Fallback: treat as dict-like object
+                        metadata = dict(latest_candidate_msg.message_metadata) if hasattr(latest_candidate_msg.message_metadata, '__iter__') else {}
+                else:
+                    metadata = {}
+                    
                 metadata["evaluation"] = {
                     "answer_quality": arguments.get("answer_quality"),
                     "key_points_covered": arguments.get("key_points_covered", []),
@@ -346,11 +358,9 @@ class RealtimeInterviewService:
                     "evaluated_at": datetime.utcnow().isoformat()
                 }
                 
-                # Update message in database
-                await self.message_repo.update_message_metadata(
-                    message_id=latest_candidate_msg.id,
-                    metadata=metadata
-                )
+                # Update message directly
+                latest_candidate_msg.message_metadata = metadata
+                await self.message_repo.db.flush()
         
         return {
             "success": True,

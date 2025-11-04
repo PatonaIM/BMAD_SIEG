@@ -101,7 +101,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-8">
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>

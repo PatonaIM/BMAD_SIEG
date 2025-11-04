@@ -24,7 +24,7 @@ export default function InterviewStartPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/5">
-      <div className="container max-w-4xl py-12">
+      <div className="container mx-auto max-w-4xl py-12">
         <MockModeIndicator />
 
         {/* Header */}

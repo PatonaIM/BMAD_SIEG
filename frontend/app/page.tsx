@@ -12,7 +12,7 @@ export default function LandingPage() {
     <div className="min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <BrainCircuit className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">Teamified</span>
@@ -41,7 +41,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container py-20 md:py-32">
+      <section className="container mx-auto py-20 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <Badge variant="secondary" className="mb-4">
             <Sparkles className="mr-1 h-3 w-3" />
@@ -70,7 +70,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container py-20 bg-muted/50">
+      <section id="features" className="container mx-auto py-20 bg-muted/50">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Powered by Advanced AI
@@ -239,7 +239,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="container py-20">
+      <section className="container mx-auto py-20">
         <Card className="bg-primary text-primary-foreground">
           <CardContent className="p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -262,7 +262,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t py-12">
-        <div className="container">
+        <div className="container mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">

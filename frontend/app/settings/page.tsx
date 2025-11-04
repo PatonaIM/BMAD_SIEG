@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const [marketingEmails, setMarketingEmails] = useState(false)
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Settings</h1>

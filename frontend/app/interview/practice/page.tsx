@@ -35,7 +35,7 @@ export default function MockInterviewPage() {
   ]
 
   return (
-    <div className="container max-w-5xl py-12">
+    <div className="container mx-auto max-w-5xl py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Mock Interview Practice</h1>
         <p className="text-muted-foreground">

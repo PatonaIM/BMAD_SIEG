@@ -1,11 +1,51 @@
-# React + TypeScript + Vite
+# Teamified Frontend - Next.js + TypeScript
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern job interview platform built with Next.js 16 App Router, TypeScript, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Framework**: [Next.js 16](https://nextjs.org/) with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4 + shadcn/ui components
+- **State Management**: Zustand
+- **Data Fetching**: TanStack Query (React Query)
+- **Testing**: Vitest + React Testing Library
+- **Forms**: React Hook Form + Zod validation
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and pnpm installed
+
+### Installation
+
+```bash
+# Install dependencies
+pnpm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Start development server
+pnpm dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to view the application.
+
+## Available Scripts
+
+```bash
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+pnpm lint:fix     # Fix ESLint issues
+pnpm format       # Format code with Prettier
+pnpm test         # Run tests with Vitest
+pnpm test:ui      # Run tests with UI
+pnpm test:coverage # Generate coverage report
+```
 
 ## Mock API Mode
 
@@ -13,11 +53,11 @@ This project includes a mock API feature flag that allows you to preview the UI 
 
 ### Enabling Mock Mode
 
-Set the environment variable in your `.env` file:
+Set the environment variable in your `.env.local` file:
 
-\`\`\`env
+```env
 NEXT_PUBLIC_MOCK_API=true
-\`\`\`
+```
 
 When enabled:
 - All API calls return mock data instead of making real network requests
@@ -28,72 +68,40 @@ When enabled:
 
 To use real API calls, set:
 
-\`\`\`env
+```env
 NEXT_PUBLIC_MOCK_API=false
-\`\`\`
+```
 
 Or remove the variable entirely (defaults to `false`).
 
-## React Compiler
+## Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+frontend/
+├── app/              # Next.js App Router pages
+├── components/       # React components
+├── hooks/           # Custom React hooks
+├── lib/             # Utilities and helpers
+├── styles/          # Global styles
+└── tests/           # Test files
+```
 
-## Expanding the ESLint configuration
+## Environment Variables
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Required environment variables (see `.env.example`):
 
-\`\`\`js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_MOCK_API=false
+```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Learn More
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-\`\`\`
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [shadcn/ui Components](https://ui.shadcn.com)
+- [TanStack Query](https://tanstack.com/query)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Contributing
 
-\`\`\`js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Please refer to the [architecture documentation](../docs/architecture/frontend/) for coding standards and best practices.

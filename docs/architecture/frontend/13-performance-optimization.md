@@ -37,26 +37,61 @@ const ResultsPage = lazy(() => import('@/pages/ResultsPage'));
 
 ## 13.3 Optimization Techniques
 
+**Code Splitting (Next.js App Router):**
+```typescript
+// app/interview/page.tsx
+import dynamic from 'next/dynamic';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+
+// Lazy load heavy components
+const InterviewInterface = dynamic(
+  () => import('@/components/interview/InterviewInterface'),
+  { loading: () => <LoadingSpinner /> }
+);
+
+const SpeechVisualizer = dynamic(
+  () => import('@/components/interview/SpeechVisualizer'),
+  { ssr: false } // Disable SSR for client-only components
+);
+```
+
 **Asset Optimization:**
 ```typescript
-// vite.config.ts
-export default defineConfig({
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'mui': ['@mui/material', '@emotion/react'],
-          'speech': ['microsoft-cognitiveservices-speech-sdk'],
+// next.config.mjs
+export default {
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+  
+  // Optimize webpack bundles
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            name: 'vendor',
+            priority: 10,
+          },
+          mui: {
+            test: /[\\/]node_modules[\\/](@mui|@emotion)[\\/]/,
+            name: 'mui',
+            priority: 9,
+          },
+          query: {
+            test: /[\\/]node_modules[\\/](@tanstack)[\\/]/,
+            name: 'query',
+            priority: 8,
+          },
         },
-      },
-    },
-    chunkSizeWarningLimit: 600,
+      };
+    }
+    return config;
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom', '@tanstack/react-query'],
-  },
-});
+};
 ```
 
 **Image Optimization:**

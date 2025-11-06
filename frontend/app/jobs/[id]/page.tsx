@@ -187,15 +187,15 @@ export default function JobDetailPage() {
 
       {/* Success message */}
       {(applicationSuccess || (alreadyApplied && existingApplication)) && (
-        <Alert className="mb-6 border-green-600 bg-green-50">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Application Submitted</AlertTitle>
-          <AlertDescription className="text-green-700">
+        <Alert className="mb-6 border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-950/30">
+          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+          <AlertTitle className="text-green-800 dark:text-green-300">Application Submitted</AlertTitle>
+          <AlertDescription className="text-green-700 dark:text-green-400">
             Your application has been received. You can start the AI interview now.
             <Button
               onClick={handleStartInterview}
               variant="link"
-              className="ml-2 p-0 h-auto text-green-800 underline"
+              className="ml-2 p-0 h-auto text-green-800 dark:text-green-300 underline"
             >
               Start Interview Now →
             </Button>
@@ -223,50 +223,50 @@ export default function JobDetailPage() {
         <CardContent className="space-y-6">
           {/* Job metadata grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <MapPin className="h-5 w-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Location</p>
+                <p className="text-sm text-muted-foreground">Location</p>
                 <p className="font-medium">{job.location}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <DollarSign className="h-5 w-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <DollarSign className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Salary Range</p>
+                <p className="text-sm text-muted-foreground">Salary Range</p>
                 <p className="font-medium">{formatSalary()}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Briefcase className="h-5 w-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <Briefcase className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Employment Type</p>
+                <p className="text-sm text-muted-foreground">Employment Type</p>
                 <p className="font-medium capitalize">{job.employment_type.replace('_', ' ')}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Building2 className="h-5 w-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <Building2 className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Work Setup</p>
+                <p className="text-sm text-muted-foreground">Work Setup</p>
                 <p className="font-medium capitalize">{job.work_setup}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Clock className="h-5 w-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Experience Level</p>
+                <p className="text-sm text-muted-foreground">Experience Level</p>
                 <p className="font-medium capitalize">{job.experience_level.replace('_', ' ')}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Briefcase className="h-5 w-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <Briefcase className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-gray-600">Role Category</p>
+                <p className="text-sm text-muted-foreground">Role Category</p>
                 <p className="font-medium capitalize">{job.role_category}</p>
               </div>
             </div>
@@ -275,14 +275,14 @@ export default function JobDetailPage() {
           {/* Description */}
           <div>
             <h3 className="text-xl font-semibold mb-3">Job Description</h3>
-            <p className="text-gray-700 whitespace-pre-line">{job.description}</p>
+            <p className="text-foreground whitespace-pre-line">{job.description}</p>
           </div>
 
           {/* Tech stack */}
           {job.tech_stack && (
             <div>
               <h3 className="text-xl font-semibold mb-3">Technology Stack</h3>
-              <p className="text-gray-700">{job.tech_stack}</p>
+              <p className="text-foreground">{job.tech_stack}</p>
             </div>
           )}
 
@@ -318,7 +318,7 @@ export default function JobDetailPage() {
           {job.benefits && job.benefits.length > 0 && (
             <div>
               <h3 className="text-xl font-semibold mb-3">Benefits</h3>
-              <ul className="list-disc list-inside space-y-1 text-gray-700">
+              <ul className="list-disc list-inside space-y-1 text-foreground">
                 {job.benefits.map((benefit, index) => (
                   <li key={index}>{benefit}</li>
                 ))}

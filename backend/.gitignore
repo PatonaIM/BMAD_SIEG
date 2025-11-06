@@ -22,6 +22,10 @@ venv/
 env/
 ENV/
 
+# UV Package Manager
+# Keep uv.lock tracked for reproducible builds
+.python-version.bak
+
 # Testing & Coverage
 .pytest_cache/
 .coverage

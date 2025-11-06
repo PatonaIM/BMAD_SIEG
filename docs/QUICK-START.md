@@ -98,9 +98,7 @@ Use `pnpm` consistently for all frontend package management:
 ### Backend Setup
 ```bash
 cd backend
-uv venv
-source .venv/bin/activate  # macOS/Linux
-uv pip install -r requirements.txt
+uv sync --dev
 cp .env.example .env
 # Edit .env with your credentials
 uv run alembic upgrade head

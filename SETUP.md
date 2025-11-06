@@ -47,29 +47,21 @@ Install these tools before starting:
 ```bash
 cd backend
 
-# Create virtual environment
-uv venv
-
-# Activate virtual environment
-source .venv/bin/activate  # macOS/Linux
-# or
-.venv\Scripts\activate     # Windows
-
-# Install dependencies
-uv pip install -r requirements.txt
+# Install all dependencies (creates .venv automatically)
+uv sync --dev
 
 # Copy environment file
 cp .env.example .env
 # Edit .env with your database credentials and OpenAI API key
 
 # Run database migrations
-alembic upgrade head
+uv run alembic upgrade head
 
 # Seed sample job postings (optional, for development)
 uv run python scripts/seed_job_postings.py
 # This populates the database with 20+ realistic job postings for testing the application flow
 
-# Start the backend server (⚠️ ALWAYS use 'uv run' prefix)
+# Start the backend server
 uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -93,6 +85,19 @@ uv run alembic upgrade head
 uvicorn main:app --reload
 python scripts/seed_job_postings.py
 pytest
+```
+
+**Modern UV workflow eliminates manual venv management:**
+
+```bash
+# ❌ Old way (no longer needed)
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+
+# ✅ New way (UV handles everything)
+uv sync --dev                    # Creates .venv + installs all deps
+uv run <command>                 # Runs in correct environment automatically
 ```
 
 **All frontend commands must use `pnpm`:**
@@ -135,7 +140,7 @@ Frontend will be available at: http://localhost:5173
 ### Backend Tests
 ```bash
 cd backend
-pytest
+uv run pytest
 ```
 
 ### Frontend Tests

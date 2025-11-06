@@ -93,18 +93,12 @@ python --version  # Should output: Python 3.11.9
 ```bash
 cd backend
 
-# Install UV package manager
-pip install uv
+# Install UV package manager (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Or via pip: pip install uv
 
-# Create virtual environment
-uv venv
-
-# Activate virtual environment
-source .venv/bin/activate  # macOS/Linux
-# .venv\Scripts\activate   # Windows
-
-# Install dependencies
-uv pip install -r requirements.txt
+# Install all dependencies (creates .venv automatically)
+uv sync --dev
 
 # Create environment file
 cp .env.example .env
@@ -133,14 +127,13 @@ cp .env.example .env.development
 
 ```bash
 cd backend
-source .venv/bin/activate  # Activate venv
 uv run uvicorn main:app --reload
 
 # Backend will run on: http://localhost:8000
 # OpenAPI docs at: http://localhost:8000/docs
 ```
 
-> **⚠️ Important:** Always use `uv run` to execute Python commands. This ensures the correct virtual environment and dependencies are used.
+> **⚠️ Important:** Always use `uv run` to execute Python commands. UV automatically manages the virtual environment - no need to manually activate it!
 
 ### Seed Sample Job Postings (Optional - for Development)
 
@@ -220,7 +213,6 @@ yarn dev                         # Use pnpm instead
 
 ```bash
 cd backend
-source .venv/bin/activate
 uv run pytest tests/unit/              # Unit tests
 uv run pytest tests/integration/       # Integration tests
 uv run pytest --cov=app --cov-report=term-missing  # With coverage
@@ -241,7 +233,6 @@ pnpm test:coverage     # Run with coverage report
 
 ```bash
 cd backend
-source .venv/bin/activate
 
 # Check code quality
 uv run ruff check .

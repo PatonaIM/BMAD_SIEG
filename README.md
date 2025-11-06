@@ -2,9 +2,10 @@
 
 An AI-powered technical interview platform designed for recruitment firms to efficiently assess technical candidates through natural speech-to-speech interviews.
 
-> **📚 For complete system documentation, architecture, and development guide:**  
-> **→ [Read the Complete System Documentation](./docs/COMPLETE-SYSTEM-DOCUMENTATION.md)** ←  
-> This comprehensive guide covers everything: AI interview flow, tech stack, API reference, troubleshooting, and more.
+> **📚 Quick Links:**  
+> - **🚀 [Quick Start Guide](./docs/QUICK-START.md)** ← Start here for rapid setup!
+> - **📖 [Complete System Documentation](./docs/COMPLETE-SYSTEM-DOCUMENTATION.md)** - Full technical guide
+> - **⚠️ Important:** Backend: Always use `uv run` | Frontend: Always use `pnpm`
 
 ## 🎯 Project Overview
 
@@ -44,7 +45,7 @@ This is a monorepo containing both frontend and backend applications:
 - **Python 3.11.9** (managed via pyenv)
 - **Node.js 18+** (currently using v24.6.0)
 - **UV Package Manager** (for Python dependencies)
-- **npm 8+** (for Node.js dependencies)
+- **pnpm 8+** (for Node.js dependencies - faster and more efficient than npm)
 
 ### Recommended
 
@@ -115,8 +116,11 @@ cp .env.example .env
 ```bash
 cd frontend
 
+# Install pnpm if not already installed
+npm install -g pnpm
+
 # Install dependencies
-npm install
+pnpm install
 
 # Create environment file
 cp .env.example .env.development
@@ -130,11 +134,13 @@ cp .env.example .env.development
 ```bash
 cd backend
 source .venv/bin/activate  # Activate venv
-uvicorn main:app --reload
+uv run uvicorn main:app --reload
 
 # Backend will run on: http://localhost:8000
 # OpenAPI docs at: http://localhost:8000/docs
 ```
+
+> **⚠️ Important:** Always use `uv run` to execute Python commands. This ensures the correct virtual environment and dependencies are used.
 
 ### Seed Sample Job Postings (Optional - for Development)
 
@@ -150,7 +156,7 @@ uv run python scripts/seed_job_postings.py
 
 ```bash
 cd frontend
-npm run dev
+pnpm dev
 
 # Frontend will run on: http://localhost:3000
 ```
@@ -161,6 +167,53 @@ Once both services are running, visit:
 - Backend Health: http://localhost:8000/health
 - Frontend: http://localhost:3000 (displays backend connection status)
 
+## ⚡ Development Best Practices
+
+### Backend: Always Use `uv run` for Python Commands
+
+**✅ Correct:**
+```bash
+uv run uvicorn main:app --reload
+uv run python scripts/seed_job_postings.py
+uv run pytest
+uv run alembic upgrade head
+```
+
+**❌ Incorrect:**
+```bash
+uvicorn main:app --reload        # Missing uv run
+python scripts/seed.py           # Missing uv run
+pytest                           # Missing uv run
+```
+
+**Why?** Using `uv run` ensures:
+- Correct virtual environment activation
+- Proper dependency resolution
+- Consistent behavior across all environments
+- No PATH or PYTHONPATH conflicts
+
+### Frontend: Always Use `pnpm`
+
+**✅ Correct:**
+```bash
+pnpm install
+pnpm dev
+pnpm test
+pnpm build
+```
+
+**❌ Incorrect:**
+```bash
+npm install                      # Use pnpm instead
+yarn dev                         # Use pnpm instead
+```
+
+**Why?** Using `pnpm` consistently:
+- Faster installs (up to 2x faster than npm)
+- Saves disk space (content-addressable storage)
+- Stricter dependency management (prevents phantom dependencies)
+- Avoids lock file conflicts (npm vs pnpm vs yarn)
+
 ## 🧪 Testing
 
 ### Backend Tests
@@ -168,18 +221,18 @@ Once both services are running, visit:
 ```bash
 cd backend
 source .venv/bin/activate
-pytest tests/unit/              # Unit tests
-pytest tests/integration/       # Integration tests
-pytest --cov=app --cov-report=term-missing  # With coverage
+uv run pytest tests/unit/              # Unit tests
+uv run pytest tests/integration/       # Integration tests
+uv run pytest --cov=app --cov-report=term-missing  # With coverage
 ```
 
 ### Frontend Tests
 
 ```bash
 cd frontend
-npm run test              # Run tests in watch mode
-npm run test:ui           # Run tests with UI
-npm run test:coverage     # Run with coverage report
+pnpm test              # Run tests in watch mode
+pnpm test:ui           # Run tests with UI
+pnpm test:coverage     # Run with coverage report
 ```
 
 ## 🔍 Code Quality
@@ -191,16 +244,16 @@ cd backend
 source .venv/bin/activate
 
 # Check code quality
-ruff check .
+uv run ruff check .
 
 # Auto-fix issues
-ruff check . --fix
+uv run ruff check . --fix
 
 # Format code
-black .
+uv run black .
 
 # Type checking
-mypy .
+uv run mypy .
 ```
 
 ### Frontend Linting & Formatting
@@ -209,13 +262,13 @@ mypy .
 cd frontend
 
 # Lint code
-npm run lint
+pnpm lint
 
 # Auto-fix lint issues
-npm run lint:fix
+pnpm lint:fix
 
 # Format code
-npm run format
+pnpm format
 ```
 
 ## 📚 Documentation

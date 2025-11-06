@@ -610,8 +610,10 @@ GET    /api/v1/interviews/{id}/transcript   # Get full conversation history
 ```bash
 cd backend
 source .venv/bin/activate  # Virtual environment active
-uvicorn main:app --reload  # Running on http://localhost:8000
+uv run uvicorn main:app --reload  # Running on http://localhost:8000
 ```
+
+> **⚠️ Important:** Always use `uv run` prefix for Python commands to ensure proper dependency management.
 
 **Frontend:**
 ```bash
@@ -883,10 +885,10 @@ alembic upgrade head
 ### Backend Development
 
 ```bash
-# Start development server
+# Start development server (⚠️ ALWAYS use 'uv run' prefix)
 cd backend
 source .venv/bin/activate
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 # Run tests
 pytest

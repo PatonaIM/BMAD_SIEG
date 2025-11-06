@@ -21,8 +21,8 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start server
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
+# Run migrations and start server (using uv run for proper dependency management)
+CMD ["sh", "-c", "alembic upgrade head && uv run uvicorn main:app --host 0.0.0.0 --port 8000"]
 ```
 
 **docker-compose.yml (Local Development):**

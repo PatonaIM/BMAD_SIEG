@@ -746,7 +746,7 @@ async def check_cost_threshold(interview: Interview) -> bool:
 |------|---------|
 | **pyenv** | Python version management |
 | **UV** | Fast Python package manager |
-| **pnpm** | Node.js package manager |
+| **pnpm** | Fast Node.js package manager (more efficient than npm) |
 | **ESLint** | JavaScript/TypeScript linting |
 | **Ruff** | Python linting |
 | **Black** | Python code formatting |
@@ -1576,6 +1576,8 @@ pnpm dev
 
 # Server will be available at http://localhost:3000
 ```
+
+> **⚠️ Important:** Always use `pnpm` for frontend commands - it's faster and more efficient than npm.
 
 ### Environment Variables
 

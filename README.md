@@ -136,6 +136,16 @@ uvicorn main:app --reload
 # OpenAPI docs at: http://localhost:8000/docs
 ```
 
+### Seed Sample Job Postings (Optional - for Development)
+
+```bash
+cd backend
+uv run python scripts/seed_job_postings.py
+
+# This generates 20+ diverse job postings across multiple tech stacks
+# Run this after database migrations to populate the job postings table for testing
+```
+
 ### Start Frontend (from frontend directory)
 
 ```bash
@@ -215,7 +225,63 @@ npm run format
 - **[User Stories](./docs/stories/)** - Development stories and tasks
 - **[Coding Standards](./docs/architecture/coding-standards.md)** - Development best practices
 
-## 🛠️ Tech Stack
+## � API Documentation
+
+Interactive API documentation is available at **http://localhost:8000/docs** (Swagger UI) when the backend server is running.
+
+### Job Postings API (Epic 03)
+
+**List Job Postings**
+```
+GET /api/v1/job-postings
+Query Parameters: role_category, tech_stack, location, employment_type, work_setup, experience_level, search, skip, limit
+Response: { jobs: JobPosting[], total: number, skip: number, limit: number }
+Authentication: None (public endpoint)
+```
+
+**Get Job Posting Details**
+```
+GET /api/v1/job-postings/{id}
+Response: JobPosting object
+Authentication: None (public endpoint)
+```
+
+### Applications API (Epic 03)
+
+**Submit Application**
+```
+POST /api/v1/applications
+Body: { job_posting_id: UUID }
+Response: ApplicationDetailResponse with created interview
+Authentication: Required (JWT)
+```
+
+**Get My Applications**
+```
+GET /api/v1/applications/me
+Response: ApplicationWithJobDetails[] (includes job posting and interview data)
+Authentication: Required (JWT)
+```
+
+**Get Application Details**
+```
+GET /api/v1/applications/{id}
+Response: ApplicationDetailResponse
+Authentication: Required (JWT)
+```
+
+### Enhanced Interview API (Epic 03)
+
+**Start Interview (Enhanced)**
+```
+POST /api/v1/interviews/start
+Body: { role_type?: string, resume_id?: UUID, application_id?: UUID }
+Response: InterviewResponse
+Authentication: Required (JWT)
+Note: When application_id provided, role_type derived from job posting's tech_stack
+```
+
+## �🛠️ Tech Stack
 
 ### Backend
 - **Language**: Python 3.11.9

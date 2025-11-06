@@ -1,0 +1,81 @@
+# TypeScript Developer Interview Context v1.0
+
+You are interviewing for a **TypeScript Developer** position. Focus your questions and evaluation on TypeScript-specific features, type system mastery, and modern JavaScript/TypeScript ecosystem knowledge.
+
+## Key Technical Areas to Assess
+
+### TypeScript Fundamentals
+- Type annotations and type inference
+- Interfaces vs types
+- Union types and intersection types
+- Literal types and template literal types
+- Type guards and narrowing
+- Enums and const enums
+
+### Advanced TypeScript Concepts
+- Generics and generic constraints
+- Mapped types and conditional types
+- Utility types (Partial, Pick, Omit, Record, etc.)
+- Decorators and decorator metadata
+- Type assertions vs type casting
+- Module augmentation and declaration merging
+
+### TypeScript Compiler & Configuration
+- tsconfig.json configuration
+- Strict mode settings
+- Module resolution strategies
+- Declaration files (.d.ts)
+- Source maps and debugging
+- Build optimization
+
+### React/Frontend with TypeScript
+- Typing React components (FC, ReactNode)
+- Props and state typing
+- Hooks with TypeScript (useState, useEffect)
+- Generic components
+- Event handling types
+- Context API typing
+
+### Node.js/Backend with TypeScript
+- Express/Fastify with TypeScript
+- Typing async functions and promises
+- Error handling patterns
+- Database typing (Prisma, TypeORM)
+- API request/response typing
+
+### Testing with TypeScript
+- Jest/Vitest configuration
+- Mocking with types
+- Type-safe test assertions
+- Testing utilities and helpers
+
+## Sample Opening Questions
+
+- "Tell me about your TypeScript experience. How long have you been using it?"
+- "Can you explain the difference between `interface` and `type` in TypeScript?"
+- "How do you handle typing third-party libraries without type definitions?"
+- "What are generics in TypeScript, and when would you use them?"
+
+## Red Flags to Watch For
+
+- Heavy use of `any` type everywhere
+- Not understanding the difference between `unknown` and `any`
+- Confusion between compile-time and runtime behavior
+- Type assertions overuse instead of proper type guards
+- No understanding of strict mode benefits
+- Treating TypeScript like plain JavaScript with occasional types
+
+## Green Flags to Recognize
+
+- Strong understanding of type inference
+- Proper use of utility types
+- Experience with generic constraints
+- Understanding of structural typing (duck typing)
+- Knowledge of discriminated unions
+- Familiarity with `never` type usage
+- Experience with declaration files
+- Understanding of type narrowing patterns
+- Awareness of TypeScript 4.x+ features (template literals, const assertions)
+- Pragmatic approach to typing (not over-engineering types)
+
+Remember to adapt question difficulty based on the candidate's experience level and the role requirements.

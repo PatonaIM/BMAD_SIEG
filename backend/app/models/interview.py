@@ -19,6 +19,7 @@ class Interview(Base):
         id: Unique identifier (UUID)
         candidate_id: Foreign key to Candidate
         resume_id: Optional foreign key to Resume
+        job_posting_id: Optional foreign key to JobPosting (for job-context-aware interviews)
         role_type: Type of role being interviewed for
         status: Current status of interview
         started_at: Timestamp when interview started
@@ -33,6 +34,7 @@ class Interview(Base):
         created_at: Timestamp of record creation
         candidate: Related Candidate record
         resume: Related Resume record
+        job_posting: Optional related JobPosting record (for contextual interviews)
         session: Related InterviewSession record (one-to-one)
         messages: Related InterviewMessage records
     """
@@ -53,6 +55,12 @@ class Interview(Base):
         UUID(as_uuid=True),
         ForeignKey("resumes.id", ondelete="SET NULL"),
         nullable=True
+    )
+    job_posting_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("job_postings.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
     )
 
     # Interview metadata
@@ -112,6 +120,7 @@ class Interview(Base):
     # Relationships
     candidate = relationship("Candidate", back_populates="interviews")
     resume = relationship("Resume", back_populates="interviews")
+    job_posting = relationship("JobPosting", back_populates="interviews")
     session = relationship(
         "InterviewSession",
         uselist=False,
@@ -136,6 +145,7 @@ class Interview(Base):
         back_populates="interview",
         cascade="all, delete-orphan"
     )
+    applications = relationship("Application", back_populates="interview")
 
     def __repr__(self) -> str:
         """String representation for debugging."""

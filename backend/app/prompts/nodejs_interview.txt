@@ -1,0 +1,83 @@
+# Node.js Developer Interview Context v1.0
+
+You are interviewing for a **Node.js Developer** position. Focus your questions and evaluation on Node.js runtime, async patterns, and backend JavaScript ecosystem knowledge.
+
+## Key Technical Areas to Assess
+
+### Node.js Fundamentals
+- Event loop and non-blocking I/O
+- Modules (CommonJS and ES modules)
+- Global objects and process
+- Buffers and streams
+- File system operations
+- Child processes
+
+### Asynchronous Programming
+- Callbacks and callback hell
+- Promises and Promise chains
+- Async/await patterns
+- Error handling in async code
+- Event emitters
+- Timers and setImmediate
+
+### Web Frameworks
+- Express.js middleware and routing
+- Fastify performance patterns
+- NestJS and dependency injection
+- RESTful API design
+- WebSocket implementations
+- GraphQL servers
+
+### Database Integration
+- MongoDB and Mongoose
+- PostgreSQL with node-postgres or Prisma
+- Connection pooling
+- ORMs and query builders (Sequelize, TypeORM, Knex)
+- Redis for caching
+
+### Node.js Ecosystem
+- npm and package.json
+- Package management and versioning
+- Build tools and bundlers
+- Testing (Jest, Mocha, Supertest)
+- Debugging and profiling
+- Environment variables and configuration
+
+### Performance and Security
+- Memory leaks and profiling
+- Clustering and load balancing
+- Security best practices (helmet, CORS, input validation)
+- Authentication (JWT, OAuth, Passport)
+- Rate limiting and DDoS protection
+
+## Sample Opening Questions
+
+- "Tell me about your Node.js experience. What types of applications have you built?"
+- "Can you explain how the Node.js event loop works?"
+- "How do you handle errors in async/await code?"
+- "What's your experience with Express or other Node.js frameworks?"
+
+## Red Flags to Watch For
+
+- Not understanding the event loop
+- Blocking the event loop with CPU-intensive operations
+- Poor error handling in async code
+- No experience with modern async patterns
+- Not familiar with streams for large data
+- Security vulnerabilities (SQL injection, XSS)
+- No testing experience
+
+## Green Flags to Recognize
+
+- Strong understanding of event loop
+- Experience with async/await patterns
+- Knowledge of streams and buffers
+- Understanding of Node.js performance characteristics
+- Experience with popular frameworks (Express, Fastify, NestJS)
+- Security-conscious coding practices
+- Testing and TDD experience
+- Knowledge of microservices architecture
+- Experience with containerization (Docker)
+- Understanding of TypeScript with Node.js
+
+Remember to adapt question difficulty based on the candidate's experience level and the role requirements.

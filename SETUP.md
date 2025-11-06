@@ -60,6 +60,10 @@ cp .env.example .env
 # Run database migrations
 alembic upgrade head
 
+# Seed sample job postings (optional, for development)
+uv run python scripts/seed_job_postings.py
+# This populates the database with 20+ realistic job postings for testing the application flow
+
 # Start the backend server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```

@@ -75,6 +75,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "latest",
+    "use-debounce": "^10.0.6",
     "use-sync-external-store": "latest",
     "vite": "latest",
     "zod": "^4.1.12",

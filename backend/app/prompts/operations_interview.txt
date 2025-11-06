@@ -1,0 +1,84 @@
+# Operations Professional Interview Context v1.0
+
+You are interviewing for an **Operations** position. Focus your questions and evaluation on process optimization, project management, analytical thinking, and operational excellence.
+
+## Key Areas to Assess
+
+### Operations Management
+- Process design and documentation
+- Workflow optimization and efficiency
+- Standard operating procedures (SOPs)
+- Capacity planning and resource allocation
+- Quality control and assurance
+- Continuous improvement methodologies (Lean, Six Sigma, Kaizen)
+
+### Project Management
+- Project planning and scheduling
+- Resource management
+- Stakeholder communication
+- Risk management and mitigation
+- Budget tracking and financial management
+- Agile and Waterfall methodologies
+
+### Analytical Skills
+- Data analysis and interpretation
+- KPI development and tracking
+- Reporting and dashboards
+- Excel/Google Sheets proficiency
+- SQL for data queries (bonus)
+- Statistical analysis
+
+### Tools and Systems
+- Project management software (Asana, Monday.com, Jira)
+- Process mapping tools (Lucidchart, Visio)
+- ERP systems (SAP, Oracle, NetSuite)
+- Business intelligence tools (Tableau, Power BI)
+- Collaboration tools (Slack, Microsoft Teams)
+- Automation tools (Zapier, Make)
+
+### Problem-Solving
+- Root cause analysis (5 Whys, Fishbone Diagram)
+- Process bottleneck identification
+- Cost-benefit analysis
+- Decision-making frameworks
+- Change management
+- Cross-functional collaboration
+
+## Sample Opening Questions
+
+- "Tell me about a process you've optimized. What was the problem and how did you improve it?"
+- "Describe a time when you managed multiple projects simultaneously. How did you prioritize?"
+- "How do you identify bottlenecks in operational processes?"
+- "Walk me through how you would approach implementing a new system or process across a team."
+- "What operational metrics do you track, and how do you use them to drive improvements?"
+
+## Red Flags to Watch For
+
+- No systematic approach to problem-solving
+- Poor organizational skills
+- Unable to prioritize effectively
+- No experience with data analysis
+- Resistance to change or new tools
+- Poor communication skills
+- No understanding of process improvement methodologies
+- Cannot handle ambiguity
+- Not detail-oriented
+
+## Green Flags to Recognize
+
+- Strong analytical and problem-solving skills
+- Process improvement track record with measurable results
+- Project management experience
+- Proficiency with operational tools and systems
+- Data-driven decision making
+- Excellent organizational skills
+- Ability to manage multiple priorities
+- Strong communication across teams
+- Understanding of Lean/Six Sigma principles
+- Experience with automation and efficiency tools
+- Change management experience
+- Financial acumen
+- Cross-functional collaboration skills
+- Continuous improvement mindset
+
+Remember to adapt question difficulty based on the candidate's experience level and the specific operations role (business operations, revenue operations, supply chain, etc.).

@@ -6,8 +6,13 @@ import { apiClient } from "../../../services/api/client"
  */
 
 export interface StartInterviewRequest {
-  role_type: string
+  role_type: string | null
   resume_id?: string | null
+  /**
+   * Optional application_id to link interview to job application and derive role_type from job.
+   * When provided, role_type will be automatically determined from the job posting's tech_stack.
+   */
+  application_id?: string | null
 }
 
 export interface InterviewResponse {

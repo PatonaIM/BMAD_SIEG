@@ -3,14 +3,58 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class InterviewStartRequest(BaseModel):
-    """Schema for starting an interview."""
+    """
+    Schema for starting an interview.
+    
+    Supports two modes:
+    1. Standalone interview: Provide role_type
+    2. Job-linked interview: Provide application_id (role_type derived from job)
+    
+    At least one of (role_type, application_id) must be provided.
+    """
 
-    role_type: str = Field(..., pattern="^(react|python|javascript|fullstack)$")
-    resume_id: UUID | None = None
+    role_type: str | None = Field(
+        None,
+        description="Role type for standalone interview (e.g., 'react', 'python', 'javascript', 'fullstack')"
+    )
+    resume_id: UUID | None = Field(
+        None,
+        description="Optional resume ID"
+    )
+    application_id: UUID | None = Field(
+        None,
+        description="Optional application ID to link interview to job posting"
+    )
+
+    @field_validator('application_id')
+    @classmethod
+    def validate_at_least_one(cls, v, info):
+        """Ensure at least one of role_type or application_id is provided."""
+        role_type = info.data.get('role_type')
+        if not v and not role_type:
+            raise ValueError('Either role_type or application_id must be provided')
+        return v
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "role_type": "react",
+                    "resume_id": None,
+                    "application_id": None
+                },
+                {
+                    "role_type": None,
+                    "resume_id": None,
+                    "application_id": "123e4567-e89b-12d3-a456-426614174000"
+                }
+            ]
+        }
+    )
 
 
 class InterviewResponse(BaseModel):
@@ -346,7 +390,7 @@ class VideoConsentRequest(BaseModel):
     """Schema for video recording consent."""
 
     video_recording_consent: bool = Field(
-        ..., 
+        ...,
         description="Whether candidate consents to video recording"
     )
 

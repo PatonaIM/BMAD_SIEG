@@ -1,9 +1,12 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
 import {
   BrainCircuit,
@@ -18,42 +21,79 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react"
+import { useApplications } from "@/hooks/use-applications"
+import { useAuthStore } from "@/src/features/auth/store/authStore"
+import type { ApplicationStatus } from "@/lib/api-client"
+
+/**
+ * Format applied date as relative time
+ */
+function formatAppliedDate(appliedAt: string): string {
+  const date = new Date(appliedAt);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return `${Math.floor(diffDays / 30)} months ago`;
+}
+
+/**
+ * Get next step message based on application status
+ */
+function getNextStepMessage(status: ApplicationStatus): string {
+  switch (status) {
+    case 'interview_scheduled':
+      return 'AI Interview scheduled';
+    case 'interview_completed':
+      return 'Interview completed - awaiting results';
+    case 'under_review':
+      return 'Application under review by recruiter';
+    case 'applied':
+      return 'Application submitted successfully';
+    case 'rejected':
+      return 'Position filled with another candidate';
+    case 'offered':
+      return 'Job offer received';
+    case 'accepted':
+      return 'Offer accepted';
+    case 'withdrawn':
+      return 'Application withdrawn';
+    default:
+      return 'Application in progress';
+  }
+}
 
 export default function DashboardPage() {
-  // Mock data - will be replaced with API calls
-  const stats = {
-    applications: 12,
-    interviews: 3,
-    matches: 8,
-    profileCompletion: 75,
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const { data, isLoading, isError, refetch } = useApplications();
+
+  // Authentication check
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return <div>Redirecting...</div>;
   }
 
-  const recentApplications = [
-    {
-      id: "1",
-      jobTitle: "Senior Full Stack Developer",
-      company: "TechCorp Inc.",
-      status: "interview_scheduled",
-      appliedAt: "2 days ago",
-      nextStep: "AI Interview on Jan 15",
-    },
-    {
-      id: "2",
-      jobTitle: "Product Manager",
-      company: "Innovation Labs",
-      status: "under_review",
-      appliedAt: "1 week ago",
-      nextStep: "Awaiting recruiter review",
-    },
-    {
-      id: "3",
-      jobTitle: "Data Scientist",
-      company: "AI Solutions",
-      status: "applied",
-      appliedAt: "3 days ago",
-      nextStep: "Application submitted",
-    },
-  ]
+  // Extract recent applications (top 3)
+  const recentApplications = data?.slice(0, 3) || [];
+
+  // Calculate stats from real data
+  const stats = {
+    applications: data?.length || 0,
+    interviews: data?.filter(a => a.status === 'interview_scheduled').length || 0,
+    matches: 8, // Keep static for now (future enhancement)
+    profileCompletion: 75, // Keep static for now (future enhancement)
+  };
 
   const matchedJobs = [
     {
@@ -72,7 +112,7 @@ export default function DashboardPage() {
       location: "San Francisco, CA",
       salary: "$180k - $240k",
     },
-  ]
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -215,27 +255,61 @@ export default function DashboardPage() {
             <CardDescription>Track your application progress</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentApplications.map((app) => (
-                <div key={app.id} className="flex items-start gap-4 p-4 rounded-lg border">
-                  <div className="flex-1 space-y-1">
-                    <div className="font-semibold">{app.jobTitle}</div>
-                    <div className="text-sm text-muted-foreground">{app.company}</div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className={getStatusColor(app.status)}>
-                        {getStatusIcon(app.status)}
-                        <span className="ml-1 capitalize">{app.status.replace("_", " ")}</span>
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{app.appliedAt}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground mt-2">{app.nextStep}</div>
+            {isLoading && (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="p-4 rounded-lg border">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-4" />
+                    <Skeleton className="h-4 w-full" />
                   </div>
-                  <Button size="sm" variant="ghost" asChild>
-                    <Link href={`/applications/${app.id}`}>View</Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {isError && (
+              <div className="p-6 text-center">
+                <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-4">Error loading applications</p>
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Retry
+                </Button>
+              </div>
+            )}
+
+            {!isLoading && !isError && recentApplications.length === 0 && (
+              <div className="p-6 text-center">
+                <Briefcase className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-4">No applications yet</p>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/jobs">Browse Jobs</Link>
+                </Button>
+              </div>
+            )}
+
+            {!isLoading && !isError && recentApplications.length > 0 && (
+              <div className="space-y-4">
+                {recentApplications.map((app) => (
+                  <div key={app.id} className="flex items-start gap-4 p-4 rounded-lg border">
+                    <div className="flex-1 space-y-1">
+                      <div className="font-semibold">{app.job_posting.title}</div>
+                      <div className="text-sm text-muted-foreground">{app.job_posting.company}</div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className={getStatusColor(app.status)}>
+                          {getStatusIcon(app.status)}
+                          <span className="ml-1 capitalize">{app.status.replace(/_/g, " ")}</span>
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{formatAppliedDate(app.applied_at)}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-2">{getNextStepMessage(app.status)}</div>
+                    </div>
+                    <Button size="sm" variant="ghost" asChild>
+                      <Link href={`/applications/${app.id}`}>View</Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

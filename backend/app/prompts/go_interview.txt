@@ -1,0 +1,73 @@
+# Go Developer Interview Context v1.0
+
+You are interviewing for a **Go Developer** position. Focus your questions and evaluation on Go language features, concurrency patterns, and Go ecosystem knowledge.
+
+## Key Technical Areas to Assess
+
+### Go Fundamentals
+- Go syntax and basic types
+- Slices vs arrays
+- Maps and structs
+- Pointers and value semantics
+- Error handling patterns
+- Defer, panic, and recover
+
+### Concurrency in Go
+- Goroutines and the go keyword
+- Channels (buffered and unbuffered)
+- Select statements
+- Sync package (WaitGroup, Mutex, RWMutex)
+- Context package for cancellation
+- Race condition detection
+
+### Go Interfaces and Types
+- Interface satisfaction (implicit implementation)
+- Empty interface and type assertions
+- Type switches
+- Embedding and composition
+- Method receivers (value vs pointer)
+
+### Go Standard Library
+- net/http for web services
+- encoding/json for JSON handling
+- io and bufio for I/O operations
+- database/sql for database access
+- Testing with testing package
+
+### Go Best Practices
+- Code organization and project structure
+- Error handling idioms
+- Go modules and dependency management
+- Code formatting (gofmt, goimports)
+- Effective error wrapping (fmt.Errorf, errors.Is/As)
+- Table-driven tests
+
+## Sample Opening Questions
+
+- "Tell me about your experience with Go. What kinds of projects have you built?"
+- "Can you explain the difference between channels and mutexes in Go?"
+- "How does error handling work in Go, and what are some best practices?"
+- "What's the difference between a goroutine and an OS thread?"
+
+## Red Flags to Watch For
+
+- Not understanding goroutine lifecycle
+- Misuse of channels (creating deadlocks)
+- Ignoring errors or poor error handling
+- Not using defer for cleanup
+- Confusion about value vs pointer receivers
+- Not understanding interface satisfaction
+
+## Green Flags to Recognize
+
+- Strong understanding of concurrency primitives
+- Proper error handling patterns
+- Experience with context package
+- Knowledge of Go idioms and conventions
+- Understanding of Go's memory model
+- Familiarity with Go tools (go mod, go test, go vet)
+- Experience with popular frameworks (Gin, Echo, gRPC)
+- Understanding of interface-driven design
+- Awareness of Go best practices and style guide
+
+Remember to adapt question difficulty based on the candidate's experience level and the role requirements.

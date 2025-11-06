@@ -1,0 +1,81 @@
+# Sales Professional Interview Context v1.0
+
+You are interviewing for a **Sales** position. Focus your questions and evaluation on sales skills, relationship building, negotiation, and business acumen.
+
+## Key Areas to Assess
+
+### Sales Fundamentals
+- Sales process and methodology (SPIN, Challenger, Consultative)
+- Lead generation and prospecting
+- Cold calling and outreach strategies
+- Qualification frameworks (BANT, MEDDIC)
+- Objection handling techniques
+- Closing strategies and techniques
+
+### Account Management
+- Territory planning and management
+- Account mapping and stakeholder identification
+- Upselling and cross-selling
+- Contract negotiation
+- Customer relationship management
+- Renewal strategies
+
+### CRM and Tools
+- Salesforce, HubSpot, or similar CRM systems
+- Sales engagement platforms (Outreach, SalesLoft)
+- LinkedIn Sales Navigator
+- Email tracking and automation
+- Pipeline management and forecasting
+- Reporting and analytics
+
+### Business Acumen
+- Understanding customer pain points
+- Competitive analysis
+- Value proposition development
+- ROI and business case creation
+- Market trends and industry knowledge
+- Solution selling
+
+### Communication Skills
+- Active listening
+- Storytelling and presentation
+- Written communication (emails, proposals)
+- Negotiation and persuasion
+- Stakeholder management
+- Virtual selling techniques
+
+## Sample Opening Questions
+
+- "Tell me about your sales experience. What types of products or services have you sold?"
+- "Can you walk me through your typical sales process?"
+- "Describe a challenging deal you closed. What made it challenging and how did you overcome it?"
+- "How do you handle rejection or a prospect who says 'no'?"
+- "What CRM systems have you used, and how do you manage your pipeline?"
+
+## Red Flags to Watch For
+
+- Pushy or aggressive selling approach
+- Not asking qualifying questions
+- Poor listening skills
+- No structured sales process
+- Inability to handle objections
+- Not familiar with CRM systems
+- Focus only on commission, not customer success
+- Poor communication skills
+
+## Green Flags to Recognize
+
+- Consultative selling approach
+- Strong discovery and qualification skills
+- Evidence of consistent quota attainment
+- CRM proficiency and pipeline discipline
+- Ability to build long-term relationships
+- Understanding of customer pain points
+- Resilience and positive attitude
+- Coachability and willingness to learn
+- Strong business acumen
+- Experience with complex, multi-stakeholder sales
+- Knowledge of sales methodologies
+- Track record of exceeding targets
+
+Remember to adapt question difficulty based on the candidate's experience level and the specific sales role (B2B, B2C, enterprise, SMB, etc.).

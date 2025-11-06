@@ -3,22 +3,140 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useAuthStore } from "@/src/features/auth/store/authStore"
 import { useLogout } from "@/src/features/auth/hooks/useAuth"
 import { useStartInterview } from "@/src/features/interview/hooks/useInterview"
-import { BrainCircuit, Sparkles, CheckCircle2, Mic, MessageSquare, BarChart3 } from "lucide-react"
+import { useApplication } from "@/hooks/use-application"
+import { BrainCircuit, Sparkles, CheckCircle2, Mic, MessageSquare, BarChart3, AlertCircle, Briefcase, Building2 } from "lucide-react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { MockModeIndicator } from "@/src/components/shared/MockModeIndicator"
+import type { Application } from "@/lib/api-client"
+
+/**
+ * Get tech stack-specific preparation tips
+ */
+function getPreparationTips(techStack: string | null): string[] {
+  const stack = techStack?.toLowerCase() || 'unknown'
+  
+  const tipsMap: Record<string, string[]> = {
+    react: [
+      "Review component lifecycle and hooks (useState, useEffect, useContext)",
+      "Practice state management patterns (Redux, Zustand, Context API)",
+      "Be ready for JSX/TypeScript questions and component composition"
+    ],
+    python: [
+      "Brush up on list comprehensions and decorators",
+      "Review OOP concepts and design patterns",
+      "Practice algorithm questions and data structures"
+    ],
+    javascript: [
+      "Review closures and async/await patterns",
+      "Practice DOM manipulation and event handling",
+      "Be ready for ES6+ features (arrow functions, destructuring, modules)"
+    ],
+    typescript: [
+      "Review type system and generics",
+      "Practice interface and type definitions",
+      "Be ready for advanced type patterns (utility types, conditional types)"
+    ],
+    go: [
+      "Review goroutines and channels for concurrency",
+      "Practice error handling patterns",
+      "Be ready for questions about interfaces and composition"
+    ],
+    node: [
+      "Review async patterns and event loop",
+      "Practice Express/Fastify framework concepts",
+      "Be ready for questions about streams and buffers"
+    ],
+    nodejs: [
+      "Review async patterns and event loop",
+      "Practice Express/Fastify framework concepts",
+      "Be ready for questions about streams and buffers"
+    ],
+  }
+  
+  return tipsMap[stack] || [
+    "Review core programming concepts and best practices",
+    "Practice problem-solving and algorithmic thinking",
+    "Be ready for technical discussions about your experience"
+  ]
+}
+
+/**
+ * Job Context Card - displays job details for application-linked interviews
+ */
+function JobContextCard({ application }: { application: Application }) {
+  const { job_posting } = application
+  const tips = getPreparationTips(job_posting.tech_stack)
+  const techStackDisplay = job_posting.tech_stack || 'Technical'
+  
+  return (
+    <Card className="mb-6 border-primary bg-accent/5">
+      <CardHeader>
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Briefcase className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <CardTitle className="text-xl">Interview for {job_posting.title}</CardTitle>
+            <CardDescription className="flex items-center gap-2 mt-1">
+              <Building2 className="h-3 w-3" />
+              {job_posting.company} • {job_posting.role_category}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Tech Stack Badge */}
+        <div>
+          <Badge variant="secondary" className="text-sm">
+            {techStackDisplay}
+          </Badge>
+        </div>
+        
+        {/* Preparation Tips */}
+        <div>
+          <h3 className="font-semibold text-sm mb-2">
+            What to prepare for {techStackDisplay} interview:
+          </h3>
+          <ul className="space-y-1.5">
+            {tips.map((tip, index) => (
+              <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0" />
+                <span>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function InterviewStartPage() {
+  const searchParams = useSearchParams()
+  const applicationId = searchParams.get('application_id')
+  
   const user = useAuthStore((state) => state.user)
   const logout = useLogout()
   const { mutate: startInterview, isPending, isError, error } = useStartInterview()
+  
+  const { 
+    data: application, 
+    isLoading: isLoadingApp, 
+    isError: isAppError, 
+    error: appError 
+  } = useApplication(applicationId)
 
   const handleBeginInterview = () => {
+    // When application_id provided, role_type derived from job on backend
     startInterview({
-      role_type: "react",
+      role_type: applicationId ? null : "react",
       resume_id: null,
+      application_id: applicationId || null,
     })
   }
 
@@ -38,6 +156,46 @@ export default function InterviewStartPage() {
             Hello, {user?.email || "Candidate"}! Let's showcase your skills with our AI interviewer.
           </p>
         </div>
+
+        {/* Loading State for Application */}
+        {isLoadingApp && applicationId && (
+          <Card className="mb-6 p-6">
+            <Skeleton className="h-8 w-3/4 mb-4" />
+            <Skeleton className="h-4 w-1/2 mb-2" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </Card>
+        )}
+
+        {/* Error State for Application */}
+        {isAppError && applicationId && (
+          <Card className="mb-6 p-6 border-destructive bg-destructive/5">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-destructive mb-1">
+                  Unable to Load Application
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {appError?.message || 'The application could not be found or you do not have access to it.'}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-3"
+                  onClick={() => window.location.href = '/applications'}
+                >
+                  View My Applications
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Job Context Card - only show when application loaded successfully */}
+        {application && !isLoadingApp && (
+          <JobContextCard application={application} />
+        )}
 
         {/* Main Card */}
         <Card className="mb-8">
@@ -120,7 +278,10 @@ export default function InterviewStartPage() {
                 ) : (
                   <>
                     <BrainCircuit className="mr-2 h-4 w-4" />
-                    Begin Interview
+                    {application 
+                      ? `Begin ${application.job_posting.tech_stack || 'Technical'} Interview`
+                      : 'Begin Interview'
+                    }
                   </>
                 )}
               </Button>

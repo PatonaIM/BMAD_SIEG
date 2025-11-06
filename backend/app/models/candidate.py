@@ -68,6 +68,12 @@ class Candidate(Base):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
+    applications = relationship(
+        "Application",
+        back_populates="candidate",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
 
     def __repr__(self) -> str:
         """String representation for debugging."""

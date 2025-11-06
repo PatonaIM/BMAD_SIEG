@@ -4,10 +4,10 @@ from datetime import datetime
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, Form, File
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_application_repository, get_current_user
 from app.core.database import get_db
 from app.core.exceptions import (
     InterviewCompletedException,
@@ -19,6 +19,7 @@ from app.models.interview import Interview
 from app.models.interview_message import InterviewMessage
 from app.models.interview_session import InterviewSession
 from app.providers.openai_provider import OpenAIProvider
+from app.repositories.application_repository import ApplicationRepository
 from app.repositories.interview import InterviewRepository
 from app.repositories.interview_message import InterviewMessageRepository
 from app.repositories.interview_session import InterviewSessionRepository
@@ -43,22 +44,107 @@ logger = structlog.get_logger().bind(module="interviews_api")
 router = APIRouter(prefix="/interviews", tags=["interviews"])
 
 
+def _map_role_type(role_type_raw: str) -> str:
+    """
+    Map tech_stack or role_category to valid interview role_type enum.
+    
+    Uses the same expanded mapping as ApplicationService (50+ mappings)
+    to support both technical and non-technical roles.
+    
+    Args:
+        role_type_raw: Raw tech_stack or role_category string
+    
+    Returns:
+        Mapped role_type enum value (react|python|javascript|fullstack)
+    """
+    role_type_mapping = {
+        # Technical mappings
+        "react": "react",
+        "python": "python",
+        "javascript": "javascript",
+        "typescript": "javascript",
+        "go": "python",
+        "rust": "python",
+        "java": "python",
+        "csharp": "python",
+        "c#": "python",
+        "dotnet": "python",
+        ".net": "python",
+        "php": "python",
+        "node": "javascript",
+        "nodejs": "javascript",
+        "node.js": "javascript",
+        "data": "python",
+        "data_engineering": "python",
+        "data engineering": "python",
+        "devops": "python",
+        "qa": "javascript",
+        "qa_automation": "javascript",
+        "quality_assurance": "javascript",
+        "playwright": "javascript",
+        "cypress": "javascript",
+
+        # Non-technical role mappings
+        "sales": "fullstack",
+        "account_manager": "fullstack",
+        "account manager": "fullstack",
+        "business_development": "fullstack",
+        "business development": "fullstack",
+        "support": "fullstack",
+        "customer_service": "fullstack",
+        "customer service": "fullstack",
+        "customer_success": "fullstack",
+        "customer success": "fullstack",
+        "product": "fullstack",
+        "product_manager": "fullstack",
+        "product manager": "fullstack",
+        "design": "fullstack",
+        "ux": "fullstack",
+        "ui": "fullstack",
+        "ux/ui": "fullstack",
+        "marketing": "fullstack",
+        "operations": "fullstack",
+        "management": "fullstack",
+
+        # Default
+        "fullstack": "fullstack",
+        "full-stack": "fullstack",
+        "full stack": "fullstack",
+    }
+    return role_type_mapping.get(role_type_raw.lower(), "fullstack")
+
+
 @router.post("/start", response_model=InterviewResponse, status_code=status.HTTP_201_CREATED)
 async def start_interview(
     data: InterviewStartRequest,
     current_user: Annotated[Candidate, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
+    app_repo: Annotated[ApplicationRepository, Depends(get_application_repository)]
 ) -> InterviewResponse:
     """
     Start a new interview session and generate the first AI question.
+    
+    Supports two modes:
+    1. Standalone interview: Provide role_type for practice/standalone interview
+    2. Job-linked interview: Provide application_id to link interview to job posting
+       (role_type automatically derived from job's tech_stack)
+    
+    Job-linked interviews automatically inject job context into AI prompts
+    for customized, role-specific questions.
 
     Args:
-        data: Interview start request (role_type, resume_id)
+        data: Interview start request (role_type OR application_id, optional resume_id)
         current_user: Authenticated candidate
         db: Database session
+        app_repo: Application repository for fetching job context
 
     Returns:
         Created interview with status "in_progress" and first AI question
+        
+    Raises:
+        HTTPException 400: Neither role_type nor application_id provided
+        HTTPException 403: Attempting to use another candidate's application
+        HTTPException 404: Application or job posting not found
     """
     correlation_id = str(uuid.uuid4())
 
@@ -66,16 +152,75 @@ async def start_interview(
         "start_interview_request",
         correlation_id=correlation_id,
         candidate_id=str(current_user.id),
-        role_type=data.role_type
+        role_type=data.role_type,
+        application_id=str(data.application_id) if data.application_id else None
     )
+
+    # Determine role_type and job_posting_id
+    job_posting_id = None
+    final_role_type = data.role_type
+
+    if data.application_id:
+        # Fetch application with eager-loaded job_posting
+        application = await app_repo.get_by_id(data.application_id)
+
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Application {data.application_id} not found"
+            )
+
+        # Authorization: Verify application belongs to current user
+        if application.candidate_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access this application"
+            )
+
+        # Extract job context via eager-loaded relationship
+        job_posting = application.job_posting
+        if not job_posting:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Job posting not found for application {data.application_id}"
+            )
+
+        job_posting_id = job_posting.id
+
+        # Use existing role mapping from ApplicationService (Story 3.13)
+        # Priority: tech_stack first, then role_category, then default
+        role_type_raw = (
+            job_posting.tech_stack or
+            str(job_posting.role_category) or
+            "fullstack"
+        )
+        final_role_type = _map_role_type(role_type_raw)
+
+        logger.info(
+            "interview_start_with_job_context",
+            correlation_id=correlation_id,
+            application_id=str(data.application_id),
+            job_posting_id=str(job_posting_id),
+            tech_stack=job_posting.tech_stack,
+            role_category=str(job_posting.role_category),
+            mapped_role_type=final_role_type
+        )
+
+    elif not data.role_type:
+        # Neither application_id nor role_type provided
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either application_id or role_type must be provided"
+        )
 
     # Create interview record with in_progress status
     interview = Interview(
         id=uuid.uuid4(),
         candidate_id=current_user.id,
         resume_id=data.resume_id,
-        role_type=data.role_type,
-        status="in_progress",  # Changed from "scheduled"
+        role_type=final_role_type,
+        job_posting_id=job_posting_id,  # Set FK (Story 3.13 column)
+        status="in_progress",
         total_tokens_used=0
     )
 
@@ -157,7 +302,9 @@ async def start_interview(
             "interview_started_successfully",
             correlation_id=correlation_id,
             interview_id=str(interview.id),
-            session_id=str(interview_session.id)
+            session_id=str(interview_session.id),
+            role_type=final_role_type,
+            has_job_context=bool(job_posting_id)
         )
 
     except Exception as e:
@@ -529,22 +676,22 @@ async def complete_interview(
         HTTPException 500: Internal server error
     """
     correlation_id = str(uuid.uuid4())
-    
+
     logger.info(
         "complete_interview_request",
         correlation_id=correlation_id,
         interview_id=str(interview_id),
         candidate_id=str(current_user.id)
     )
-    
+
     # Initialize repositories
     interview_repo = InterviewRepository(db)
     session_repo = InterviewSessionRepository(db)
     message_repo = InterviewMessageRepository(db)
-    
+
     # Load interview
     interview = await interview_repo.get_by_id(interview_id)
-    
+
     if not interview:
         logger.warning(
             "interview_not_found",
@@ -555,7 +702,7 @@ async def complete_interview(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found"
         )
-    
+
     # Verify ownership
     if interview.candidate_id != current_user.id:
         logger.warning(
@@ -568,7 +715,7 @@ async def complete_interview(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to complete this interview"
         )
-    
+
     # Check if already completed
     if interview.status == "completed":
         logger.warning(
@@ -580,7 +727,7 @@ async def complete_interview(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Interview has already been completed"
         )
-    
+
     try:
         # Initialize AI provider and interview engine
         ai_provider = OpenAIProvider()
@@ -590,12 +737,12 @@ async def complete_interview(
             message_repo=message_repo,
             interview_repo=interview_repo
         )
-        
+
         # Complete the interview
         result = await interview_engine.complete_interview(interview_id)
-        
+
         await db.commit()
-        
+
         logger.info(
             "interview_completed_successfully",
             correlation_id=correlation_id,
@@ -603,9 +750,9 @@ async def complete_interview(
             duration_seconds=result["duration_seconds"],
             questions_answered=result["questions_answered"]
         )
-        
+
         return InterviewCompleteResponse(**result)
-        
+
     except InterviewCompletedException as e:
         logger.warning(
             "interview_already_completed",
@@ -673,21 +820,21 @@ async def get_interview_transcript(
         HTTPException 403: Not authorized to access this transcript
     """
     correlation_id = str(uuid.uuid4())
-    
+
     logger.info(
         "get_transcript_request",
         correlation_id=correlation_id,
         interview_id=str(interview_id),
         candidate_id=str(current_user.id)
     )
-    
+
     # Initialize repositories
     interview_repo = InterviewRepository(db)
     message_repo = InterviewMessageRepository(db)
-    
+
     # Load interview
     interview = await interview_repo.get_by_id(interview_id)
-    
+
     if not interview:
         logger.warning(
             "interview_not_found_for_transcript",
@@ -698,7 +845,7 @@ async def get_interview_transcript(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found"
         )
-    
+
     # Verify ownership
     if interview.candidate_id != current_user.id:
         logger.warning(
@@ -711,14 +858,14 @@ async def get_interview_transcript(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this transcript"
         )
-    
+
     # Get all messages
     all_messages = await message_repo.get_by_interview_id(interview_id)
-    
+
     # Apply pagination with limit cap
     limit = min(limit, 100)
     paginated_messages = all_messages[skip:skip + limit]
-    
+
     # Convert to TranscriptMessage schema
     transcript_messages = [
         TranscriptMessage(
@@ -730,7 +877,7 @@ async def get_interview_transcript(
         )
         for msg in paginated_messages
     ]
-    
+
     logger.info(
         "transcript_retrieved_successfully",
         correlation_id=correlation_id,
@@ -738,7 +885,7 @@ async def get_interview_transcript(
         message_count=len(transcript_messages),
         total_messages=len(all_messages)
     )
-    
+
     return InterviewTranscriptResponse(
         interview_id=interview_id,
         started_at=interview.started_at or datetime.utcnow(),
@@ -770,7 +917,7 @@ async def submit_tech_check_results(
         Success status and message
     """
     correlation_id = str(uuid.uuid4())
-    
+
     logger.info(
         "tech_check_submission",
         correlation_id=correlation_id,
@@ -779,9 +926,9 @@ async def submit_tech_check_results(
         audio_passed=request.audio_test_passed,
         camera_passed=request.camera_test_passed
     )
-    
+
     interview_repo = InterviewRepository(db)
-    
+
     # Get interview
     interview = await interview_repo.get_by_id(interview_id)
     if not interview:
@@ -794,7 +941,7 @@ async def submit_tech_check_results(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found"
         )
-    
+
     # Verify ownership
     if interview.candidate_id != current_user.id:
         logger.warning(
@@ -808,7 +955,7 @@ async def submit_tech_check_results(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized"
         )
-    
+
     # Store tech check metadata
     interview.tech_check_metadata = {
         "audio": {
@@ -828,9 +975,9 @@ async def submit_tech_check_results(
             "browser_info": request.browser_info
         }
     }
-    
+
     await db.commit()
-    
+
     logger.info(
         "tech_check_results_stored",
         correlation_id=correlation_id,
@@ -838,7 +985,7 @@ async def submit_tech_check_results(
         audio_passed=request.audio_test_passed,
         camera_passed=request.camera_test_passed
     )
-    
+
     return TechCheckResponse(
         success=True,
         message="Tech check results saved successfully"
@@ -877,7 +1024,7 @@ async def upload_video_chunk(
         507: Storage quota exceeded
     """
     correlation_id = str(uuid.uuid4())
-    
+
     logger.info(
         "video_chunk_upload_request",
         correlation_id=correlation_id,
@@ -886,9 +1033,9 @@ async def upload_video_chunk(
         chunk_index=chunk_index,
         is_final=is_final
     )
-    
+
     interview_repo = InterviewRepository(db)
-    
+
     # Get interview
     interview = await interview_repo.get_by_id(interview_id)
     if not interview:
@@ -896,14 +1043,14 @@ async def upload_video_chunk(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found"
         )
-    
+
     # Verify ownership
     if interview.candidate_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized"
         )
-    
+
     # Check video recording consent
     if not interview.video_recording_consent:
         logger.warning(
@@ -915,58 +1062,58 @@ async def upload_video_chunk(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Video recording consent not granted"
         )
-    
+
     try:
         # Read chunk data
         chunk_data = await chunk.read()
-        
+
         # Create temporary storage directory
-        import tempfile
         import os
-        
+        import tempfile
+
         temp_dir = tempfile.gettempdir()
         interview_temp_dir = os.path.join(temp_dir, f"interview_{interview_id}")
         os.makedirs(interview_temp_dir, exist_ok=True)
-        
+
         # Save chunk temporarily
         chunk_path = os.path.join(interview_temp_dir, f"chunk_{chunk_index}.webm")
         with open(chunk_path, "wb") as f:
             f.write(chunk_data)
-        
+
         logger.info(
             "video_chunk_saved_temporarily",
             correlation_id=correlation_id,
             chunk_index=chunk_index,
             size_bytes=len(chunk_data)
         )
-        
+
         # If final chunk, concatenate and upload
         if is_final:
-            from app.utils.supabase_storage import SupabaseStorageClient
             from app.models.video_recording import VideoRecording
-            
+            from app.utils.supabase_storage import SupabaseStorageClient
+
             # Concatenate all chunks
             final_video_data = bytearray()
             chunk_files = sorted([
-                f for f in os.listdir(interview_temp_dir) 
+                f for f in os.listdir(interview_temp_dir)
                 if f.startswith("chunk_")
             ])
-            
+
             for chunk_file in chunk_files:
                 chunk_file_path = os.path.join(interview_temp_dir, chunk_file)
                 with open(chunk_file_path, "rb") as f:
                     final_video_data.extend(f.read())
-            
+
             logger.info(
                 "video_chunks_concatenated",
                 correlation_id=correlation_id,
                 total_chunks=len(chunk_files),
                 final_size_bytes=len(final_video_data)
             )
-            
+
             # Upload to Supabase Storage
             storage_client = SupabaseStorageClient()
-            
+
             # Assuming org_id is available (for MVP, use candidate_id as org_id)
             org_id = str(current_user.id)
             storage_path = await storage_client.upload_video(
@@ -974,11 +1121,11 @@ async def upload_video_chunk(
                 org_id,
                 str(interview_id)
             )
-            
+
             # Update interview with storage path
             interview.video_recording_url = storage_path
             interview.video_recording_status = "completed"
-            
+
             # Create video recording metadata
             video_recording = VideoRecording(
                 id=uuid.uuid4(),
@@ -992,14 +1139,14 @@ async def upload_video_chunk(
                     "upload_correlation_id": correlation_id
                 }
             )
-            
+
             db.add(video_recording)
             await db.commit()
-            
+
             # Clean up temporary files
             import shutil
             shutil.rmtree(interview_temp_dir, ignore_errors=True)
-            
+
             logger.info(
                 "video_upload_completed",
                 correlation_id=correlation_id,
@@ -1007,13 +1154,13 @@ async def upload_video_chunk(
                 storage_path=storage_path,
                 file_size_mb=round(len(final_video_data) / (1024 * 1024), 2)
             )
-        
+
         return VideoChunkUploadResponse(
             success=True,
             chunk_index=chunk_index,
             uploaded_at=datetime.utcnow()
         )
-        
+
     except Exception as e:
         logger.error(
             "video_chunk_upload_failed",
@@ -1022,14 +1169,14 @@ async def upload_video_chunk(
             chunk_index=chunk_index,
             error=str(e)
         )
-        
+
         # Check for storage quota errors
         if "quota" in str(e).lower() or "storage" in str(e).lower():
             raise HTTPException(
                 status_code=507,
                 detail="Storage quota exceeded. Please contact support."
             )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Video upload failed: {str(e)}"
@@ -1060,7 +1207,7 @@ async def submit_video_consent(
         403: Not authorized
     """
     correlation_id = str(uuid.uuid4())
-    
+
     logger.info(
         "video_consent_submission",
         correlation_id=correlation_id,
@@ -1068,9 +1215,9 @@ async def submit_video_consent(
         candidate_id=str(current_user.id),
         consent=request.video_recording_consent
     )
-    
+
     interview_repo = InterviewRepository(db)
-    
+
     # Get interview
     interview = await interview_repo.get_by_id(interview_id)
     if not interview:
@@ -1078,20 +1225,20 @@ async def submit_video_consent(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found"
         )
-    
+
     # Verify ownership
     if interview.candidate_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized"
         )
-    
+
     # Update consent and status
     interview.video_recording_consent = request.video_recording_consent
     interview.video_recording_status = "recording" if request.video_recording_consent else "not_recorded"
-    
+
     await db.commit()
-    
+
     logger.info(
         "video_consent_recorded",
         correlation_id=correlation_id,
@@ -1099,7 +1246,7 @@ async def submit_video_consent(
         consent=request.video_recording_consent,
         status=interview.video_recording_status
     )
-    
+
     return VideoConsentResponse(
         success=True,
         video_recording_consent=request.video_recording_consent,

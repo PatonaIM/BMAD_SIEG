@@ -3,6 +3,7 @@ import asyncio
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import structlog
@@ -20,6 +21,9 @@ from app.repositories.interview_message import InterviewMessageRepository
 from app.repositories.interview_session import InterviewSessionRepository
 from app.services.conversation_memory import ConversationMemoryManager
 from app.services.progressive_assessment_engine import DifficultyLevel, ProgressiveAssessmentEngine
+
+if TYPE_CHECKING:
+    from app.models.job_posting import JobPosting
 
 logger = structlog.get_logger().bind(service="interview_engine")
 
@@ -148,7 +152,8 @@ class InterviewEngine:
     def get_realtime_system_prompt(
         self,
         role_type: str,
-        session: InterviewSession | None = None
+        session: InterviewSession | None = None,
+        job_posting: "JobPosting | None" = None  # NEW: Optional job context
     ) -> str:
         """
         Generate system prompt for OpenAI Realtime API.
@@ -158,10 +163,12 @@ class InterviewEngine:
         - Question progression logic
         - Answer evaluation criteria
         - Technical depth for the specific role
+        - Job-specific context (if job_posting provided)
         
         Args:
             role_type: Type of role interview (e.g., "react", "python", "fullstack")
             session: Optional session for context (questions asked, difficulty level)
+            job_posting: Optional JobPosting for job-context-aware interviews
         
         Returns:
             Formatted system prompt string for Realtime API
@@ -169,6 +176,8 @@ class InterviewEngine:
         Example:
             >>> prompt = engine.get_realtime_system_prompt("react")
             >>> # Use in realtime session configuration
+            >>> # With job context:
+            >>> prompt = engine.get_realtime_system_prompt("react", session, job_posting)
         """
         # Get current interview state
         questions_asked = 0
@@ -265,6 +274,63 @@ After 12-20 questions or when 20-30 minutes have passed:
 4. End on a positive, encouraging note
 
 Remember: Your goal is to accurately assess technical skills while creating a positive candidate experience. Be thorough but fair, challenging but supportive."""
+        
+        # NEW: Inject job-specific context if job_posting is provided
+        if job_posting:
+            # Truncate description to avoid token limit issues (max 500 chars)
+            description_preview = job_posting.description[:500]
+            if len(job_posting.description) > 500:
+                description_preview += "..."
+            
+            # Format required skills
+            required_skills_str = ", ".join(job_posting.required_skills or [])
+            
+            # Build job context section
+            job_context = f"""
+
+---
+
+## JOB-SPECIFIC CONTEXT
+
+You are interviewing the candidate for this specific position:
+
+**Position:** {job_posting.title}
+**Company:** {job_posting.company}
+**Role Category:** {job_posting.role_category}
+**Experience Level:** {job_posting.experience_level}
+
+**Job Description:**
+{description_preview}
+
+**Required Skills/Qualifications:**
+{required_skills_str}
+
+**CRITICAL INSTRUCTIONS FOR JOB-CONTEXT INTERVIEWS:**
+
+1. **Tailor ALL questions to assess the required skills listed above**
+2. **Focus on technologies and tools mentioned in the job description**
+3. **Use the base technical framework as a foundation, but adapt every question to this specific role**
+4. **Ask follow-up questions about relevant experience with the required tech stack**
+5. **For non-technical roles (sales, support, product, design, marketing, operations, management):**
+   - **DO NOT ask coding or technical programming questions**
+   - **Focus on role-appropriate behavioral, situational, and skill-based questions**
+   - **Use the required skills list to guide your assessment areas**
+   - **Example for Sales: Ask about sales process, CRM experience, deal closing, objection handling**
+   - **Example for Support: Ask about customer service scenarios, conflict resolution, tool proficiency**
+
+6. **Evaluate the candidate's fit for THIS SPECIFIC JOB, not just general skills**
+
+Remember: This interview is for the "{job_posting.title}" position at {job_posting.company}. Every question should assess the candidate's ability to succeed in THIS SPECIFIC ROLE."""
+            
+            prompt = prompt + job_context
+            
+            logger.info(
+                "job_context_injected",
+                job_posting_id=str(job_posting.id),
+                job_title=job_posting.title,
+                role_category=str(job_posting.role_category),
+                prompt_length=len(prompt),
+            )
         
         return prompt
 

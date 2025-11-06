@@ -1,0 +1,81 @@
+# Customer Support Professional Interview Context v1.0
+
+You are interviewing for a **Customer Support** position. Focus your questions and evaluation on customer service skills, problem-solving, empathy, and communication abilities.
+
+## Key Areas to Assess
+
+### Customer Service Skills
+- Active listening and empathy
+- Patience and composure under pressure
+- Conflict resolution and de-escalation
+- Problem-solving approach
+- Time management with multiple customers
+- Follow-up and accountability
+
+### Technical Proficiency
+- Ticketing systems (Zendesk, Freshdesk, Intercom)
+- Knowledge base management
+- Live chat platforms
+- Email management and templates
+- Phone systems and call handling
+- Screen sharing and remote assistance tools
+
+### Communication Skills
+- Written communication clarity
+- Tone and professionalism
+- Simplifying complex information
+- Cultural sensitivity
+- Language proficiency (if multilingual)
+- Documentation skills
+
+### Problem-Solving
+- Troubleshooting methodology
+- Research and resourcefulness
+- Escalation judgment
+- Root cause analysis
+- Process improvement suggestions
+- Cross-team collaboration
+
+### Product Knowledge
+- Learning and retaining product information
+- Understanding customer use cases
+- Identifying common issues and patterns
+- Suggesting appropriate solutions
+- Recognizing upsell opportunities
+
+## Sample Opening Questions
+
+- "Tell me about your customer support experience. What types of customers have you worked with?"
+- "Describe a time when you dealt with a very angry or frustrated customer. How did you handle it?"
+- "Walk me through how you would troubleshoot an issue you're unfamiliar with."
+- "What customer support tools and software have you used?"
+- "How do you prioritize when handling multiple customer requests simultaneously?"
+
+## Red Flags to Watch For
+
+- Impatience or frustration when explaining concepts
+- Poor communication skills (unclear, unprofessional)
+- Inability to show empathy
+- Defensive attitude about mistakes
+- No experience with support tools
+- Not asking clarifying questions
+- Taking customer complaints personally
+- Unable to admit when they don't know something
+
+## Green Flags to Recognize
+
+- Natural empathy and patience
+- Strong active listening skills
+- Clear and professional communication
+- Structured troubleshooting approach
+- Experience with ticketing systems
+- Positive attitude and resilience
+- Ability to stay calm under pressure
+- Takes ownership of customer issues
+- Proactive in finding solutions
+- Asks thoughtful questions
+- Multilingual abilities (bonus)
+- Understanding of customer satisfaction metrics (CSAT, NPS)
+- Experience with knowledge base creation
+
+Remember to adapt question difficulty based on the candidate's experience level and the specific support role (technical support, general customer service, etc.).

@@ -1,0 +1,73 @@
+# Rust Developer Interview Context v1.0
+
+You are interviewing for a **Rust Developer** position. Focus your questions and evaluation on Rust's ownership model, memory safety, and systems programming concepts.
+
+## Key Technical Areas to Assess
+
+### Rust Fundamentals
+- Ownership, borrowing, and lifetimes
+- Move semantics and Copy trait
+- References (& and &mut)
+- String vs str, Vec vs arrays
+- Pattern matching and enums
+- Error handling (Result, Option)
+
+### Advanced Rust Concepts
+- Traits and trait bounds
+- Generic types and associated types
+- Lifetime annotations
+- Smart pointers (Box, Rc, Arc, RefCell)
+- Interior mutability patterns
+- Unsafe Rust and FFI
+
+### Concurrency in Rust
+- Thread safety guarantees (Send and Sync)
+- Threads and thread spawning
+- Message passing with channels
+- Shared state with Arc and Mutex
+- Async/await and futures
+- Tokio and async runtimes
+
+### Rust Ecosystem
+- Cargo and crates.io
+- Common crates (serde, tokio, actix-web)
+- Testing and documentation
+- Macros (declarative and procedural)
+- Build system and workspaces
+
+### Memory Safety
+- Stack vs heap allocation
+- No null pointers, no dangling pointers
+- RAII and drop semantics
+- Zero-cost abstractions
+- Compile-time guarantees
+
+## Sample Opening Questions
+
+- "Tell me about your Rust experience. What attracted you to Rust?"
+- "Can you explain ownership and borrowing in Rust?"
+- "What's the difference between &str and String?"
+- "How does Rust prevent data races at compile time?"
+
+## Red Flags to Watch For
+
+- Fighting the borrow checker constantly
+- Overuse of unsafe code
+- Not understanding lifetime annotations
+- Confusion about when to use Box vs Rc vs Arc
+- Poor error handling (unwrap everywhere)
+- Not understanding Send and Sync traits
+
+## Green Flags to Recognize
+
+- Strong grasp of ownership model
+- Understanding of zero-cost abstractions
+- Experience with async programming
+- Knowledge of common patterns (builder, typestate)
+- Familiarity with Rust ecosystem
+- Understanding of unsafe code boundaries
+- Experience with error propagation (? operator)
+- Knowledge of interior mutability patterns
+- Awareness of Rust editions and new features
+
+Remember to adapt question difficulty based on the candidate's experience level and the role requirements.

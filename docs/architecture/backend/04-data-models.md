@@ -1,3 +1,5 @@
+<!-- Updated: 2025-11-05 - Added Epic 03 JobPosting and Application data models -->
+
 # Data Models
 
 ## Candidate
@@ -238,6 +240,74 @@
 - `created_at`: DateTime
 
 **Note:** Deferred to Epic 5 - ATS Integration phase
+
+---
+
+## JobPosting (Epic 03)
+
+**Purpose:** Represents a job opening from a hiring company
+
+**Key Attributes:**
+- `id`: UUID - Unique identifier
+- `title`: String - Job title (e.g., "Senior React Developer")
+- `company`: String - Hiring company name
+- `description`: Text - Full job description
+- `role_category`: Enum - Job function (`engineering`, `quality_assurance`, `data`, `devops`, `design`, `product`, `sales`, `support`, `operations`, `management`, `other`)
+- `tech_stack`: String (nullable) - Primary technology (e.g., 'React', 'Python', 'TypeScript', 'Playwright')
+- `employment_type`: Enum - `permanent`, `contract`, `part_time`
+- `work_setup`: Enum - `remote`, `hybrid`, `onsite`
+- `location`: String - Job location (e.g., "Sydney, AU" or "Remote")
+- `salary_min`, `salary_max`: Numeric - Salary range
+- `salary_currency`: String - Currency code (default: 'AUD')
+- `required_skills`: JSONB - Array of required skills
+  ```json
+  ["React", "TypeScript", "REST APIs", "Git", "Agile"]
+  ```
+- `experience_level`: String - e.g., "Junior", "Mid-level", "Senior"
+- `status`: Enum - `active`, `paused`, `closed` (default: 'active')
+- `is_cancelled`: Boolean - Whether job was cancelled
+- `cancellation_reason`: Text (nullable) - Reason for cancellation
+- `created_at`, `updated_at`: DateTime - Timestamps
+
+**Relationships:**
+- Has many `Application` records (candidates applying to this job)
+- Has many `Interview` records (via applications)
+
+**Business Logic:**
+- `tech_stack` drives AI interview customization (e.g., 'React' → React-focused questions)
+- `role_category` used for filtering and categorization
+- `status='active'` means accepting applications
+- When job cancelled, `is_cancelled=true` and existing applications preserved but interview creation blocked
+
+---
+
+## Application (Epic 03)
+
+**Purpose:** Represents a candidate's application to a specific job posting
+
+**Key Attributes:**
+- `id`: UUID - Unique identifier
+- `candidate_id`: UUID - Foreign key to candidates table
+- `job_posting_id`: UUID - Foreign key to job_postings table
+- `interview_id`: UUID (nullable) - Foreign key to interviews table (set after interview created)
+- `status`: Enum - `applied`, `interview_scheduled`, `interview_completed`, `under_review`, `rejected`, `offered`, `accepted`, `withdrawn`
+- `applied_at`: DateTime - Application submission timestamp
+- `created_at`, `updated_at`: DateTime - Record timestamps
+
+**Relationships:**
+- Belongs to `Candidate` (applicant)
+- Belongs to `JobPosting` (job being applied to)
+- Belongs to `Interview` (optional, created after application)
+
+**Constraints:**
+- Unique constraint on `(candidate_id, job_posting_id)` - prevents duplicate applications to same job
+
+**Business Logic:**
+- Upon creation, triggers AI interview creation automatically (linked via `interview_id`)
+- Interview's `role_type` derived from job posting's `tech_stack`
+- Status progresses: `applied` → `interview_scheduled` → `interview_completed` → `under_review`/`rejected`/`offered`
+- Candidate can only apply once to each job posting (enforced by unique constraint)
+- If candidate withdraws, status set to `withdrawn` but record preserved for analytics
 
 ---
 

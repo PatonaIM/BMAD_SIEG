@@ -1,3 +1,5 @@
+<!-- Updated: 2025-11-05 - Added Epic 03 job_postings and applications tables documentation -->
+
 # Database Schema
 
 ## PostgreSQL DDL (Data Definition Language)
@@ -146,6 +148,63 @@ CREATE TABLE recruiters (
 
 CREATE INDEX idx_recruiters_email ON recruiters(email);
 CREATE INDEX idx_recruiters_organization_id ON recruiters(organization_id);
+
+-- Job Postings table (Epic 03)
+CREATE TYPE role_category AS ENUM ('engineering', 'quality_assurance', 'data', 'devops', 'design', 'product', 'sales', 'support', 'operations', 'management', 'other');
+CREATE TYPE employment_type AS ENUM ('permanent', 'contract', 'part_time');
+CREATE TYPE work_setup AS ENUM ('remote', 'hybrid', 'onsite');
+CREATE TYPE job_posting_status AS ENUM ('active', 'paused', 'closed');
+
+CREATE TABLE job_postings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,  -- e.g., "Senior React Developer"
+    company VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    role_category role_category NOT NULL,  -- Job function/department
+    tech_stack VARCHAR(100),  -- Primary technology (e.g., 'React', 'Python', 'TypeScript')
+    employment_type employment_type NOT NULL,
+    work_setup work_setup NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    salary_min NUMERIC(10, 2),
+    salary_max NUMERIC(10, 2),
+    salary_currency VARCHAR(3) NOT NULL DEFAULT 'AUD',
+    required_skills JSONB,  -- Array of required skills
+    experience_level VARCHAR(50) NOT NULL,  -- e.g., "Junior", "Mid-level", "Senior"
+    status job_posting_status NOT NULL DEFAULT 'active',
+    is_cancelled BOOLEAN NOT NULL DEFAULT FALSE,
+    cancellation_reason TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for job_postings
+CREATE INDEX idx_job_postings_role_category ON job_postings(role_category);
+CREATE INDEX idx_job_postings_tech_stack ON job_postings(tech_stack) WHERE tech_stack IS NOT NULL;
+CREATE INDEX idx_job_postings_status ON job_postings(status) WHERE status = 'active';
+CREATE INDEX idx_job_postings_employment_type ON job_postings(employment_type);
+CREATE INDEX idx_job_postings_created_at ON job_postings(created_at);
+
+-- Applications table (Epic 03)
+CREATE TYPE application_status AS ENUM ('applied', 'interview_scheduled', 'interview_completed', 'under_review', 'rejected', 'offered', 'accepted', 'withdrawn');
+
+CREATE TABLE applications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+    job_posting_id UUID NOT NULL REFERENCES job_postings(id) ON DELETE CASCADE,
+    interview_id UUID REFERENCES interviews(id) ON DELETE SET NULL,
+    status application_status NOT NULL DEFAULT 'applied',
+    applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_applications_candidate_job UNIQUE (candidate_id, job_posting_id)  -- Prevents duplicate applications
+);
+
+-- Indexes for applications
+CREATE INDEX idx_applications_candidate_id ON applications(candidate_id);
+CREATE INDEX idx_applications_job_posting_id ON applications(job_posting_id);
+CREATE INDEX idx_applications_interview_id ON applications(interview_id);
+CREATE INDEX idx_applications_status ON applications(status);
+CREATE INDEX idx_applications_applied_at ON applications(applied_at);
 
 -- IntegrationWebhooks table (Epic 5 - Future)
 CREATE TABLE integration_webhooks (

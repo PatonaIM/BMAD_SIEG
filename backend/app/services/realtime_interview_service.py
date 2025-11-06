@@ -4,7 +4,7 @@ import asyncio
 import json
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from uuid import UUID
 
 import structlog
@@ -16,6 +16,9 @@ from app.repositories.interview import InterviewRepository
 from app.repositories.interview_message import InterviewMessageRepository
 from app.repositories.interview_session import InterviewSessionRepository
 from app.utils.realtime_cost import calculate_realtime_cost, check_cost_threshold
+
+if TYPE_CHECKING:
+    from app.models.interview import Interview
 
 logger = structlog.get_logger().bind(service="realtime_interview_service")
 
@@ -139,7 +142,8 @@ class RealtimeInterviewService:
         # Build system instructions with interview context
         instructions = await self._build_system_instructions(
             session=session,
-            role_type=interview.role_type
+            role_type=interview.role_type,
+            interview=interview  # Pass interview for job context
         )
         
         # Define function tools for answer evaluation
@@ -179,17 +183,19 @@ class RealtimeInterviewService:
     async def _build_system_instructions(
         self,
         session: InterviewSession,
-        role_type: str
+        role_type: str,
+        interview: "Interview"  # NEW: Pass interview for job context
     ) -> str:
         """
         Build system instructions for the AI interviewer.
         
         Creates a comprehensive prompt using InterviewEngine's system prompt
-        generator, enhanced with current conversation context.
+        generator, enhanced with current conversation context and job-specific details.
         
         Args:
             session: Interview session with current state
             role_type: Role being interviewed for (e.g., "react", "python")
+            interview: Interview model instance for job context lookup
         
         Returns:
             System instructions string for OpenAI Realtime API
@@ -197,11 +203,29 @@ class RealtimeInterviewService:
         # Import here to avoid circular dependency
         from app.services.interview_engine import InterviewEngine
         
+        # Fetch job_posting if job_posting_id exists (for job-context-aware interviews)
+        job_posting = None
+        if interview.job_posting_id:
+            job_posting = await self.interview_repo.db.execute(
+                f"SELECT * FROM job_postings WHERE id = '{interview.job_posting_id}'"
+            )
+            # Actually, let's use the relationship
+            if interview.job_posting:
+                job_posting = interview.job_posting
+                logger.info(
+                    "job_posting_loaded_for_context",
+                    interview_id=str(interview.id),
+                    job_posting_id=str(job_posting.id),
+                    job_title=job_posting.title,
+                )
+        
         # Generate base system prompt (contains full interview guidelines)
+        # Now includes job-specific context if available
         base_prompt = InterviewEngine.get_realtime_system_prompt(
             None,  # No need for instance, it's a method we can call statically
             role_type=role_type,
-            session=session
+            session=session,
+            job_posting=job_posting  # NEW: Pass job context
         )
         
         # Load recent conversation history for context

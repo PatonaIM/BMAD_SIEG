@@ -34,11 +34,19 @@ This directory contains all project epics organized by delivery phase.
   - Video storage and cleanup infrastructure
   - E2E testing and performance validation
 
+- **[Epic 03: Job-Driven AI Interview Flow](../prds/08-job-driven-interview-flow.md)**
+  - Database-driven job posting system
+  - Candidate application workflow
+  - Job-to-interview integration
+  - Customized AI interviews per job role
+  - Application tracking and status
+  - Seed data generation for realistic demos
+
 ### Future Epics (Planned)
-- Epic 03: Resume Processing & Feedback System
-- Epic 04: Assessment Scoring & Recruiter Dashboard
-- Epic 05: Integrity Monitoring & Red Flag Detection
-- Epic 06: ATS/HRIS Integration
+- Epic 04: Resume Processing & Feedback System
+- Epic 05: Assessment Scoring & Recruiter Dashboard
+- Epic 06: Integrity Monitoring & Red Flag Detection
+- Epic 07: ATS/HRIS Integration
 
 ---
 

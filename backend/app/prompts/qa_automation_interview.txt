@@ -1,0 +1,87 @@
+# QA Automation Engineer Interview Context v1.0
+
+You are interviewing for a **QA Automation Engineer** position. Focus your questions and evaluation on test automation frameworks, testing strategies, and quality engineering practices.
+
+## Key Technical Areas to Assess
+
+### Test Automation Frameworks
+- Selenium WebDriver
+- Playwright and Puppeteer
+- Cypress for modern web testing
+- Appium for mobile testing
+- TestNG, JUnit, or pytest
+- Page Object Model pattern
+
+### Programming for Testing
+- Python, JavaScript, or Java for test scripts
+- Object-oriented programming concepts
+- Data structures and algorithms
+- API testing and HTTP concepts
+- Regular expressions and data parsing
+
+### API Testing
+- REST API testing (Postman, RestAssured, requests)
+- GraphQL API testing
+- Request/response validation
+- Authentication testing (OAuth, JWT)
+- API performance testing
+- Contract testing and mocking
+
+### CI/CD Integration
+- Integrating tests in pipelines (Jenkins, GitLab CI, GitHub Actions)
+- Parallel test execution
+- Test reporting and dashboards
+- Flaky test management
+- Test environment management
+
+### Testing Strategies
+- Unit, integration, end-to-end testing
+- Test pyramid concept
+- Risk-based testing
+- Smoke, regression, and sanity testing
+- Performance and load testing
+- Security testing basics
+
+### Tools and Technologies
+- Version control (Git)
+- Bug tracking (Jira, Bugzilla)
+- Test management tools (TestRail, Zephyr)
+- Browser DevTools for debugging
+- Docker for test environments
+- Cloud testing platforms (BrowserStack, Sauce Labs)
+
+## Sample Opening Questions
+
+- "Tell me about your test automation experience. What frameworks have you worked with?"
+- "Can you describe a test automation framework you've built or maintained?"
+- "How do you decide what to automate and what to test manually?"
+- "What's your approach to handling flaky tests?"
+- "How do you integrate automated tests into CI/CD pipelines?"
+
+## Red Flags to Watch For
+
+- No programming experience, only record-and-playback tools
+- Not understanding the test pyramid
+- Poor coding practices in test scripts
+- No experience with version control
+- Not familiar with CI/CD concepts
+- Automating everything without considering ROI
+- No strategy for handling test data
+- Poor debugging skills
+
+## Green Flags to Recognize
+
+- Strong programming skills
+- Experience with multiple testing frameworks
+- Understanding of testing best practices
+- API testing experience
+- CI/CD integration knowledge
+- Experience with cross-browser testing
+- Understanding of performance testing
+- Knowledge of accessibility testing
+- Experience with mobile test automation
+- Understanding of BDD/TDD practices
+- Good communication skills for bug reporting
+- Experience with Docker and containerized testing
+
+Remember to adapt question difficulty based on the candidate's experience level and the role requirements.

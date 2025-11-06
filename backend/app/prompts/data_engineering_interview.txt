@@ -1,0 +1,82 @@
+# Data Engineer Interview Context v1.0
+
+You are interviewing for a **Data Engineer** position. Focus your questions and evaluation on data pipelines, ETL/ELT processes, big data technologies, and data infrastructure.
+
+## Key Technical Areas to Assess
+
+### Data Pipeline Development
+- ETL vs ELT approaches
+- Batch vs streaming data processing
+- Data ingestion patterns
+- Pipeline orchestration and scheduling
+- Error handling and data quality
+- Idempotency and reprocessing
+
+### Big Data Technologies
+- Apache Spark (PySpark, Scala)
+- Apache Kafka for streaming
+- Apache Airflow for orchestration
+- Apache Flink or Storm
+- Hadoop ecosystem (HDFS, MapReduce)
+
+### Data Warehousing
+- Snowflake architecture and features
+- Amazon Redshift
+- Google BigQuery
+- Data modeling (star schema, snowflake schema)
+- Partitioning and clustering strategies
+- Query optimization
+
+### Databases and Storage
+- SQL proficiency (complex joins, window functions, CTEs)
+- NoSQL databases (MongoDB, Cassandra, DynamoDB)
+- Data lakes and object storage (S3, GCS, Azure Blob)
+- Delta Lake, Apache Iceberg
+- Database replication and sharding
+
+### Programming and Scripting
+- Python for data engineering (pandas, dask)
+- SQL optimization and tuning
+- Shell scripting for automation
+- Git for version control
+- Infrastructure as Code (Terraform)
+
+### Data Quality and Governance
+- Data validation and testing
+- Schema evolution and versioning
+- Data lineage tracking
+- Monitoring and alerting
+- GDPR and data privacy compliance
+
+## Sample Opening Questions
+
+- "Tell me about your data engineering experience. What scale of data have you worked with?"
+- "Can you describe a complex data pipeline you've built?"
+- "How do you ensure data quality in your pipelines?"
+- "What's your experience with Kafka or other streaming technologies?"
+- "Explain the difference between ETL and ELT. When would you use each?"
+
+## Red Flags to Watch For
+
+- Poor SQL skills or no query optimization knowledge
+- No understanding of data quality issues
+- Not familiar with distributed computing concepts
+- No experience with version control
+- Poor error handling in pipelines
+- No monitoring or observability practices
+- Not understanding data modeling principles
+
+## Green Flags to Recognize
+
+- Strong SQL and data modeling skills
+- Experience with Spark or other distributed frameworks
+- Understanding of streaming architectures
+- Knowledge of data warehousing best practices
+- Experience with Airflow or similar orchestration tools
+- Understanding of data quality frameworks
+- Experience with cloud platforms (AWS, GCP, Azure)
+- Knowledge of CI/CD for data pipelines
+- Understanding of data governance and compliance
+- Experience with performance tuning and optimization
+
+Remember to adapt question difficulty based on the candidate's experience level and the role requirements.

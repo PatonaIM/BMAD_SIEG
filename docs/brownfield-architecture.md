@@ -1,23 +1,23 @@
 # Teamified AI Interview Platform - Brownfield Architecture Document
 
 > **Document Type:** Current State Analysis for AI Agents  
-> **Last Updated:** November 1, 2025  
-> **Purpose:** Enable AI agents to understand the ACTUAL implemented system for Story 1.8 completion  
-> **Status:** POC Implementation - Epic 01 & 01.5 (Speech) Near Complete
+> **Last Updated:** November 6, 2025  
+> **Purpose:** Enable AI agents to understand the ACTUAL implemented system  
+> **Status:** POC Complete - Epic 01, 01.5, & 03 Implemented | Epic 02 (Video) In Progress
 
 ---
 
 ## Document Scope
 
-**Current Focus:** Implementing Story 1.8 (Interview Completion & Basic Results) to complete the AI Interview POC.
+**Current Focus:** Epic 03 (Job-Driven Interview Flow) now fully implemented. System now supports complete candidate journey: Browse Jobs → Apply → AI Interview → Results.
 
 This document captures the **real implementation state** including:
-- What's actually built and working (Stories 1.1-1.7, 1.5.1-1.5.4)
-- What needs to be implemented (Story 1.8)
-- Current architecture patterns and conventions
-- Known gaps and technical considerations
+- ✅ Epic 01: Core AI Interview Engine (Complete)
+- ✅ Epic 01.5: Speech-to-Speech Capabilities (Complete)
+- ✅ Epic 03: Job Postings & Applications System (Complete)
+- 🚧 Epic 02: Professional Video Interview Experience (Partial - recording works, UI enhancements pending)
 
-**For AI Agents:** Use this document to understand what exists before implementing Story 1.8.
+**For AI Agents:** Use this document to understand what exists for implementing new features or fixing bugs.
 
 ---
 
@@ -26,6 +26,7 @@ This document captures the **real implementation state** including:
 | Date       | Version | Description                                    | Author  |
 |------------|---------|------------------------------------------------|---------|
 | 2025-11-01 | 1.0     | Initial brownfield analysis for Story 1.8 work | Winston |
+| 2025-11-06 | 2.0     | Updated with Epic 03 completion (Job-Driven Flow) | Winston |
 
 ---
 
@@ -47,25 +48,61 @@ This document captures the **real implementation state** including:
 
 ## Quick Reference - What's Built
 
-### Critical Files for Story 1.8
+### Epic 01 & 01.5: Core AI Interview (Complete ✅)
 
 **Backend (Python/FastAPI):**
-- `backend/main.py` - Application entrypoint
-- `backend/app/services/interview_engine.py` - Core interview logic (HAS `_should_complete_interview()` method)
-- `backend/app/api/v1/interviews.py` - Interview API endpoints (NEEDS completion endpoint)
-- `backend/app/repositories/interview.py` - Interview database operations
-- `backend/app/schemas/interview.py` - API request/response models (NEEDS completion schemas)
-- `backend/app/models/interview.py` - SQLAlchemy Interview model (has status field)
+- `backend/main.py` - Application entrypoint with CORS, WebSocket support
+- `backend/app/services/interview_engine.py` - Core interview orchestration
+- `backend/app/services/realtime_interview_service.py` - WebSocket realtime interviews
+- `backend/app/services/progressive_assessment_engine.py` - Adaptive difficulty
+- `backend/app/api/v1/interviews.py` - Interview CRUD endpoints
+- `backend/app/api/v1/realtime.py` - WebSocket realtime connection
+- `backend/app/api/v1/videos.py` - Video upload and management
+- `backend/app/repositories/interview.py` - Interview data access
+- `backend/app/models/interview.py` - Interview model with status tracking
 
 **Frontend (Next.js 16/React/TypeScript):**
-- `frontend/app/interview/[sessionId]/page.tsx` - Interview UI (NEEDS completion detection)
-- `frontend/app/interview/[sessionId]/results/page.tsx` - NEEDS CREATION (completion screen)
+- `frontend/app/interview/start/page.tsx` - Interview setup
+- `frontend/app/interview/[sessionId]/page.tsx` - Active interview UI
+- `frontend/app/interview/[sessionId]/tech-check/page.tsx` - Audio/video testing
+- `frontend/app/interview/[sessionId]/results/page.tsx` - Completion screen
+- `frontend/src/features/interview/` - Interview components and hooks
 
-**Key Models Already Built:**
-- `Interview` - Main interview record with status tracking
-- `InterviewSession` - Session state with progression tracking
-- `InterviewMessage` - Question/response history
-- `Candidate` - User authentication
+**Key Models:**
+- ✅ `Interview` - Main interview record
+- ✅ `InterviewSession` - Session state and progression
+- ✅ `InterviewMessage` - Question/response history
+- ✅ `Candidate` - User authentication
+- ✅ `VideoRecording` - Video storage metadata
+
+### Epic 03: Job-Driven Flow (Complete ✅)
+
+**Backend (Python/FastAPI):**
+- `backend/app/api/v1/job_postings.py` - Job listing and detail endpoints
+- `backend/app/api/v1/applications.py` - Application submission and tracking
+- `backend/app/services/job_posting_service.py` - Job posting business logic
+- `backend/app/services/application_service.py` - Application orchestration
+- `backend/app/repositories/job_posting.py` - Job posting data access
+- `backend/app/repositories/application.py` - Application data access
+- `backend/app/models/job_posting.py` - Job posting model
+- `backend/app/models/application.py` - Application model
+- `backend/scripts/seed_job_postings.py` - Development seed data generator
+
+**Frontend (Next.js 16/React/TypeScript):**
+- `frontend/app/jobs/page.tsx` - Browse jobs with search/filters
+- `frontend/app/jobs/[id]/page.tsx` - Job detail and one-click apply
+- `frontend/app/jobs/matches/page.tsx` - AI-matched jobs (placeholder)
+- `frontend/app/applications/page.tsx` - View application history
+- `frontend/hooks/use-job-postings.ts` - Job listing queries
+- `frontend/hooks/use-job-posting.ts` - Single job query
+- `frontend/hooks/use-applications.ts` - Application queries
+- `frontend/hooks/use-apply-to-job.ts` - Application mutation
+- `frontend/lib/api-client.ts` - API client with job/application endpoints
+
+**Key Models:**
+- ✅ `JobPosting` - Job listing with role, tech stack, requirements
+- ✅ `Application` - Links candidate → job → interview
+- ✅ Unique constraint prevents duplicate applications
 
 ---
 
@@ -82,18 +119,26 @@ This document captures the **real implementation state** including:
 │       ├── api/
 │       │   └── v1/
 │       │       ├── auth.py         # ✅ Login/Register endpoints
-│       │       ├── interviews.py   # ✅ Start, SendMessage | ⚠️ NEEDS Complete endpoint
-│       │       └── audio.py        # ✅ STT/TTS endpoints
+│       │       ├── interviews.py   # ✅ Interview CRUD & messaging
+│       │       ├── realtime.py     # ✅ WebSocket realtime interviews
+│       │       ├── videos.py       # ✅ Video upload/management
+│       │       ├── admin.py        # ✅ Admin utilities
+│       │       ├── job_postings.py # ✅ Job listing/detail (Epic 03)
+│       │       └── applications.py # ✅ Application submission (Epic 03)
 │       ├── core/
 │       │   ├── config.py           # ✅ Settings with OpenAI config
 │       │   ├── database.py         # ✅ AsyncPG connection
 │       │   └── exceptions.py       # ✅ Custom exception hierarchy
 │       ├── models/                 # ✅ SQLAlchemy models complete
 │       │   ├── candidate.py
-│       │   ├── interview.py        # Has status field: scheduled, in_progress, completed, abandoned
+│       │   ├── interview.py        # Has status: scheduled, in_progress, completed, abandoned
 │       │   ├── interview_session.py
 │       │   ├── interview_message.py
-│       │   └── resume.py
+│       │   ├── resume.py
+│       │   ├── assessment.py
+│       │   ├── video_recording.py
+│       │   ├── job_posting.py      # ✅ Job postings (Epic 03)
+│       │   └── application.py      # ✅ Applications (Epic 03)
 │       ├── providers/              # ✅ AI/Speech provider abstractions
 │       │   ├── base_ai_provider.py
 │       │   ├── openai_provider.py

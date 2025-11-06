@@ -1,7 +1,7 @@
 # Teamified Candidates Portal - Complete System Documentation
 
-**Version:** 2.0 (Current State)  
-**Last Updated:** November 4, 2025  
+**Version:** 2.1 (Current State)  
+**Last Updated:** November 6, 2025  
 **Status:** Comprehensive Production Documentation  
 **Target Audience:** Junior & Senior Engineers, AI Agents
 
@@ -32,7 +32,7 @@
 
 Teamified Candidates Portal is an **AI-powered technical interview platform** that enables recruitment consultants to conduct scalable, consistent technical assessments through **natural voice conversations** with candidates. The system uses OpenAI's GPT-4 and Realtime API to conduct adaptive, progressive interviews that assess technical skills across multiple domains.
 
-### Current State (November 2025)
+### Current State (November 6, 2025)
 
 - ✅ **Backend**: Fully functional FastAPI application with PostgreSQL database
 - ✅ **Frontend**: Next.js application with real-time audio/video capabilities
@@ -41,7 +41,12 @@ Teamified Candidates Portal is an **AI-powered technical interview platform** th
   - **Legacy Mode** (Fallback): STT/TTS pipeline for older browsers
 - ✅ **Progressive Assessment**: Adaptive difficulty adjustment based on candidate responses
 - ✅ **Video Recording**: Optional candidate video recording with Supabase storage
-- 🚧 **Recruiter Portal**: Planned (Epic 02)
+- ✅ **Job-Driven Flow (Epic 03)**: Complete job posting and application system
+  - Database-driven job postings with search/filtering
+  - One-click application submission
+  - Automatic AI interview creation linked to applications
+  - Application tracking and status management
+- 🚧 **Recruiter Portal**: Planned (Epic 04+)
 
 ### Key Architectural Decisions
 
@@ -50,6 +55,7 @@ Teamified Candidates Portal is an **AI-powered technical interview platform** th
 3. **Progressive Difficulty**: Dynamic question adjustment based on performance
 4. **Supabase for Storage**: Video recordings stored in Supabase buckets
 5. **PostgreSQL Database**: Single database with normalized schema
+6. **Job-Driven Interviews**: Applications automatically trigger role-customized AI interviews
 
 ---
 
@@ -65,9 +71,14 @@ Teamified Candidates Portal is an **AI-powered technical interview platform** th
 │  │ /login         │  │ /interview/*    │  │ /dashboard      │ │
 │  │ /register      │  │ /tech-check     │  │ /profile        │ │
 │  └────────────────┘  └─────────────────┘  └─────────────────┘ │
+│  ┌────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  Jobs Pages    │  │  App Pages      │  │ Settings Pages  │ │
+│  │ /jobs          │  │ /applications   │  │ /settings       │ │
+│  │ /jobs/[id]     │  │                 │  │                 │ │
+│  └────────────────┘  └─────────────────┘  └─────────────────┘ │
 │                              ↓                                   │
 │  ┌───────────────────────────────────────────────────────────┐ │
-│  │        Feature Modules (auth, interview, video)           │ │
+│  │   Feature Modules (auth, interview, video, jobs, apps)    │ │
 │  │  - Zustand Stores (state)                                 │ │
 │  │  - React Query Hooks (API)                                │ │
 │  │  - Custom Hooks (useAudioCapture, useVideoRecorder)       │ │
@@ -81,7 +92,9 @@ Teamified Candidates Portal is an **AI-powered technical interview platform** th
 │  │  /auth/*       │  │ InterviewEngine │  │ interview_repo  │ │
 │  │  /interviews/* │  │ RealtimeService │  │ message_repo    │ │
 │  │  /realtime/*   │  │ VideoCleanup    │  │ candidate_repo  │ │
-│  │  /videos/*     │  │ AssessmentEngine│  │ (Data Access)   │ │
+│  │  /videos/*     │  │ AssessmentEngine│  │ job_posting_repo│ │
+│  │  /job-postings*│  │ JobPostingService│ │ application_repo│ │
+│  │  /applications*│  │ ApplicationService│ │ (Data Access)  │ │
 │  └────────────────┘  └─────────────────┘  └─────────────────┘ │
 │                              ↓                                   │
 │  ┌───────────────────────────────────────────────────────────┐ │
@@ -104,6 +117,8 @@ BMAD_Sieg/
 │   │   │   ├── interviews.py # Interview CRUD and messaging
 │   │   │   ├── realtime.py   # WebSocket realtime connection
 │   │   │   ├── videos.py     # Video upload/management
+│   │   │   ├── job_postings.py # Job posting endpoints (Epic 03)
+│   │   │   ├── applications.py # Application endpoints (Epic 03)
 │   │   │   └── admin.py      # Admin utilities
 │   │   ├── core/             # Core configuration
 │   │   │   ├── config.py     # Settings (from .env)
@@ -117,26 +132,34 @@ BMAD_Sieg/
 │   │   │   ├── interview_message.py
 │   │   │   ├── resume.py
 │   │   │   ├── assessment.py
-│   │   │   └── video_recording.py
+│   │   │   ├── video_recording.py
+│   │   │   ├── job_posting.py    # Job postings (Epic 03)
+│   │   │   └── application.py    # Applications (Epic 03)
 │   │   ├── schemas/          # Pydantic request/response schemas
 │   │   │   ├── auth.py
 │   │   │   ├── interview.py
 │   │   │   ├── message.py
-│   │   │   └── video.py
+│   │   │   ├── video.py
+│   │   │   ├── job_posting.py    # Job posting schemas (Epic 03)
+│   │   │   └── application.py    # Application schemas (Epic 03)
 │   │   ├── repositories/     # Data access layer
 │   │   │   ├── base.py
 │   │   │   ├── candidate.py
 │   │   │   ├── interview.py
 │   │   │   ├── interview_session.py
 │   │   │   ├── interview_message.py
-│   │   │   └── video.py
+│   │   │   ├── video.py
+│   │   │   ├── job_posting.py    # Job posting data access (Epic 03)
+│   │   │   └── application.py    # Application data access (Epic 03)
 │   │   ├── services/         # Business logic
 │   │   │   ├── interview_engine.py              # Main interview orchestrator
 │   │   │   ├── realtime_interview_service.py    # Realtime API manager
 │   │   │   ├── progressive_assessment_engine.py # Difficulty adjustment
 │   │   │   ├── conversation_memory.py           # Context management
 │   │   │   ├── auth_service.py                  # Authentication
-│   │   │   └── video_cleanup_service.py         # Video lifecycle
+│   │   │   ├── video_cleanup_service.py         # Video lifecycle
+│   │   │   ├── job_posting_service.py           # Job posting business logic (Epic 03)
+│   │   │   └── application_service.py           # Application business logic (Epic 03)
 │   │   ├── providers/        # External API wrappers
 │   │   │   ├── base_ai_provider.py
 │   │   │   └── openai_provider.py
@@ -166,6 +189,14 @@ BMAD_Sieg/
 │   │   ├── login/page.tsx    # /login route
 │   │   ├── register/page.tsx # /register route
 │   │   ├── dashboard/page.tsx # /dashboard route
+│   │   ├── profile/page.tsx  # /profile route
+│   │   ├── settings/page.tsx # /settings route
+│   │   ├── jobs/             # Job postings (Epic 03)
+│   │   │   ├── page.tsx      # /jobs (browse jobs)
+│   │   │   ├── [id]/page.tsx # /jobs/:id (job details)
+│   │   │   └── matches/page.tsx # /jobs/matches (AI matches)
+│   │   ├── applications/     # Applications (Epic 03)
+│   │   │   └── page.tsx      # /applications (view applications)
 │   │   └── interview/
 │   │       ├── start/page.tsx           # /interview/start
 │   │       ├── [sessionId]/
@@ -216,7 +247,11 @@ BMAD_Sieg/
 │   │   │   └── env.ts        # Environment variables
 │   │   ├── hooks/            # Global hooks
 │   │   │   ├── useDebounce.ts
-│   │   │   └── useLocalStorage.ts
+│   │   │   ├── useLocalStorage.ts
+│   │   │   ├── use-job-postings.ts       # Job posting queries (Epic 03)
+│   │   │   ├── use-job-posting.ts        # Single job query (Epic 03)
+│   │   │   ├── use-applications.ts       # Application queries (Epic 03)
+│   │   │   └── use-apply-to-job.ts       # Application mutation (Epic 03)
 │   │   └── styles/           # Global styles
 │   ├── public/               # Static assets
 │   ├── package.json          # Node.js dependencies
@@ -1026,6 +1061,109 @@ Response: {
 Status:   200 OK
 ```
 
+#### Job Posting Endpoints (`/api/v1/job-postings`) - Epic 03
+
+```python
+GET /api/v1/job-postings
+Query:    role_category, tech_stack, employment_type, work_setup,
+          experience_level, location, search, skip=0, limit=20
+Response: {
+  jobs: [
+    {
+      id: UUID,
+      title: string,
+      company: string,
+      description: string,
+      role_category: enum,
+      tech_stack: string | null,
+      employment_type: enum,
+      work_setup: enum,
+      location: string,
+      salary_range_min: decimal | null,
+      salary_range_max: decimal | null,
+      salary_currency: string,
+      required_skills: array | null,
+      preferred_skills: array | null,
+      benefits: array | null,
+      experience_level: string,
+      status: enum,
+      created_at: ISO8601,
+      updated_at: ISO8601
+    },
+    ...
+  ],
+  total: int,
+  skip: int,
+  limit: int
+}
+Status:   200 OK
+
+GET /api/v1/job-postings/{id}
+Response: JobPosting object (same as above)
+Status:   200 OK
+```
+
+#### Application Endpoints (`/api/v1/applications`) - Epic 03
+
+```python
+POST /api/v1/applications
+Headers:  Authorization: Bearer <token>
+Request:  { job_posting_id: UUID }
+Response: {
+  id: UUID,
+  candidate_id: UUID,
+  job_posting_id: UUID,
+  interview_id: UUID,
+  status: "interview_scheduled",
+  applied_at: ISO8601,
+  job_posting: {
+    title: string,
+    company: string
+  }
+}
+Status:   201 Created
+Notes:    Automatically creates AI interview customized to job's role_type.
+          Returns 409 Conflict if already applied to this job.
+          Returns 404 Not Found if job posting doesn't exist.
+          Returns 400 Bad Request if job posting is not active.
+
+GET /api/v1/applications/me
+Headers:  Authorization: Bearer <token>
+Query:    skip=0, limit=20
+Response: [
+  {
+    id: UUID,
+    candidate_id: UUID,
+    job_posting_id: UUID,
+    interview_id: UUID | null,
+    status: enum,
+    applied_at: ISO8601,
+    job_posting: {
+      id: UUID,
+      title: string,
+      company: string,
+      location: string,
+      role_category: enum,
+      tech_stack: string | null
+    },
+    interview: {
+      id: UUID,
+      status: enum,
+      started_at: ISO8601,
+      completed_at: ISO8601 | null
+    } | null
+  },
+  ...
+]
+Status:   200 OK
+
+GET /api/v1/applications/{id}
+Headers:  Authorization: Bearer <token>
+Response: Application object with full job posting and interview details
+Status:   200 OK
+Notes:    Returns 403 Forbidden if application belongs to another candidate.
+```
+
 ### Database Models
 
 #### Interview
@@ -1166,6 +1304,73 @@ Status:   200 OK
 - `uploaded_at` (timestamp)
 - `created_at` (timestamp)
 
+#### JobPosting - Epic 03
+
+**Table**: `job_postings`
+
+**Columns**:
+- `id` (UUID, PK) - Job posting identifier
+- `title` (varchar, 255) - Job title (e.g., "Senior React Developer")
+- `company` (varchar, 255) - Company name
+- `description` (text) - Full job description
+- `role_category` (enum) - engineering, quality_assurance, data, devops, design, product, sales, support, operations, management, other
+- `tech_stack` (varchar, 100, nullable) - Primary technology (e.g., "React", "Python", "TypeScript")
+- `employment_type` (enum) - permanent, contract, part_time
+- `work_setup` (enum) - remote, hybrid, onsite
+- `location` (varchar, 255) - Job location (city, state, country)
+- `salary_range_min` (decimal(10,2), nullable) - Minimum salary
+- `salary_range_max` (decimal(10,2), nullable) - Maximum salary
+- `salary_currency` (varchar, 3, default "AUD") - Currency code
+- `required_skills` (jsonb, nullable) - Array of required skills
+  ```json
+  ["React", "TypeScript", "Node.js", "PostgreSQL"]
+  ```
+- `preferred_skills` (jsonb, nullable) - Array of preferred/bonus skills
+- `benefits` (jsonb, nullable) - Array of company benefits
+- `experience_level` (varchar, 50) - Required experience (e.g., "Mid-level", "Senior")
+- `status` (enum, default "active") - active, paused, closed
+- `is_cancelled` (boolean, default false) - Cancellation flag
+- `cancellation_reason` (text, nullable) - Reason for cancellation
+- `created_at` (timestamp) - When job was posted
+- `updated_at` (timestamp) - Last modification
+
+**Relationships**:
+- One-to-many with `Application`
+
+**Indexes**:
+- `role_category` (for filtering)
+- `status` (for active jobs query)
+- `created_at` (for sorting)
+
+#### Application - Epic 03
+
+**Table**: `applications`
+
+**Columns**:
+- `id` (UUID, PK) - Application identifier
+- `candidate_id` (UUID, FK → candidates.id, CASCADE delete) - Who applied
+- `job_posting_id` (UUID, FK → job_postings.id, CASCADE delete) - Which job
+- `interview_id` (UUID, FK → interviews.id, SET NULL, nullable) - Linked interview
+- `status` (enum, default "applied") - applied, interview_scheduled, interview_completed, under_review, rejected, offered, accepted, withdrawn
+- `applied_at` (timestamp, default now()) - When candidate applied
+- `created_at` (timestamp) - Record creation
+- `updated_at` (timestamp) - Last modification
+
+**Relationships**:
+- Many-to-one with `Candidate`
+- Many-to-one with `JobPosting`
+- One-to-one with `Interview` (nullable)
+
+**Constraints**:
+- Unique constraint on (candidate_id, job_posting_id) - Prevent duplicate applications
+
+**Indexes**:
+- `candidate_id` (for candidate's applications list)
+- `job_posting_id` (for job's applicants list)
+- `interview_id` (for interview linkage)
+- `status` (for filtering by application status)
+- `applied_at` (for sorting)
+
 ### Database Relationships Diagram
 
 ```
@@ -1204,7 +1409,26 @@ Status:   200 OK
     └───│   resumes    │
   1:N   │              │
         └──────────────┘
+
+┌──────────────┐         ┌──────────────┐
+│ job_postings │─────────│ applications │
+│              │ 1:N     │              │
+│  - title     │         │- candidate_id│───┐
+│  - company   │         │- job_post_id │   │
+│  - role_cat. │         │- interview_id│───┼──→ Links to interviews table above
+│  - tech_stack│         │- status      │   │
+└──────────────┘         └──────────────┘   │
+                                  │          │
+                                  └──────────┘
+                            (N:1 to candidates)
 ```
+
+**Key Relationships (Epic 03 - Job-Driven Flow)**:
+- **Candidate → Application** (1:N): A candidate can apply to multiple jobs
+- **JobPosting → Application** (1:N): A job posting receives multiple applications
+- **Application → Interview** (1:1): Each application triggers one AI interview
+- **Candidate → JobPosting** (N:M through Application): Many-to-many via applications table
+- **Constraint**: Unique (candidate_id, job_posting_id) prevents duplicate applications
 
 ---
 
@@ -2296,6 +2520,82 @@ describe('useStartInterview', () => {
 ---
 
 ## Quick Reference for Common Tasks
+
+### Job Application Workflow (Epic 03)
+
+#### Complete Candidate Journey: Browse → Apply → Interview
+
+**Step 1: Browse Jobs**
+```typescript
+// Frontend: /jobs page
+const { data, isLoading } = useJobPostings({
+  role_category: "engineering",
+  tech_stack: "React",
+  work_setup: "remote",
+  skip: 0,
+  limit: 20
+});
+```
+
+**Step 2: View Job Details**
+```typescript
+// Frontend: /jobs/[id] page
+const { data: job } = useJobPosting(jobId);
+```
+
+**Step 3: One-Click Application**
+```typescript
+// Frontend: Job detail page
+const { mutate: applyToJob } = useApplyToJob();
+
+// Clicking "Apply Now" triggers:
+applyToJob(jobId); 
+
+// Backend automatically:
+// 1. Creates Application record
+// 2. Creates Interview with role_type from job posting
+// 3. Links Interview to Application
+// 4. Updates Application status to "interview_scheduled"
+```
+
+**Step 4: Start Interview**
+```typescript
+// Frontend: Redirects to /interview/start?application_id={appId}
+// Interview engine customizes questions based on job's role_type
+router.push(`/interview/start?application_id=${applicationData.id}`);
+```
+
+**API Flow:**
+```
+POST /api/v1/applications
+  ├─> Check: Job posting exists and is active
+  ├─> Check: Candidate hasn't already applied (409 if duplicate)
+  ├─> Create: Application record
+  ├─> Create: Interview (role_type from job.role_category mapping)
+  ├─> Link: application.interview_id = interview.id
+  └─> Return: Application with embedded job_posting and interview
+
+GET /api/v1/applications/me
+  └─> Returns: All candidate's applications with job and interview details
+```
+
+**Database Flow:**
+```sql
+-- Application creation triggers interview creation
+BEGIN;
+  INSERT INTO applications (candidate_id, job_posting_id, status)
+  VALUES (:candidate_id, :job_id, 'applied');
+  
+  INSERT INTO interviews (candidate_id, role_type, status, job_posting_id)
+  VALUES (:candidate_id, :role_type, 'scheduled', :job_id);
+  
+  UPDATE applications 
+  SET interview_id = :interview_id, status = 'interview_scheduled'
+  WHERE id = :application_id;
+COMMIT;
+```
+
+---
 
 ### For Bug Fixes
 

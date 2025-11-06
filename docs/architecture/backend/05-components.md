@@ -422,3 +422,74 @@ sequenceDiagram
 
 ---
 
+## Job Posting Service (Epic 03)
+
+**Responsibility:** Manage job postings database, search/filtering, and CRUD operations
+
+**Key Interfaces:**
+- `search_and_filter_jobs(filters, skip, limit) → List[JobPosting], total_count`
+- `get_job_posting_by_id(job_id) → JobPosting`
+- `create_job_posting(data) → JobPosting` (Admin/recruiter only)
+- `update_job_posting(job_id, data) → JobPosting`
+- `deactivate_job_posting(job_id) → JobPosting`
+
+**Dependencies:**
+- `JobPostingRepository` - Database access for job postings
+- PostgreSQL - Full-text search capabilities
+
+**Technology Stack:**
+- SQLAlchemy filters for dynamic query building
+- JSONB columns for skills arrays
+- Indexed fields: `role_category`, `status`, `created_at`
+
+**Key Features:**
+- Multi-field filtering (role, tech stack, location, employment type, etc.)
+- Case-insensitive search across title and company
+- Pagination support
+- Status management (active, paused, closed)
+
+---
+
+## Application Service (Epic 03)
+
+**Responsibility:** Orchestrate candidate applications and automatically trigger AI interviews
+
+**Key Interfaces:**
+- `create_application(candidate_id, job_posting_id) → Application, InterviewSession`
+- `get_candidate_applications(candidate_id, skip, limit) → List[Application]`
+- `get_application_by_id(application_id, candidate_id) → Application`
+- `update_application_status(application_id, status) → Application`
+
+**Dependencies:**
+- `ApplicationRepository` - Database access for applications
+- `JobPostingRepository` - Validate job posting exists and is active
+- `InterviewEngine` - Create and start AI interview
+- `InterviewRepository` - Link interview to application
+
+**Technology Stack:**
+- Transactional database operations (Application + Interview creation in single transaction)
+- Unique constraint enforcement (candidate_id, job_posting_id)
+- Status enum management
+
+**Key Features:**
+- **One-click application flow**: Single API call creates application + interview
+- **Automatic interview customization**: Interview role_type matches job's role_category
+- **Duplicate prevention**: Returns 409 Conflict if already applied
+- **Referential integrity**: CASCADE delete, SET NULL for interviews
+- **Status tracking**: applied → interview_scheduled → interview_completed → under_review → offered/rejected
+
+**Business Logic:**
+```python
+# When candidate applies:
+1. Validate job posting exists and status='active'
+2. Check for duplicate application (raise 409 if exists)
+3. Create Application record with status='applied'
+4. Map job role_category to interview role_type
+5. Create Interview with customized role_type
+6. Link interview_id to application
+7. Update application status to 'interview_scheduled'
+8. Return application with embedded job_posting and interview
+```
+
+---
+

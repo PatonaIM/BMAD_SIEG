@@ -25,27 +25,47 @@ backend/
 │   │   ├── recruiter.py
 │   │   ├── resume.py
 │   │   ├── interview.py
-│   │   └── assessment.py
+│   │   ├── interview_session.py
+│   │   ├── interview_message.py
+│   │   ├── assessment.py
+│   │   ├── video_recording.py
+│   │   ├── job_posting.py     # Epic 03
+│   │   └── application.py     # Epic 03
 │   ├── schemas/               # Pydantic request/response schemas
 │   │   ├── __init__.py
 │   │   ├── auth.py
 │   │   ├── candidate.py
 │   │   ├── interview.py
-│   │   └── assessment.py
+│   │   ├── message.py
+│   │   ├── assessment.py
+│   │   ├── video.py
+│   │   ├── job_posting.py     # Epic 03
+│   │   └── application.py     # Epic 03
 │   ├── repositories/          # Data access layer
 │   │   ├── __init__.py
 │   │   ├── base.py           # BaseRepository abstract class
 │   │   ├── candidate.py
 │   │   ├── resume.py
 │   │   ├── interview.py
+│   │   ├── interview_session.py
+│   │   ├── interview_message.py
+│   │   ├── video.py
+│   │   ├── job_posting.py     # Epic 03
+│   │   ├── application.py     # Epic 03
 │   │   └── session.py
 │   ├── services/              # Business logic layer
 │   │   ├── __init__.py
 │   │   ├── auth_service.py
 │   │   ├── interview_engine.py
+│   │   ├── realtime_interview_service.py
+│   │   ├── progressive_assessment_engine.py
+│   │   ├── conversation_memory.py
 │   │   ├── speech_service.py
+│   │   ├── video_cleanup_service.py
 │   │   ├── resume_parser.py
-│   │   └── scoring_service.py
+│   │   ├── scoring_service.py
+│   │   ├── job_posting_service.py    # Epic 03
+│   │   └── application_service.py    # Epic 03
 │   ├── providers/             # External API abstractions
 │   │   ├── __init__.py
 │   │   ├── base_ai_provider.py       # Abstract class
@@ -60,6 +80,11 @@ backend/
 │   │   │   ├── candidates.py # /api/v1/candidates
 │   │   │   ├── resumes.py    # /api/v1/resumes
 │   │   │   ├── interviews.py # /api/v1/interviews
+│   │   │   ├── realtime.py   # /api/v1/realtime (WebSocket)
+│   │   │   ├── videos.py     # /api/v1/videos
+│   │   │   ├── admin.py      # /api/v1/admin
+│   │   │   ├── job_postings.py  # /api/v1/job-postings (Epic 03)
+│   │   │   ├── applications.py  # /api/v1/applications (Epic 03)
 │   │   │   └── assessments.py # /api/v1/assessments
 │   ├── middleware/            # Custom middleware
 │   │   ├── __init__.py
@@ -90,6 +115,8 @@ backend/
 │       └── test_complete_interview.py
 ├── scripts/                  # Utility scripts
 │   ├── seed_dev_data.py
+│   ├── seed_job_postings.py  # Epic 03 job posting generator
+│   ├── cleanup_videos.py
 │   ├── migrate_db.sh
 │   └── run_local.sh
 └── Dockerfile               # Container definition

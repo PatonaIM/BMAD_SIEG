@@ -408,3 +408,187 @@ export const InterviewChat = ({ interviewId }: { interviewId: string }) => {
 
 ---
 
+## 6.7 Job Postings & Applications API (Epic 03)
+
+### Job Postings Service
+
+```typescript
+// lib/api-client.ts (excerpt)
+export const jobPostingsApi = {
+  async list(filters?: JobPostingFilters): Promise<JobPostingListResponse> {
+    const params = new URLSearchParams();
+    if (filters?.role_category) params.append('role_category', filters.role_category);
+    if (filters?.tech_stack) params.append('tech_stack', filters.tech_stack);
+    if (filters?.employment_type) params.append('employment_type', filters.employment_type);
+    if (filters?.work_setup) params.append('work_setup', filters.work_setup);
+    if (filters?.experience_level) params.append('experience_level', filters.experience_level);
+    if (filters?.location) params.append('location', filters.location);
+    if (filters?.search) params.append('search', filters.search);
+    params.append('skip', String(filters?.skip || 0));
+    params.append('limit', String(filters?.limit || 20));
+
+    return apiClient.get(`/job-postings?${params.toString()}`);
+  },
+
+  async getById(id: string): Promise<JobPosting> {
+    return apiClient.get(`/job-postings/${id}`);
+  },
+};
+```
+
+### Applications Service
+
+```typescript
+// lib/api-client.ts (excerpt)
+export const applicationsApi = {
+  async create(jobPostingId: string): Promise<Application> {
+    return apiClient.post('/applications', { job_posting_id: jobPostingId });
+  },
+
+  async getMyApplications(): Promise<Application[]> {
+    return apiClient.get('/applications/me');
+  },
+
+  async getById(id: string): Promise<ApplicationDetail> {
+    return apiClient.get(`/applications/${id}`);
+  },
+};
+```
+
+### React Query Hooks
+
+```typescript
+// hooks/use-job-postings.ts
+import { useQuery } from '@tanstack/react-query';
+import { jobPostingsApi, type JobPostingFilters } from '@/lib/api-client';
+
+export const jobPostingsKeys = {
+  all: ['job-postings'] as const,
+  lists: () => [...jobPostingsKeys.all, 'list'] as const,
+  list: (filters: JobPostingFilters) => [...jobPostingsKeys.lists(), filters] as const,
+  details: () => [...jobPostingsKeys.all, 'detail'] as const,
+  detail: (id: string) => [...jobPostingsKeys.details(), id] as const,
+};
+
+export function useJobPostings(filters: JobPostingFilters) {
+  return useQuery({
+    queryKey: jobPostingsKeys.list(filters),
+    queryFn: () => jobPostingsApi.list(filters),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+  });
+}
+
+export function useJobPosting(id: string) {
+  return useQuery({
+    queryKey: jobPostingsKeys.detail(id),
+    queryFn: () => jobPostingsApi.getById(id),
+    staleTime: 1000 * 60 * 5,
+    enabled: !!id,
+  });
+}
+```
+
+```typescript
+// hooks/use-apply-to-job.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { applicationsApi } from '@/lib/api-client';
+import { applicationsKeys } from './use-applications';
+
+export function useApplyToJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (jobPostingId: string) => applicationsApi.create(jobPostingId),
+    onSuccess: () => {
+      // Invalidate applications list to refetch
+      queryClient.invalidateQueries({ queryKey: applicationsKeys.me() });
+    },
+  });
+}
+```
+
+```typescript
+// hooks/use-applications.ts
+import { useQuery } from '@tanstack/react-query';
+import { applicationsApi } from '@/lib/api-client';
+
+export const applicationsKeys = {
+  all: ['applications'] as const,
+  me: () => [...applicationsKeys.all, 'me'] as const,
+};
+
+export function useApplications() {
+  return useQuery({
+    queryKey: applicationsKeys.me(),
+    queryFn: () => applicationsApi.getMyApplications(),
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
+  });
+}
+```
+
+### Usage in Components
+
+```typescript
+// app/jobs/page.tsx
+import { useJobPostings } from '@/hooks/use-job-postings';
+
+export default function JobsPage() {
+  const [filters, setFilters] = useState<JobPostingFilters>({
+    search: '',
+    role_category: '',
+    skip: 0,
+    limit: 20,
+  });
+
+  const { data, isLoading, isError } = useJobPostings(filters);
+
+  if (isLoading) return <Skeleton />;
+  if (isError) return <ErrorMessage />;
+
+  return (
+    <div>
+      {data?.jobs.map(job => (
+        <JobCard key={job.id} job={job} />
+      ))}
+      <Pagination total={data?.total} />
+    </div>
+  );
+}
+```
+
+```typescript
+// app/jobs/[id]/page.tsx
+import { useJobPosting } from '@/hooks/use-job-posting';
+import { useApplyToJob } from '@/hooks/use-apply-to-job';
+import { useApplications } from '@/hooks/use-applications';
+
+export default function JobDetailPage() {
+  const jobId = params.id as string;
+  const { data: job } = useJobPosting(jobId);
+  const { data: applications } = useApplications();
+  const { mutate: applyToJob, isPending } = useApplyToJob();
+
+  const alreadyApplied = applications?.some(app => app.job_posting_id === jobId);
+
+  const handleApply = () => {
+    applyToJob(jobId);
+  };
+
+  return (
+    <div>
+      <h1>{job?.title}</h1>
+      <Button 
+        onClick={handleApply} 
+        disabled={alreadyApplied || isPending}
+      >
+        {alreadyApplied ? 'Applied' : 'Apply Now'}
+      </Button>
+    </div>
+  );
+}
+```
+
+---
+

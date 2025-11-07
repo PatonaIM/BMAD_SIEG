@@ -17,8 +17,12 @@ from app.repositories.interview_message import InterviewMessageRepository
 from app.repositories.interview_session import InterviewSessionRepository
 from app.repositories.job_posting_repository import JobPostingRepository
 from app.services.application_service import ApplicationService
+from app.services.embedding_service import EmbeddingService
+from app.services.explanation_cache import ExplanationCache
+from app.services.explanation_service import ExplanationService
 from app.services.interview_engine import InterviewEngine
 from app.services.job_posting_service import JobPostingService
+from app.services.profile_service import ProfileService
 
 # OAuth2 scheme for token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
@@ -140,3 +144,118 @@ async def get_application_service(
     )
 
     return ApplicationService(app_repo, job_repo, interview_repo, interview_engine)
+
+
+async def get_profile_service(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ProfileService:
+    """
+    Get profile service instance.
+
+    Args:
+        db: Database session
+
+    Returns:
+        ProfileService instance with candidate repository and embedding service
+    """
+    candidate_repo = CandidateRepository(db)
+    job_repo = JobPostingRepository(db)
+    embedding_service = EmbeddingService(candidate_repo, job_repo)
+    explanation_cache = await get_explanation_cache()
+    return ProfileService(candidate_repo, embedding_service, explanation_cache)
+
+
+async def get_embedding_service(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> EmbeddingService:
+    """
+    Get embedding service instance.
+
+    Args:
+        db: Database session
+
+    Returns:
+        EmbeddingService instance with all dependencies
+    """
+    candidate_repo = CandidateRepository(db)
+    job_repo = JobPostingRepository(db)
+    return EmbeddingService(candidate_repo, job_repo)
+
+
+async def get_matching_repository(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> "MatchingRepository":
+    """
+    Get matching repository instance.
+
+    Args:
+        db: Database session
+
+    Returns:
+        MatchingRepository instance
+    """
+    from app.repositories.matching_repository import MatchingRepository
+    return MatchingRepository(db)
+
+
+async def get_matching_service(
+    matching_repo: Annotated["MatchingRepository", Depends(get_matching_repository)],
+    profile_service: Annotated[ProfileService, Depends(get_profile_service)]
+) -> "MatchingService":
+    """
+    Get matching service instance.
+
+    Args:
+        matching_repo: Matching repository instance
+        profile_service: Profile service instance
+
+    Returns:
+        MatchingService instance with all dependencies
+    """
+    from app.services.matching_service import MatchingService
+    return MatchingService(matching_repo, profile_service)
+
+
+# Singleton cache instance for explanation service
+_explanation_cache: ExplanationCache | None = None
+
+
+async def get_explanation_cache() -> ExplanationCache:
+    """
+    Get singleton explanation cache instance.
+    
+    Returns:
+        ExplanationCache singleton instance
+    """
+    global _explanation_cache
+    if _explanation_cache is None:
+        _explanation_cache = ExplanationCache()
+    return _explanation_cache
+
+
+async def get_explanation_service(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ExplanationService:
+    """
+    Get explanation service instance.
+    
+    Factory dependency for ExplanationService that creates all required
+    dependencies and injects them into the service.
+    
+    Args:
+        db: Database session
+    
+    Returns:
+        ExplanationService instance with all dependencies injected
+    """
+    openai_provider = OpenAIProvider()
+    candidate_repo = CandidateRepository(db)
+    job_repo = JobPostingRepository(db)
+    cache = await get_explanation_cache()
+    
+    return ExplanationService(
+        openai_provider=openai_provider,
+        candidate_repo=candidate_repo,
+        job_repo=job_repo,
+        cache=cache
+    )

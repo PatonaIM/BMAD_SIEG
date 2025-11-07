@@ -53,6 +53,20 @@ class BaseRepository(ABC, Generic[ModelType]):
         await self.db.refresh(obj)
         return obj
 
+    async def update(self, obj: ModelType) -> ModelType:
+        """
+        Update an existing record.
+
+        Args:
+            obj: Model instance to update (must have valid ID)
+
+        Returns:
+            Updated model instance with refreshed fields
+        """
+        await self.db.flush()
+        await self.db.refresh(obj)
+        return obj
+
     async def delete(self, id: UUID) -> bool:
         """
         Delete a record by ID.

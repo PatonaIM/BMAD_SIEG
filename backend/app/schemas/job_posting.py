@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 class JobPostingFilters(BaseModel):
@@ -104,6 +104,11 @@ class JobPostingResponse(BaseModel):
     cancellation_reason: str | None
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer('salary_min', 'salary_max')
+    def serialize_salary(self, value: Decimal | None) -> float | None:
+        """Serialize Decimal to float for JSON compatibility."""
+        return float(value) if value is not None else None
 
 
 class JobPostingListResponse(BaseModel):

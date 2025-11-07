@@ -13,6 +13,7 @@
 
 ### Brownfield Enhancement PRDs
 - [08. Job-Driven AI Interview Flow](./08-job-driven-interview-flow.md) - Epic 03
+- [09. Intelligent Job Matching System](./09-intelligent-job-matching.md) - Epic 04
 
 ## Epic Details
 
@@ -22,6 +23,7 @@ For detailed epic breakdowns with stories, see:
 - **[Epic 01.5: Speech](../epics/epic-01.5-speech.md)** - Speech-to-speech capability
 - **[Epic 02: Video Interview](../epics/epic-02-video-interview-experience.md)** - Professional video experience
 - **[Epic 03: Job-Driven Flow](./08-job-driven-interview-flow.md)** - Database-driven job postings and applications
+- **[Epic 04: Intelligent Matching](./09-intelligent-job-matching.md)** - AI-powered job recommendations
 
 ---
 

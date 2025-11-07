@@ -2,9 +2,10 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Column, DateTime, Integer, Numeric, String
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -21,6 +22,11 @@ class Candidate(Base):
         password_hash: Hashed password for authentication
         phone: Optional phone number
         status: Account status (active, inactive, deleted)
+        skills: Array of skill strings (JSONB)
+        experience_years: Years of professional experience (INTEGER)
+        job_preferences: Job search preferences object (JSONB)
+        profile_completeness_score: Profile completion percentage 0-100 (DECIMAL)
+        profile_embedding: Semantic embedding vector for matching (vector(3072))
         created_at: Timestamp of account creation
         updated_at: Timestamp of last update
         resumes: Related Resume records
@@ -44,6 +50,17 @@ class Candidate(Base):
         default="active",
         nullable=False,
         index=True
+    )
+
+    # Epic 04: Profile fields for intelligent job matching
+    skills = Column(JSONB, nullable=True, comment="Array of skill strings")
+    experience_years = Column(Integer, nullable=True, comment="Years of professional experience")
+    job_preferences = Column(JSONB, nullable=True, comment="Job search preferences object")
+    profile_completeness_score = Column(
+        Numeric(5, 2), nullable=True, comment="Profile completion percentage 0-100"
+    )
+    profile_embedding = Column(
+        Vector(3072), nullable=True, comment="Semantic embedding for matching"
     )
 
     # Timestamps

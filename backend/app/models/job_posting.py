@@ -2,6 +2,7 @@
 import uuid
 from datetime import datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, Column, DateTime, Numeric, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -34,6 +35,7 @@ class JobPosting(Base):
         status: Job posting status (active, paused, closed) - default 'active'
         is_cancelled: Whether job posting has been cancelled
         cancellation_reason: Reason for cancellation if applicable
+        job_embedding: Semantic embedding vector for matching (vector(3072))
         created_at: Timestamp of job posting creation
         updated_at: Timestamp of last update
         applications: Related Application records
@@ -98,6 +100,9 @@ class JobPosting(Base):
     )
     is_cancelled = Column(Boolean, default=False, nullable=False)
     cancellation_reason = Column(Text, nullable=True)
+
+    # Epic 04: Semantic embedding for intelligent job matching
+    job_embedding = Column(Vector(3072), nullable=True, comment="Semantic embedding for matching")
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

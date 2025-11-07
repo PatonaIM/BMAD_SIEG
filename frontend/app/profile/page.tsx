@@ -4,27 +4,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { User, FileText, Briefcase, MapPin, Mail, Phone, Edit, Award, Target } from "lucide-react"
+import { User, FileText, Briefcase, Mail, Phone, Award, Target, AlertCircle, CheckCircle2 } from "lucide-react"
+import { useProfile } from "@/hooks/use-profile"
+import { calculateProfileCompleteness } from "@/lib/profile-utils"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function ProfilePage() {
-  // Mock profile data
-  const profile = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    title: "Senior Full Stack Developer",
-    experience: "5+ years",
-    completion: 75,
-    skills: ["React", "Node.js", "TypeScript", "AWS", "Python", "Docker"],
-    preferences: {
-      jobType: "Full-time",
-      remote: true,
-      salaryMin: "$140k",
-      salaryMax: "$180k",
-    },
+  const { data: profile, isLoading, isError, error } = useProfile()
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-9 w-48 mb-2" />
+            <Skeleton className="h-5 w-64" />
+          </div>
+        </div>
+        <Skeleton className="h-48 w-full" />
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    )
   }
+
+  if (isError || !profile) {
+    return (
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error?.message || "Failed to load profile. Please try again."}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  const breakdown = calculateProfileCompleteness(profile)
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -34,12 +57,6 @@ export default function ProfilePage() {
           <h1 className="text-3xl font-bold mb-2">My Profile</h1>
           <p className="text-muted-foreground">Manage your professional information</p>
         </div>
-        <Button asChild>
-          <Link href="/profile/edit">
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Profile
-          </Link>
-        </Button>
       </div>
 
       {/* Profile Completion */}
@@ -52,20 +69,80 @@ export default function ProfilePage() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Overall Progress</span>
-              <span className="text-sm text-muted-foreground">{profile.completion}%</span>
+              <span className="text-sm text-muted-foreground">{breakdown.total}%</span>
             </div>
-            <Progress value={profile.completion} className="h-2" />
+            <Progress value={breakdown.total} className="h-2" />
           </div>
+          
+          {/* Detailed Breakdown */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Base Info</div>
+              <div className="flex items-center gap-2">
+                <Progress value={(breakdown.baseInfo / 20) * 100} className="h-1 flex-1" />
+                <span className="text-xs font-medium">{breakdown.baseInfo}/20%</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Phone</div>
+              <div className="flex items-center gap-2">
+                <Progress value={(breakdown.phone / 10) * 100} className="h-1 flex-1" />
+                <span className="text-xs font-medium">{breakdown.phone}/10%</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Skills</div>
+              <div className="flex items-center gap-2">
+                <Progress value={(breakdown.skills / 20) * 100} className="h-1 flex-1" />
+                <span className="text-xs font-medium">{breakdown.skills}/20%</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Experience</div>
+              <div className="flex items-center gap-2">
+                <Progress value={(breakdown.experience / 15) * 100} className="h-1 flex-1" />
+                <span className="text-xs font-medium">{breakdown.experience}/15%</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Preferences</div>
+              <div className="flex items-center gap-2">
+                <Progress value={(breakdown.preferences / 20) * 100} className="h-1 flex-1" />
+                <span className="text-xs font-medium">{breakdown.preferences}/20%</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">Resume</div>
+              <div className="flex items-center gap-2">
+                <Progress value={(breakdown.resume / 15) * 100} className="h-1 flex-1" />
+                <span className="text-xs font-medium">{breakdown.resume}/15%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/profile/resume">Upload Resume</Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/profile/skills">Add More Skills</Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/profile/preferences">Set Job Preferences</Link>
-            </Button>
+            {breakdown.resume === 0 && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/profile/resume">Upload Resume</Link>
+              </Button>
+            )}
+            {breakdown.skills < 20 && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/profile/skills">Add More Skills</Link>
+              </Button>
+            )}
+            {breakdown.preferences < 20 && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/profile/preferences">Set Job Preferences</Link>
+              </Button>
+            )}
+            {breakdown.total === 100 && (
+              <Badge variant="default" className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Profile Complete!
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -82,7 +159,7 @@ export default function ProfilePage() {
           <CardContent className="space-y-4">
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Name</div>
-              <div className="text-base">{profile.name}</div>
+              <div className="text-base">{profile.full_name || "Not provided"}</div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Email</div>
@@ -95,46 +172,47 @@ export default function ProfilePage() {
               <div className="text-sm font-medium text-muted-foreground mb-1">Phone</div>
               <div className="flex items-center gap-2 text-base">
                 <Phone className="h-4 w-4" />
-                {profile.phone}
+                {profile.phone || "Not provided"}
               </div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Location</div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Experience Years</div>
               <div className="flex items-center gap-2 text-base">
-                <MapPin className="h-4 w-4" />
-                {profile.location}
+                <Briefcase className="h-4 w-4" />
+                {profile.experience_years ? `${profile.experience_years} years` : "Not provided"}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Professional Info */}
+        {/* Skills */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5" />
-              <CardTitle>Professional Information</CardTitle>
+              <Award className="h-5 w-5" />
+              <CardTitle>Skills</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Current Title</div>
-              <div className="text-base">{profile.title}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Experience</div>
-              <div className="text-base">{profile.experience}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">Skills</div>
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill) => (
-                  <Badge key={skill} variant="secondary">
-                    {skill}
-                  </Badge>
-                ))}
+              <div className="text-sm font-medium text-muted-foreground mb-2">
+                {profile.skills.length} {profile.skills.length === 1 ? 'skill' : 'skills'}
               </div>
+              {profile.skills.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.skills.map((skill) => (
+                    <Badge key={skill} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No skills added yet</p>
+              )}
             </div>
+            <Button variant="outline" size="sm" asChild className="w-full">
+              <Link href="/profile/skills">Manage Skills</Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -148,19 +226,36 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Job Type</div>
-              <div className="text-base">{profile.preferences.jobType}</div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Job Types</div>
+              <div className="text-base">
+                {profile.preferred_job_types.length > 0 
+                  ? profile.preferred_job_types.join(", ") 
+                  : "Not set"}
+              </div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Remote Work</div>
-              <div className="text-base">{profile.preferences.remote ? "Yes, preferred" : "No preference"}</div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Locations</div>
+              <div className="text-base">
+                {profile.preferred_locations.length > 0 
+                  ? profile.preferred_locations.join(", ") 
+                  : "Not set"}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Work Setup</div>
+              <div className="text-base capitalize">{profile.preferred_work_setup}</div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Salary Range</div>
               <div className="text-base">
-                {profile.preferences.salaryMin} - {profile.preferences.salaryMax}
+                {profile.salary_expectation_min && profile.salary_expectation_max
+                  ? `${profile.salary_currency} ${profile.salary_expectation_min.toLocaleString()} - ${profile.salary_expectation_max.toLocaleString()}`
+                  : "Not set"}
               </div>
             </div>
+            <Button variant="outline" size="sm" asChild className="w-full">
+              <Link href="/profile/preferences">Update Preferences</Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -173,27 +268,29 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg border bg-muted/50">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <span className="font-medium">resume_john_doe.pdf</span>
+            {profile.resume_id ? (
+              <div className="p-4 rounded-lg border bg-muted/50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <span className="font-medium">Resume uploaded</span>
+                  </div>
+                  <Badge variant="secondary">
+                    <Award className="h-3 w-3 mr-1" />
+                    On File
+                  </Badge>
                 </div>
-                <Badge variant="secondary">
-                  <Award className="h-3 w-3 mr-1" />
-                  AI Analyzed
-                </Badge>
               </div>
-              <div className="text-sm text-muted-foreground">Uploaded 2 weeks ago</div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent" asChild>
-                <Link href="/profile/resume">View Resume</Link>
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent">
-                Upload New
-              </Button>
-            </div>
+            ) : (
+              <div className="p-4 rounded-lg border border-dashed">
+                <p className="text-sm text-muted-foreground text-center">No resume uploaded yet</p>
+              </div>
+            )}
+            <Button variant="outline" size="sm" asChild className="w-full">
+              <Link href="/profile/resume">
+                {profile.resume_id ? "View Resume Details" : "Upload Resume"}
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

@@ -22,6 +22,9 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { useApplications } from "@/hooks/use-applications"
+import { useProfile } from "@/hooks/use-profile"
+import { useJobMatches } from "@/hooks/use-job-matches"
+import { calculateProfileCompleteness } from "@/lib/profile-utils"
 import { useAuthStore } from "@/src/features/auth/store/authStore"
 import type { ApplicationStatus } from "@/lib/api-client"
 
@@ -71,6 +74,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
   const { data, isLoading, isError, refetch } = useApplications();
+  const { data: profile } = useProfile();
+  const { data: matchesData, isLoading: matchesLoading } = useJobMatches(1, 2); // Fetch top 2 matches
 
   // Authentication check
   useEffect(() => {
@@ -87,32 +92,21 @@ export default function DashboardPage() {
   // Extract recent applications (top 3)
   const recentApplications = data?.slice(0, 3) || [];
 
+  // Extract matched jobs from real API data
+  const matchedJobs = matchesData?.jobs || [];
+
+  // Calculate profile completion from real data
+  const profileCompletion = profile 
+    ? calculateProfileCompleteness(profile).total 
+    : 0;
+
   // Calculate stats from real data
   const stats = {
     applications: data?.length || 0,
     interviews: data?.filter(a => a.status === 'interview_scheduled').length || 0,
-    matches: 8, // Keep static for now (future enhancement)
-    profileCompletion: 75, // Keep static for now (future enhancement)
+    matches: matchesData?.total || 0, // Use real matches count
+    profileCompletion,
   };
-
-  const matchedJobs = [
-    {
-      id: "1",
-      title: "Lead Frontend Engineer",
-      company: "StartupXYZ",
-      matchScore: 95,
-      location: "Remote",
-      salary: "$150k - $200k",
-    },
-    {
-      id: "2",
-      title: "Engineering Manager",
-      company: "BigTech Co",
-      matchScore: 88,
-      location: "San Francisco, CA",
-      salary: "$180k - $240k",
-    },
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -190,7 +184,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.profileCompletion}%</div>
-            <p className="text-xs text-muted-foreground">Profile completion</p>
+            <p className="text-xs text-muted-foreground mb-2">Profile completion</p>
+            {stats.profileCompletion < 100 && (
+              <Button variant="ghost" size="sm" className="h-auto p-0 text-xs" asChild>
+                <Link href="/profile">Complete Profile →</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -328,29 +327,67 @@ export default function DashboardPage() {
             <CardDescription>AI-recommended jobs based on your profile</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {matchedJobs.map((job) => (
-                <div key={job.id} className="p-4 rounded-lg border">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="font-semibold">{job.title}</div>
-                      <div className="text-sm text-muted-foreground">{job.company}</div>
+            {matchesLoading && (
+              <div className="space-y-4">
+                {[1, 2].map(i => (
+                  <div key={i} className="p-4 rounded-lg border">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-4" />
+                    <Skeleton className="h-2 w-full mb-3" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!matchesLoading && matchedJobs.length === 0 && (
+              <div className="p-6 text-center">
+                <Target className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-4">
+                  {profile && profile.profile_completeness_score < 40 
+                    ? 'Complete your profile to unlock AI job matching'
+                    : 'No matches yet - check back soon!'}
+                </p>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={profile && profile.profile_completeness_score < 40 ? "/profile" : "/jobs"}>
+                    {profile && profile.profile_completeness_score < 40 ? 'Complete Profile' : 'Browse Jobs'}
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {!matchesLoading && matchedJobs.length > 0 && (
+              <div className="space-y-4">
+                {matchedJobs.map((job) => {
+                  // Format salary display
+                  const salaryDisplay = job.salary_min && job.salary_max 
+                    ? `$${(job.salary_min / 1000).toFixed(0)}k - $${(job.salary_max / 1000).toFixed(0)}k`
+                    : 'Salary not specified';
+                  
+                  return (
+                    <div key={job.id} className="p-4 rounded-lg border">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="font-semibold">{job.title}</div>
+                          <div className="text-sm text-muted-foreground">{job.company}</div>
+                        </div>
+                        <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+                          {job.match_score}% Match
+                        </Badge>
+                      </div>
+                      <Progress value={job.match_score} className="h-2 mb-3" />
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{job.location}</span>
+                        <span className="font-medium">{salaryDisplay}</span>
+                      </div>
+                      <Button className="w-full mt-3" size="sm" asChild>
+                        <Link href={`/jobs/${job.id}`}>View Details →</Link>
+                      </Button>
                     </div>
-                    <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
-                      {job.matchScore}% Match
-                    </Badge>
-                  </div>
-                  <Progress value={job.matchScore} className="h-2 mb-3" />
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{job.location}</span>
-                    <span className="font-medium">{job.salary}</span>
-                  </div>
-                  <Button className="w-full mt-3" size="sm" asChild>
-                    <Link href={`/jobs/${job.id}`}>View & Apply</Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

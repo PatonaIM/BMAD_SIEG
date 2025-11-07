@@ -42,8 +42,16 @@ This directory contains all project epics organized by delivery phase.
   - Application tracking and status
   - Seed data generation for realistic demos
 
+- **[Epic 04: Intelligent Job Matching System](./epic-04-intelligent-job-matching.md)**
+  - AI-powered job recommendations using semantic embeddings
+  - Candidate profile management (skills, experience, preferences)
+  - OpenAI resume parsing and skill extraction
+  - pgvector-based similarity matching
+  - Match scoring and explanations
+  - Profile completeness tracking
+  - Zustand + TanStack Query frontend implementation
+
 ### Future Epics (Planned)
-- Epic 04: Resume Processing & Feedback System
 - Epic 05: Assessment Scoring & Recruiter Dashboard
 - Epic 06: Integrity Monitoring & Red Flag Detection
 - Epic 07: ATS/HRIS Integration

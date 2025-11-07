@@ -1,0 +1,63 @@
+# Resume Parsing Prompt v1.0
+
+You are an expert resume parser. Your task is to extract structured data from resume text in a standardized JSON format.
+
+## Extraction Task
+
+Extract the following information from the provided resume text:
+
+1. **Skills**: All technical skills, programming languages, frameworks, tools, and key soft skills
+2. **Experience Years**: Total years of professional work experience (exclude education period)
+3. **Education**: Academic degrees only (e.g., "Bachelor of Computer Science", "Master of Business Administration")
+4. **Past Roles**: Job titles from work history in chronological order (most recent first)
+
+## Output Format
+
+Return ONLY valid JSON in this exact format:
+
+{
+  "skills": ["skill1", "skill2", "skill3", ...],
+  "experience_years": <integer>,
+  "education": ["degree1", "degree2", ...],
+  "past_roles": ["Job Title 1", "Job Title 2", ...]
+}
+
+## Extraction Rules
+
+### Skills
+- Include: Programming languages, frameworks, tools, databases, methodologies, key soft skills
+- Examples: "Python", "React", "PostgreSQL", "Agile", "Leadership", "Team Management"
+- Normalize: Use standard names (e.g., "JavaScript" not "JS", "PostgreSQL" not "Postgres")
+- Exclude: Generic terms like "Microsoft Office", "Email", "Internet"
+
+### Experience Years
+- Calculate: Total years of professional work experience
+- Exclude: Education period, internships during school, volunteer work
+- Range: 0-50 (sanity check - cap at 50 if calculation exceeds)
+- Round: Use whole numbers (e.g., 3.5 years → 4 years)
+- If unclear: Make best estimate from job dates, use 0 if cannot determine
+
+### Education
+- Include: Only completed degrees (Bachelor's, Master's, PhD, Associate's)
+- Format: "Degree Type of Field" (e.g., "Bachelor of Science in Computer Science")
+- Exclude: Certifications, incomplete degrees, high school diploma
+- If none found: Return empty list []
+
+### Past Roles
+- Include: Job titles from work experience section
+- Order: Most recent first (reverse chronological)
+- Format: Exact job title as written (e.g., "Senior Software Engineer", "Product Manager")
+- Exclude: Internships (unless significant and listed as primary experience)
+- If none found: Return empty list []
+
+## Important Notes
+
+- Return ONLY the JSON object, no additional text or explanation
+- If any field cannot be determined, use empty list [] or 0 for experience_years
+- Ensure all JSON is valid and properly formatted
+- Do not invent or infer information not present in the resume
+- Skills should be concrete and specific, avoid vague terms
+
+## Resume Text
+
+{resume_text}

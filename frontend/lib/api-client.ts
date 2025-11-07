@@ -1,6 +1,8 @@
 // API Client for Job Postings
 // Handles data fetching and type definitions for job posting endpoints
 
+import { ProfileResponseSchema } from '@/lib/schemas/profile.schema';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 /**
@@ -256,5 +258,113 @@ export const applicationsApi = {
     }
 
     return response.json();
+  },
+};
+
+/**
+ * Profile API client
+ * Handles profile management endpoints from Story 4.3
+ */
+export const profileApi = {
+  /**
+   * Get the authenticated candidate's profile
+   * Validates and normalizes response using Zod schema
+   * @returns Promise resolving to profile data with completeness score
+   */
+  async get(): Promise<import('@/types/profile').ProfileResponse> {
+    const rawResponse = await fetchApiAuth<unknown>('/profile');
+    // Validate and transform using Zod schema (converts null arrays to empty arrays)
+    const validated = ProfileResponseSchema.parse(rawResponse);
+    return validated as import('@/types/profile').ProfileResponse;
+  },
+
+  /**
+   * Update candidate skills
+   * Backend normalizes skills to lowercase, trim, deduplicate, and sort
+   * @param skills - Array of skill names (raw, backend normalizes)
+   * @returns Promise resolving to updated profile
+   */
+  async updateSkills(skills: string[]): Promise<import('@/types/profile').ProfileResponse> {
+    const rawResponse = await fetchApiAuth<unknown>('/profile/skills', {
+      method: 'PUT',
+      body: JSON.stringify({ skills }),
+    });
+    // Validate and transform using Zod schema
+    const validated = ProfileResponseSchema.parse(rawResponse);
+    return validated as import('@/types/profile').ProfileResponse;
+  },
+
+  /**
+   * Update candidate job preferences
+   * @param preferences - Job preferences data
+   * @returns Promise resolving to updated profile
+   */
+  async updatePreferences(preferences: import('@/types/profile').UpdatePreferencesRequest): Promise<import('@/types/profile').ProfileResponse> {
+    const rawResponse = await fetchApiAuth<unknown>('/profile/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+    // Validate and transform using Zod schema
+    const validated = ProfileResponseSchema.parse(rawResponse);
+    return validated as import('@/types/profile').ProfileResponse;
+  },
+};
+
+/**
+ * Resume API client
+ * Handles resume parsing status from Story 4.2
+ */
+export const resumeApi = {
+  /**
+   * Get resume parsing status
+   * Will return 404 if no resume uploaded yet
+   * @param resumeId - Resume UUID from profile.resume_id
+   * @returns Promise resolving to parsing status
+   */
+  async getParsingStatus(resumeId: string): Promise<import('@/types/profile').ResumeParsingStatus> {
+    return fetchApiAuth<import('@/types/profile').ResumeParsingStatus>(`/resumes/${resumeId}/parsing-status`);
+  },
+};
+
+/**
+ * Matching API client
+ * Handles job matching and explanation endpoints from Story 4.5 and 4.6
+ */
+export const matchingApi = {
+  /**
+   * Get matched jobs for the authenticated candidate
+   * Returns jobs ranked by match score with explanations
+   * 
+   * @param page - Page number (default: 1)
+   * @param limit - Results per page (default: 20, max: 100)
+   * @returns Promise resolving to matched jobs with pagination
+   * @throws Error with status 401 if authentication invalid
+   * @throws Error with status 403 if profile completeness < 40%
+   * @throws Error with status 404 if no profile embedding yet
+   */
+  async getMatches(page: number = 1, limit: number = 20): Promise<import('@/types/matching').JobMatchesResponse> {
+    const params = new URLSearchParams();
+    params.append('page', String(page));
+    params.append('limit', String(limit));
+    
+    return fetchApiAuth<import('@/types/matching').JobMatchesResponse>(
+      `/matching/jobs?${params.toString()}`
+    );
+  },
+
+  /**
+   * Get match explanation for a specific job
+   * Explains why the job matches the candidate's profile
+   * 
+   * @param jobId - Job posting UUID
+   * @returns Promise resolving to match explanation
+   * @throws Error with status 401 if authentication invalid
+   * @throws Error with status 404 if job not found or match score < 40%
+   * @throws Error with status 500 if OpenAI API failure
+   */
+  async getExplanation(jobId: string): Promise<import('@/types/matching').MatchExplanation> {
+    return fetchApiAuth<import('@/types/matching').MatchExplanation>(
+      `/matching/jobs/${jobId}/explanation`
+    );
   },
 };

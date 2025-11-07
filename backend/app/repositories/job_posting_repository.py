@@ -1,6 +1,8 @@
 """Repository for JobPosting data access."""
 
-from sqlalchemy import func, or_, select
+from uuid import UUID
+
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.job_posting import JobPosting
@@ -238,5 +240,58 @@ class JobPostingRepository(BaseRepository[JobPosting]):
 
         data_result = await self.db.execute(stmt)
         items = list(data_result.scalars().all())
+
+        return items, total
+
+    async def update_embedding(
+        self, 
+        job_id: UUID, 
+        embedding: list[float]
+    ) -> None:
+        """
+        Update job posting embedding vector.
+        
+        Args:
+            job_id: UUID of the job posting
+            embedding: 3072-dimensional embedding vector
+        """
+        stmt = (
+            update(JobPosting)
+            .where(JobPosting.id == job_id)
+            .values(job_embedding=embedding)
+        )
+        await self.db.execute(stmt)
+        await self.db.commit()
+
+    async def get_jobs_for_embedding(
+        self,
+        skip_with_embedding: bool,
+        limit: int
+    ) -> list[JobPosting]:
+        """
+        Get active job postings ready for embedding generation.
+        
+        Filters:
+        - status = 'active'
+        - Optionally skip jobs with existing embeddings
+        
+        Args:
+            skip_with_embedding: If true, skip jobs with existing embeddings
+            limit: Max number of jobs to return
+        
+        Returns:
+            List of JobPosting instances
+        """
+        stmt = select(JobPosting).where(
+            JobPosting.status == 'active'
+        )
+        
+        if skip_with_embedding:
+            stmt = stmt.where(JobPosting.job_embedding.is_(None))
+        
+        stmt = stmt.limit(limit).order_by(JobPosting.created_at.desc())
+        
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
 
         return items, total

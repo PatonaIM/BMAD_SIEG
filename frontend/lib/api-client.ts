@@ -347,9 +347,20 @@ export const matchingApi = {
     params.append('page', String(page));
     params.append('limit', String(limit));
     
-    return fetchApiAuth<import('@/types/matching').JobMatchesResponse>(
-      `/matching/jobs?${params.toString()}`
-    );
+    const response = await fetchApiAuth<{
+      matches: any[];
+      total_count: number;
+      page: number;
+      page_size: number;
+    }>(`/matching/jobs?${params.toString()}`);
+
+    // Transform backend response to match frontend type
+    return {
+      jobs: response.matches,
+      total: response.total_count,
+      page: response.page,
+      limit: response.page_size,
+    };
   },
 
   /**

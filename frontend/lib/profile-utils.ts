@@ -6,6 +6,23 @@
 import type { ProfileResponse, ProfileCompletenessBreakdown } from '@/types/profile';
 
 /**
+ * Format enum values for display (e.g., "permanent" -> "Permanent")
+ */
+export function formatEnumValue(value: string): string {
+  return value
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Format array of enum values for display
+ */
+export function formatEnumArray(values: string[]): string {
+  return values.map(formatEnumValue).join(', ');
+}
+
+/**
  * Calculate profile completeness breakdown
  * Matches backend algorithm from Story 4.3
  * 
@@ -48,18 +65,16 @@ export function calculateProfileCompleteness(profile: ProfileResponse): ProfileC
     experience = 15;
   }
 
-  // Job Preferences: 20% (incremental)
-  if (profile.preferred_locations.length > 0) {
-    preferences += 5;
-  }
+  // Job Preferences: 20% (redistributed after removing locations)
+  // Each criterion is worth ~6.67% to maintain 20% total
   if (profile.preferred_job_types.length > 0) {
-    preferences += 5;
+    preferences += 7;
   }
   if (profile.preferred_work_setup && profile.preferred_work_setup !== 'any') {
-    preferences += 5;
+    preferences += 7;
   }
   if (profile.salary_expectation_min && profile.salary_expectation_max) {
-    preferences += 5;
+    preferences += 6;
   }
 
   // Resume: 15%

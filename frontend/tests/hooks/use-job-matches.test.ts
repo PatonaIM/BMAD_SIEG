@@ -48,7 +48,7 @@ describe('useJobMatches', () => {
           company: 'Tech Corp',
           description: 'Great role',
           location: 'Remote',
-          employment_type: 'full_time',
+          employment_type: 'permanent',
           work_setup: 'remote',
           salary_min: 100000,
           salary_max: 150000,

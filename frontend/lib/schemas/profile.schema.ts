@@ -11,20 +11,8 @@ import { z } from 'zod';
 export const WorkSetupSchema = z.enum(['remote', 'hybrid', 'onsite', 'any']);
 
 /**
- * Backend Job Preferences Schema (nested structure)
- */
-const JobPreferencesSchema = z.object({
-  locations: z.array(z.string()).nullable().optional(),
-  employment_types: z.array(z.string()).nullable().optional(),
-  work_setups: z.array(z.string()).nullable().optional(),
-  salary_min: z.number().nullable().optional(),
-  salary_max: z.number().nullable().optional(),
-  role_categories: z.array(z.string()).nullable().optional(),
-}).nullable().optional();
-
-/**
  * Profile Response Schema
- * Transforms backend format (nested job_preferences) to frontend format (flat fields)
+ * Backend now sends flattened preference fields directly (no nested job_preferences)
  * Also transforms null/undefined arrays to empty arrays for type safety
  */
 export const ProfileResponseSchema = z.object({
@@ -41,39 +29,22 @@ export const ProfileResponseSchema = z.object({
   
   experience_years: z.number().optional().nullable(),
   
-  // Backend uses nested job_preferences, flatten for frontend
-  job_preferences: JobPreferencesSchema,
+  // Flattened preference fields (from backend Pydantic transformation)
+  preferred_job_types: z.array(z.string())
+    .nullable()
+    .optional()
+    .transform(v => v ?? []),
+  preferred_work_setup: z.string().optional().default('any'),
+  salary_expectation_min: z.number().optional().nullable(),
+  salary_expectation_max: z.number().optional().nullable(),
+  salary_currency: z.string().optional().default('USD'),
+  salary_period: z.string().optional().default('annually'),
   
   profile_completeness_score: z.number().min(0).max(100).nullable().optional().transform(v => v ?? 0),
   resume_id: z.string().optional().nullable(),
   
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
-}).transform((data) => {
-  // Flatten job_preferences into top-level fields for frontend
-  const prefs = data.job_preferences || {};
-  
-  return {
-    id: data.id,
-    email: data.email,
-    full_name: data.full_name,
-    phone: data.phone,
-    skills: data.skills,
-    experience_years: data.experience_years,
-    
-    // Flatten preferences
-    preferred_job_types: prefs.employment_types ?? [],
-    preferred_locations: prefs.locations ?? [],
-    preferred_work_setup: (prefs.work_setups?.[0] as any) ?? 'any',
-    salary_expectation_min: prefs.salary_min ?? undefined,
-    salary_expectation_max: prefs.salary_max ?? undefined,
-    salary_currency: 'USD', // Backend doesn't store this yet
-    
-    profile_completeness_score: data.profile_completeness_score,
-    resume_id: data.resume_id,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-  };
 });
 
 /**
@@ -88,11 +59,11 @@ export const UpdateSkillsRequestSchema = z.object({
  */
 export const UpdatePreferencesRequestSchema = z.object({
   preferred_job_types: z.array(z.string()),
-  preferred_locations: z.array(z.string()),
   preferred_work_setup: WorkSetupSchema,
   salary_expectation_min: z.number().optional(),
   salary_expectation_max: z.number().optional(),
   salary_currency: z.string(),
+  salary_period: z.string().optional(),
 });
 
 /**

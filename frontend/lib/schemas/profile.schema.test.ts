@@ -38,7 +38,7 @@ describe('ProfileResponseSchema', () => {
       skills: ['JavaScript', 'TypeScript'],
       job_preferences: {
         locations: ['New York', 'Remote'],
-        employment_types: ['Full-time', 'Contract'],
+        employment_types: ['Permanent', 'Contract'],
         work_setups: ['remote'],
         salary_min: 80000,
         salary_max: 120000,
@@ -52,7 +52,7 @@ describe('ProfileResponseSchema', () => {
 
     // Check flattened preferences
     expect(result.preferred_locations).toEqual(['New York', 'Remote']);
-    expect(result.preferred_job_types).toEqual(['Full-time', 'Contract']);
+    expect(result.preferred_job_types).toEqual(['Permanent', 'Contract']);
     expect(result.preferred_work_setup).toBe('remote');
     expect(result.salary_expectation_min).toBe(80000);
     expect(result.salary_expectation_max).toBe(120000);

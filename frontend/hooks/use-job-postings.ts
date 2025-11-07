@@ -8,7 +8,7 @@
  * ```tsx
  * const { data, isLoading, isError, error, refetch } = useJobPostings({
  *   search: 'developer',
- *   employment_type: 'full_time',
+ *   employment_type: 'permanent',
  *   skip: 0,
  *   limit: 20
  * });

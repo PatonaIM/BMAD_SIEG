@@ -1,31 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { TagInput } from "@/components/ui/tag-input"
 import Link from "next/link"
-import { X, Plus, Save, ArrowLeft, AlertCircle, Loader2 } from "lucide-react"
+import { Save, ArrowLeft, AlertCircle, Loader2 } from "lucide-react"
 import { useProfile } from "@/hooks/use-profile"
 import { useUpdateSkills } from "@/hooks/use-profile-mutations"
 import { useProfileStore } from "@/stores/profile-store"
+import { COMMON_SKILLS } from "@/lib/constants/profile"
 
 export default function SkillsPage() {
   const { data: profile, isLoading, isError, error } = useProfile()
   const { mutate: updateSkills, isPending } = useUpdateSkills()
   const { 
     selectedSkills, 
-    addSkill, 
-    removeSkill, 
     initializeSkills, 
     formDirty,
     setFormDirty 
   } = useProfileStore()
-  
-  const [newSkillInput, setNewSkillInput] = useState("")
 
   // Initialize skills from profile
   useEffect(() => {
@@ -34,12 +30,9 @@ export default function SkillsPage() {
     }
   }, [profile?.skills, initializeSkills])
 
-  const handleAddSkill = () => {
-    const skill = newSkillInput.trim()
-    if (skill && !selectedSkills.includes(skill)) {
-      addSkill(skill)
-      setNewSkillInput("")
-    }
+  const handleSkillsChange = (skills: string[]) => {
+    initializeSkills(skills)
+    setFormDirty(true)
   }
 
   const handleSave = () => {
@@ -110,74 +103,24 @@ export default function SkillsPage() {
       {/* Add Skills */}
       <Card>
         <CardHeader>
-          <CardTitle>Add Skills</CardTitle>
+          <CardTitle>Manage Skills</CardTitle>
           <CardDescription>
-            Enter skills one at a time. Backend will normalize and deduplicate.
+            Add skills with autocomplete suggestions. Type and press Enter or comma to add.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Type a skill (e.g., React, Python, AWS)"
-              value={newSkillInput}
-              onChange={(e) => setNewSkillInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleAddSkill()
-                }
-              }}
-              maxLength={100}
-            />
-            <Button 
-              onClick={handleAddSkill} 
-              disabled={!newSkillInput.trim()}
-              variant="outline"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+          <TagInput
+            value={selectedSkills}
+            onChange={handleSkillsChange}
+            placeholder="Type a skill (e.g., React, Python, AWS)..."
+            maxTags={50}
+            suggestions={COMMON_SKILLS}
+          />
           <p className="text-xs text-muted-foreground">
-            Press Enter or click + to add. Max 50 skills, 100 characters each.
+            Press Enter or comma to add. Max 50 skills. Start typing to see suggestions.
           </p>
-        </CardContent>
-      </Card>
-
-      {/* Current Skills */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Skills ({selectedSkills.length})</CardTitle>
-          <CardDescription>
-            Click X to remove a skill. Changes are saved when you click "Save Changes".
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {selectedSkills.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {selectedSkills.map((skill) => (
-                <Badge 
-                  key={skill} 
-                  variant="secondary"
-                  className="text-sm px-3 py-1.5 cursor-pointer hover:bg-secondary/80"
-                >
-                  {skill}
-                  <button
-                    onClick={() => removeSkill(skill)}
-                    className="ml-2 hover:text-destructive"
-                    aria-label={`Remove ${skill}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No skills added yet. Start by typing a skill above.
-            </p>
-          )}
           {selectedSkills.length > 50 && (
-            <Alert variant="destructive" className="mt-4">
+            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 Maximum 50 skills allowed. Please remove some skills before saving.

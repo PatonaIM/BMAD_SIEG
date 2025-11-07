@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -30,15 +31,15 @@ import { Save, ArrowLeft, AlertCircle, Loader2 } from "lucide-react"
 import { useProfile } from "@/hooks/use-profile"
 import { useUpdatePreferences } from "@/hooks/use-profile-mutations"
 import type { UpdatePreferencesRequest } from "@/types/profile"
+import { JOB_TYPES, WORK_SETUPS, CURRENCIES, SALARY_PERIOD } from "@/lib/constants/profile"
 
 // Validation schema
 const preferencesSchema = z.object({
-  preferred_job_types: z.string().min(1, "Please select at least one job type"),
-  preferred_locations: z.string().min(1, "Please enter at least one location"),
+  preferred_job_types: z.array(z.string()).min(1, "Please select at least one job type"),
   preferred_work_setup: z.enum(["remote", "hybrid", "onsite", "any"]),
   salary_expectation_min: z.string().optional(),
   salary_expectation_max: z.string().optional(),
-  salary_currency: z.enum(["USD", "AUD", "EUR", "GBP"]),
+  salary_currency: z.enum(["USD", "PHP", "AUD", "INR", "LKR", "JPY", "KRW", "BRL", "EUR", "GBP", "CAD", "SGD", "AED"]),
 }).refine((data) => {
   // If either salary field is filled, both must be filled
   const hasMin = data.salary_expectation_min && data.salary_expectation_min.trim() !== ""
@@ -70,8 +71,7 @@ export default function PreferencesPage() {
   const form = useForm<PreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
-      preferred_job_types: "",
-      preferred_locations: "",
+      preferred_job_types: [],
       preferred_work_setup: "any",
       salary_expectation_min: "",
       salary_expectation_max: "",
@@ -83,33 +83,22 @@ export default function PreferencesPage() {
   useEffect(() => {
     if (profile) {
       form.reset({
-        preferred_job_types: profile.preferred_job_types.join(", "),
-        preferred_locations: profile.preferred_locations.join(", "),
+        preferred_job_types: profile.preferred_job_types,
         preferred_work_setup: profile.preferred_work_setup,
         salary_expectation_min: profile.salary_expectation_min?.toString() || "",
         salary_expectation_max: profile.salary_expectation_max?.toString() || "",
-        salary_currency: (profile.salary_currency as "USD" | "AUD" | "EUR" | "GBP") || "USD",
+        salary_currency: (profile.salary_currency as "USD" | "PHP" | "AUD" | "INR" | "LKR" | "JPY" | "KRW" | "BRL" | "EUR" | "GBP" | "CAD" | "SGD" | "AED") || "USD",
       })
     }
   }, [profile, form])
 
   const onSubmit = (data: PreferencesFormData) => {
-    // Convert comma-separated strings to arrays
-    const jobTypes = data.preferred_job_types
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-    
-    const locations = data.preferred_locations
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-
     const payload: UpdatePreferencesRequest = {
-      preferred_job_types: jobTypes,
-      preferred_locations: locations,
+      preferred_job_types: data.preferred_job_types,
+      preferred_locations: [], // Empty array - location not collected
       preferred_work_setup: data.preferred_work_setup,
       salary_currency: data.salary_currency,
+      salary_period: SALARY_PERIOD, // Always annually
     }
 
     // Only include salary if both fields are filled
@@ -174,39 +163,47 @@ export default function PreferencesPage() {
               <FormField
                 control={form.control}
                 name="preferred_job_types"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormLabel>Job Types</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., full_time, part_time, contract"
-                        {...field}
-                      />
-                    </FormControl>
                     <FormDescription>
-                      Enter job types separated by commas (full_time, part_time, contract, internship)
+                      Select all job types you're interested in
                     </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Locations */}
-              <FormField
-                control={form.control}
-                name="preferred_locations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Locations</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., San Francisco, Remote, New York"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Enter locations separated by commas (max 10)
-                    </FormDescription>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      {JOB_TYPES.map((jobType) => (
+                        <FormField
+                          key={jobType.value}
+                          control={form.control}
+                          name="preferred_job_types"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={jobType.value}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(jobType.value)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, jobType.value])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== jobType.value
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal cursor-pointer">
+                                  {jobType.label}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -226,10 +223,11 @@ export default function PreferencesPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="remote">Remote</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                        <SelectItem value="onsite">On-site</SelectItem>
-                        <SelectItem value="any">Any</SelectItem>
+                        {WORK_SETUPS.map((setup) => (
+                          <SelectItem key={setup.value} value={setup.value}>
+                            {setup.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -241,66 +239,75 @@ export default function PreferencesPage() {
               />
 
               {/* Salary Range */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="salary_expectation_min"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Salary Min</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="60000"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="salary_expectation_max"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Salary Max</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="100000"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="salary_currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <div className="space-y-4">
+                <div>
+                  <FormLabel>Salary Expectations (Annual)</FormLabel>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    All salaries are annual for consistency across markets
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="salary_expectation_min"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Min</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
+                          <Input
+                            type="number"
+                            placeholder="60000"
+                            {...field}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="AUD">AUD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="GBP">GBP</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="salary_expectation_max"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="100000"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="salary_currency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Currency</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {CURRENCIES.map((currency) => (
+                              <SelectItem key={currency.value} value={currency.value}>
+                                {currency.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               <div className="text-xs text-muted-foreground">

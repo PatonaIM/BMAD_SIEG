@@ -77,15 +77,6 @@ function JobMatchCard({ job }: { job: JobMatch }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Match Score Progress */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Match Score</span>
-            <span className="text-sm text-muted-foreground">{job.match_score}%</span>
-          </div>
-          <Progress value={job.match_score} className="h-2" />
-        </div>
-
         {/* Collapsible Match Explanation */}
         <Collapsible open={isExpanded} onOpenChange={() => toggleExplanation(job.id)}>
           <CollapsibleTrigger asChild>

@@ -128,10 +128,9 @@ export default function JobsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="full_time">Full-time</SelectItem>
+                  <SelectItem value="permanent">Permanent</SelectItem>
                   <SelectItem value="part_time">Part-time</SelectItem>
                   <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="internship">Internship</SelectItem>
                 </SelectContent>
               </Select>
             </div>

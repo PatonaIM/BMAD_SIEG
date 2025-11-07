@@ -354,14 +354,13 @@ class ProfileService:
         # Job preferences (JSONB object)
         if candidate.job_preferences:
             prefs = candidate.job_preferences
-            if prefs.get("locations"):
-                score += Decimal("5.00")
+            # Removed locations check (deprecated field)
             if prefs.get("employment_types"):
-                score += Decimal("5.00")
+                score += Decimal("7.00")
             if prefs.get("work_setups"):
-                score += Decimal("5.00")
+                score += Decimal("7.00")
             if prefs.get("salary_min") and prefs.get("salary_max"):
-                score += Decimal("5.00")
+                score += Decimal("6.00")
 
         # Resume uploaded (check relationship)
         if candidate.resumes and len(candidate.resumes) > 0:

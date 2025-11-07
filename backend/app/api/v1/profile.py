@@ -57,8 +57,28 @@ async def get_profile(
         candidate_id=str(current_user.id)
     )
 
+    # Debug: log the job_preferences value
+    logger.info(
+        "get_profile_job_preferences",
+        candidate_id=str(current_user.id),
+        job_preferences=current_user.job_preferences
+    )
+
     # Return profile directly from current_user (already fetched with relationships)
-    return ProfileResponse.model_validate(current_user)
+    response = ProfileResponse.model_validate(current_user)
+    
+    # Debug: log the response data being sent to frontend
+    logger.info(
+        "get_profile_response",
+        candidate_id=str(current_user.id),
+        preferred_job_types=response.preferred_job_types,
+        preferred_work_setup=response.preferred_work_setup,
+        salary_expectation_min=response.salary_expectation_min,
+        salary_expectation_max=response.salary_expectation_max,
+        salary_currency=response.salary_currency
+    )
+    
+    return response
 
 
 @router.put("/skills", response_model=ProfileResponse)
@@ -144,8 +164,7 @@ async def update_preferences(
     """
     Update candidate job preferences.
 
-    Accepts flexible job preferences object with locations, employment types,
-    work setups, salary range, and role categories.
+    Accepts flattened preference fields from frontend and stores as JSONB.
     Profile completeness score is recalculated after update.
 
     **Authentication Required:** Bearer token (JWT)
@@ -153,14 +172,13 @@ async def update_preferences(
     **Request Body:**
     ```json
     {
-      "job_preferences": {
-        "locations": ["Remote Australia", "Sydney"],
-        "employment_types": ["permanent", "contract"],
-        "work_setups": ["remote", "hybrid"],
-        "salary_min": 120000,
-        "salary_max": 150000,
-        "role_categories": ["engineering", "quality_assurance"]
-      }
+      "preferred_job_types": ["Full Time", "Contract"],
+      "preferred_locations": [],
+      "preferred_work_setup": "remote",
+      "salary_expectation_min": 120000,
+      "salary_expectation_max": 150000,
+      "salary_currency": "USD",
+      "salary_period": "annually"
     }
     ```
 
@@ -171,8 +189,8 @@ async def update_preferences(
         candidate_id=str(current_user.id)
     )
 
-    # Convert Pydantic model to dict for JSONB storage
-    preferences_dict = request.job_preferences.model_dump(exclude_none=True)
+    # Transform flattened frontend format to JSONB structure
+    preferences_dict = request.to_job_preferences_jsonb()
 
     candidate = await profile_service.update_preferences(
         candidate_id=current_user.id,

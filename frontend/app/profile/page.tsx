@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
 import { User, FileText, Briefcase, Mail, Phone, Award, Target, AlertCircle, CheckCircle2 } from "lucide-react"
 import { useProfile } from "@/hooks/use-profile"
-import { calculateProfileCompleteness } from "@/lib/profile-utils"
+import { calculateProfileCompleteness, formatEnumArray, formatEnumValue } from "@/lib/profile-utils"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function ProfilePage() {
@@ -73,55 +73,9 @@ export default function ProfilePage() {
             </div>
             <Progress value={breakdown.total} className="h-2" />
           </div>
-          
-          {/* Detailed Breakdown */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2">
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Base Info</div>
-              <div className="flex items-center gap-2">
-                <Progress value={(breakdown.baseInfo / 20) * 100} className="h-1 flex-1" />
-                <span className="text-xs font-medium">{breakdown.baseInfo}/20%</span>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Phone</div>
-              <div className="flex items-center gap-2">
-                <Progress value={(breakdown.phone / 10) * 100} className="h-1 flex-1" />
-                <span className="text-xs font-medium">{breakdown.phone}/10%</span>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Skills</div>
-              <div className="flex items-center gap-2">
-                <Progress value={(breakdown.skills / 20) * 100} className="h-1 flex-1" />
-                <span className="text-xs font-medium">{breakdown.skills}/20%</span>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Experience</div>
-              <div className="flex items-center gap-2">
-                <Progress value={(breakdown.experience / 15) * 100} className="h-1 flex-1" />
-                <span className="text-xs font-medium">{breakdown.experience}/15%</span>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Preferences</div>
-              <div className="flex items-center gap-2">
-                <Progress value={(breakdown.preferences / 20) * 100} className="h-1 flex-1" />
-                <span className="text-xs font-medium">{breakdown.preferences}/20%</span>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">Resume</div>
-              <div className="flex items-center gap-2">
-                <Progress value={(breakdown.resume / 15) * 100} className="h-1 flex-1" />
-                <span className="text-xs font-medium">{breakdown.resume}/15%</span>
-              </div>
-            </div>
-          </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 pt-2">
             {breakdown.resume === 0 && (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/profile/resume">Upload Resume</Link>
@@ -229,24 +183,16 @@ export default function ProfilePage() {
               <div className="text-sm font-medium text-muted-foreground mb-1">Job Types</div>
               <div className="text-base">
                 {profile.preferred_job_types.length > 0 
-                  ? profile.preferred_job_types.join(", ") 
-                  : "Not set"}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Locations</div>
-              <div className="text-base">
-                {profile.preferred_locations.length > 0 
-                  ? profile.preferred_locations.join(", ") 
+                  ? formatEnumArray(profile.preferred_job_types)
                   : "Not set"}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Work Setup</div>
-              <div className="text-base capitalize">{profile.preferred_work_setup}</div>
+              <div className="text-base">{formatEnumValue(profile.preferred_work_setup)}</div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Salary Range</div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Salary Range (Annual)</div>
               <div className="text-base">
                 {profile.salary_expectation_min && profile.salary_expectation_max
                   ? `${profile.salary_currency} ${profile.salary_expectation_min.toLocaleString()} - ${profile.salary_expectation_max.toLocaleString()}`

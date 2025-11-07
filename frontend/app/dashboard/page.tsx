@@ -92,8 +92,8 @@ export default function DashboardPage() {
   // Extract recent applications (top 3)
   const recentApplications = data?.slice(0, 3) || [];
 
-  // Extract matched jobs from real API data
-  const matchedJobs = matchesData?.jobs || [];
+  // Extract matched jobs from real API data (limit to top 2 for dashboard)
+  const matchedJobs = matchesData?.jobs?.slice(0, 2) || [];
 
   // Calculate profile completion from real data
   const profileCompletion = profile 
@@ -383,7 +383,6 @@ export default function DashboardPage() {
                           {job.match_score}% Match
                         </Badge>
                       </div>
-                      <Progress value={job.match_score} className="h-2 mb-3" />
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{job.location}</span>
                         <span className="font-medium">{salaryDisplay}</span>

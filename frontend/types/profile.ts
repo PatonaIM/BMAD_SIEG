@@ -24,6 +24,7 @@ export interface ProfileResponse {
   salary_expectation_min?: number;
   salary_expectation_max?: number;
   salary_currency: string;
+  salary_period?: string; // 'monthly' | 'annually'
   profile_completeness_score: number;
   resume_id?: string | null;
   created_at: string;
@@ -47,6 +48,7 @@ export interface UpdatePreferencesRequest {
   salary_expectation_min?: number;
   salary_expectation_max?: number;
   salary_currency: string;
+  salary_period?: string; // 'monthly' | 'annually'
 }
 
 /**

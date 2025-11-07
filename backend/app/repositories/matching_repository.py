@@ -78,26 +78,26 @@ class MatchingRepository:
         if filters.get("preferred_locations"):
             locations = filters["preferred_locations"]
             query_parts.append(
-                "(jp.location = ANY(:preferred_locations) OR jp.work_setup = 'remote')"
+                "AND (jp.location = ANY(:preferred_locations) OR jp.work_setup = 'remote')"
             )
             params["preferred_locations"] = locations
 
         # Work setup filter
         if filters.get("preferred_work_setups"):
             work_setups = filters["preferred_work_setups"]
-            query_parts.append("jp.work_setup = ANY(:preferred_work_setups)")
+            query_parts.append("AND jp.work_setup = ANY(:preferred_work_setups)")
             params["preferred_work_setups"] = work_setups
 
         # Employment type filter
         if filters.get("preferred_employment_types"):
             employment_types = filters["preferred_employment_types"]
-            query_parts.append("jp.employment_type = ANY(:preferred_employment_types)")
+            query_parts.append("AND jp.employment_type = ANY(:preferred_employment_types)")
             params["preferred_employment_types"] = employment_types
 
         # Salary range overlap filter
         if filters.get("candidate_salary_min") and filters.get("candidate_salary_max"):
             query_parts.append(
-                "(jp.salary_max >= :candidate_salary_min AND jp.salary_min <= :candidate_salary_max)"
+                "AND (jp.salary_max >= :candidate_salary_min AND jp.salary_min <= :candidate_salary_max)"
             )
             params["candidate_salary_min"] = filters["candidate_salary_min"]
             params["candidate_salary_max"] = filters["candidate_salary_max"]
@@ -199,23 +199,23 @@ class MatchingRepository:
         if filters.get("preferred_locations"):
             locations = filters["preferred_locations"]
             query_parts.append(
-                "(jp.location = ANY(:preferred_locations) OR jp.work_setup = 'remote')"
+                "AND (jp.location = ANY(:preferred_locations) OR jp.work_setup = 'remote')"
             )
             params["preferred_locations"] = locations
 
         if filters.get("preferred_work_setups"):
             work_setups = filters["preferred_work_setups"]
-            query_parts.append("jp.work_setup = ANY(:preferred_work_setups)")
+            query_parts.append("AND jp.work_setup = ANY(:preferred_work_setups)")
             params["preferred_work_setups"] = work_setups
 
         if filters.get("preferred_employment_types"):
             employment_types = filters["preferred_employment_types"]
-            query_parts.append("jp.employment_type = ANY(:preferred_employment_types)")
+            query_parts.append("AND jp.employment_type = ANY(:preferred_employment_types)")
             params["preferred_employment_types"] = employment_types
 
         if filters.get("candidate_salary_min") and filters.get("candidate_salary_max"):
             query_parts.append(
-                "(jp.salary_max >= :candidate_salary_min AND jp.salary_min <= :candidate_salary_max)"
+                "AND (jp.salary_max >= :candidate_salary_min AND jp.salary_min <= :candidate_salary_max)"
             )
             params["candidate_salary_min"] = filters["candidate_salary_min"]
             params["candidate_salary_max"] = filters["candidate_salary_max"]

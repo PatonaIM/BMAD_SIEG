@@ -322,7 +322,7 @@ export default function ApplicationsPage() {
                   {hasInterviewResults && (
                     <div className="pt-2">
                       <Button variant="secondary" size="sm" asChild className="w-full sm:w-auto">
-                        <Link href={`/interview/results/${app.interview_id}`}>
+                        <Link href={`/interview/${app.interview_id}/results`}>
                           <CheckCircle2 className="h-4 w-4 mr-2" />
                           View Interview Results
                         </Link>

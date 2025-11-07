@@ -205,31 +205,31 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            <Button variant="outline" className="h-auto flex-col items-start p-4 gap-2 bg-transparent" asChild>
+            <Button variant="outline" className="h-auto flex-col items-start p-4 gap-2 bg-card hover:bg-accent/10 transition-colors" asChild>
               <Link href="/interview/practice">
-                <BrainCircuit className="h-5 w-5 text-accent" />
+                <BrainCircuit className="h-5 w-5 text-accent group-hover:text-accent" />
                 <div className="text-left">
-                  <div className="font-semibold">Mock Interview</div>
+                  <div className="font-semibold text-foreground">Mock Interview</div>
                   <div className="text-xs text-muted-foreground">Practice with AI</div>
                 </div>
               </Link>
             </Button>
 
-            <Button variant="outline" className="h-auto flex-col items-start p-4 gap-2 bg-transparent" asChild>
+            <Button variant="outline" className="h-auto flex-col items-start p-4 gap-2 bg-card hover:bg-primary/10 transition-colors" asChild>
               <Link href="/profile/resume">
-                <FileText className="h-5 w-5 text-primary" />
+                <FileText className="h-5 w-5 text-primary group-hover:text-primary" />
                 <div className="text-left">
-                  <div className="font-semibold">Resume Analysis</div>
+                  <div className="font-semibold text-foreground">Resume Analysis</div>
                   <div className="text-xs text-muted-foreground">Get AI feedback</div>
                 </div>
               </Link>
             </Button>
 
-            <Button variant="outline" className="h-auto flex-col items-start p-4 gap-2 bg-transparent" asChild>
+            <Button variant="outline" className="h-auto flex-col items-start p-4 gap-2 bg-card hover:bg-accent/10 transition-colors" asChild>
               <Link href="/jobs/matches">
-                <Target className="h-5 w-5 text-accent" />
+                <Target className="h-5 w-5 text-accent group-hover:text-accent" />
                 <div className="text-left">
-                  <div className="font-semibold">Job Matching</div>
+                  <div className="font-semibold text-foreground">Job Matching</div>
                   <div className="text-xs text-muted-foreground">Find perfect roles</div>
                 </div>
               </Link>
@@ -288,25 +288,33 @@ export default function DashboardPage() {
 
             {!isLoading && !isError && recentApplications.length > 0 && (
               <div className="space-y-4">
-                {recentApplications.map((app) => (
-                  <div key={app.id} className="flex items-start gap-4 p-4 rounded-lg border">
-                    <div className="flex-1 space-y-1">
-                      <div className="font-semibold">{app.job_posting.title}</div>
-                      <div className="text-sm text-muted-foreground">{app.job_posting.company}</div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className={getStatusColor(app.status)}>
-                          {getStatusIcon(app.status)}
-                          <span className="ml-1 capitalize">{app.status.replace(/_/g, " ")}</span>
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{formatAppliedDate(app.applied_at)}</span>
+                {recentApplications.map((app) => {
+                  // If interview is completed, link to results; otherwise link to job posting
+                  const hasInterviewResults = app.interview_id && app.interview?.status === 'completed';
+                  const viewUrl = hasInterviewResults 
+                    ? `/interview/${app.interview_id}/results`
+                    : `/jobs/${app.job_posting_id}`;
+                  
+                  return (
+                    <div key={app.id} className="flex items-start gap-4 p-4 rounded-lg border">
+                      <div className="flex-1 space-y-1">
+                        <div className="font-semibold">{app.job_posting.title}</div>
+                        <div className="text-sm text-muted-foreground">{app.job_posting.company}</div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className={getStatusColor(app.status)}>
+                            {getStatusIcon(app.status)}
+                            <span className="ml-1 capitalize">{app.status.replace(/_/g, " ")}</span>
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{formatAppliedDate(app.applied_at)}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-2">{getNextStepMessage(app.status)}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground mt-2">{getNextStepMessage(app.status)}</div>
+                      <Button size="sm" variant="ghost" asChild>
+                        <Link href={viewUrl}>View</Link>
+                      </Button>
                     </div>
-                    <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/applications/${app.id}`}>View</Link>
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

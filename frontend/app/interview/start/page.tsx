@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuthStore } from "@/src/features/auth/store/authStore"
-import { useLogout } from "@/src/features/auth/hooks/useAuth"
 import { useStartInterview } from "@/src/features/interview/hooks/useInterview"
 import { useApplication } from "@/hooks/use-application"
 import { BrainCircuit, Sparkles, CheckCircle2, Mic, MessageSquare, BarChart3, AlertCircle, Briefcase, Building2 } from "lucide-react"
@@ -121,7 +120,6 @@ export default function InterviewStartPage() {
   const applicationId = searchParams.get('application_id')
   
   const user = useAuthStore((state) => state.user)
-  const logout = useLogout()
   const { mutate: startInterview, isPending, isError, error } = useStartInterview()
   
   const { 
@@ -269,7 +267,7 @@ export default function InterviewStartPage() {
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button size="lg" onClick={handleBeginInterview} disabled={isPending} className="flex-1">
+              <Button size="lg" onClick={handleBeginInterview} disabled={isPending} className="w-full">
                 {isPending ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -284,9 +282,6 @@ export default function InterviewStartPage() {
                     }
                   </>
                 )}
-              </Button>
-              <Button variant="outline" onClick={logout} disabled={isPending}>
-                Sign Out
               </Button>
             </div>
           </CardContent>

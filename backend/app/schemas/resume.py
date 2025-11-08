@@ -85,3 +85,73 @@ class ResumeParsingResponse(BaseModel):
     parsing_status: str
     parsed_data: ResumeParsedDataSchema | None = None
     error_message: str | None = None
+
+
+# Story 4.10: Resume Upload & AI Evaluation Schemas
+
+from datetime import datetime
+
+
+class ResumeUploadResponse(BaseModel):
+    """
+    Schema for resume upload API response.
+
+    Attributes:
+        id: Resume UUID
+        file_name: Original filename
+        file_size: File size in bytes
+        uploaded_at: Upload timestamp
+        storage_url: Storage path
+        is_active: Whether this is the active resume
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    file_name: str
+    file_size: int
+    uploaded_at: datetime
+    storage_url: str = Field(alias="file_url")
+    is_active: bool
+
+
+class ResumeResponse(BaseModel):
+    """Schema for resume metadata in list/detail responses."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    file_name: str
+    file_size: int
+    uploaded_at: datetime
+    is_active: bool
+    parsing_status: str | None = None
+
+
+class ResumeAnalysisResponse(BaseModel):
+    """
+    Schema for resume analysis API response.
+
+    Attributes:
+        id: Analysis UUID
+        resume_id: UUID of analyzed resume
+        overall_score: Quality score (0-100)
+        strengths: Array of positive points
+        weaknesses: Array of improvement areas
+        suggestions: Array of actionable tips
+        keywords_missing: Array of missing industry keywords
+        analysis_model: AI model used
+        analyzed_at: Analysis timestamp
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    resume_id: UUID
+    overall_score: int
+    strengths: list[str]
+    weaknesses: list[str]
+    suggestions: list[str]
+    keywords_missing: list[str]
+    analysis_model: str
+    analyzed_at: datetime

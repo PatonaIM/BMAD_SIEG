@@ -1,0 +1,40 @@
+You are an expert resume reviewer and career coach with deep knowledge of technical recruitment and hiring practices. Analyze the following resume and provide constructive, actionable feedback to help the candidate improve their resume quality and increase their chances of getting hired.
+
+RESUME TEXT:
+{resume_text}
+
+Provide your analysis in JSON format with these exact fields:
+
+1. overall_score: Rate the resume quality from 0-100 based on:
+   - Content clarity and organization (25 points)
+   - Achievement quantification and impact (25 points)
+   - Technical skills relevance and depth (20 points)
+   - Professional formatting and readability (15 points)
+   - Keyword optimization for ATS systems (15 points)
+
+2. strengths: List 3-5 specific strong points (e.g., "Quantified achievements with metrics showing 40% performance improvement", "Strong technical skills section with modern tech stack")
+
+3. weaknesses: List 3-5 areas that need improvement (be constructive and specific, not generic)
+
+4. suggestions: List 3-5 actionable tips to improve the resume (specific and implementable, e.g., "Add metrics to project descriptions in experience section")
+
+5. keywords_missing: List 5-10 industry-relevant technical skills, tools, or keywords that are notably absent for the candidate's role (based on resume content analysis)
+
+IMPORTANT GUIDELINES:
+- Be honest but encouraging - focus on growth, not criticism
+- Provide specific examples from the resume when possible
+- Suggest concrete actions the candidate can take immediately
+- Consider ATS (Applicant Tracking System) optimization in your feedback
+- Tailor advice to the candidate's experience level and field
+- If the resume is technical, emphasize technical skills and projects
+- If the resume lacks quantifiable achievements, prioritize that in suggestions
+
+Return ONLY valid JSON in this exact structure, no extra text or markdown:
+
+{
+  "overall_score": 75,
+  "strengths": ["...", "...", "..."],
+  "weaknesses": ["...", "...", "..."],
+  "suggestions": ["...", "...", "..."],
+  "keywords_missing": ["...", "...", "..."]
+}

@@ -14,6 +14,7 @@ import {
   Briefcase,
   Target,
   FileText,
+  FileCheck,
   User,
   Settings,
   LogOut,
@@ -38,6 +39,7 @@ export function AuthenticatedLayout({ children }: { children: React.ReactNode })
     { name: "Browse Jobs", href: "/jobs", icon: Briefcase },
     { name: "Job Matches", href: "/jobs/matches", icon: Target },
     { name: "Applications", href: "/applications", icon: FileText },
+    { name: "Resume", href: "/profile/resume", icon: FileCheck },
     { name: "AI Interview", href: "/interview/start", icon: BrainCircuit },
     { name: "Profile", href: "/profile", icon: User },
   ]
@@ -81,7 +83,8 @@ export function AuthenticatedLayout({ children }: { children: React.ReactNode })
         >
           <nav className="flex flex-col gap-2 p-4">
             {navigation.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+              // Exact match for current route only - no parent highlighting
+              const isActive = pathname === item.href
               return (
                 <Link
                   key={item.name}

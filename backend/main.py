@@ -22,7 +22,7 @@ from app.core.exceptions import (
     OpenAIRateLimitException,
     ContextWindowExceededException,
 )
-from app.api.v1 import auth, interviews, realtime, videos, admin, job_postings, applications, profile, matching
+from app.api.v1 import auth, interviews, realtime, videos, admin, job_postings, applications, profile, matching, resumes
 
 # Configure structured logging
 structlog.configure(
@@ -89,6 +89,7 @@ app.include_router(job_postings.router, prefix="/api/v1")
 app.include_router(applications.router, prefix="/api/v1")
 app.include_router(profile.router, prefix="/api/v1")
 app.include_router(matching.router, prefix="/api/v1")
+app.include_router(resumes.router, prefix="/api/v1")
 
 
 # Error handlers for custom exceptions

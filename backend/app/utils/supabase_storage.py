@@ -14,7 +14,7 @@ class SupabaseStorageClient:
         """Initialize Supabase client with service role key."""
         self.client: Client = create_client(
             settings.supabase_url,
-            settings.supabase_service_key
+            settings.supabase_service_key.get_secret_value()
         )
         self.bucket_name = "interview-recordings"
 

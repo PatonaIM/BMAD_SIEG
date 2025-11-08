@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.candidate import Candidate
 from app.repositories.base import BaseRepository
@@ -20,6 +21,23 @@ class CandidateRepository(BaseRepository[Candidate]):
             db: Async database session
         """
         super().__init__(db, Candidate)
+
+    async def get_by_id(self, id: UUID) -> Candidate | None:
+        """
+        Retrieve a candidate by ID with resumes loaded.
+
+        Args:
+            id: UUID of the candidate
+
+        Returns:
+            Candidate instance if found, None otherwise
+        """
+        result = await self.db.execute(
+            select(Candidate)
+            .options(selectinload(Candidate.resumes))
+            .where(Candidate.id == id)
+        )
+        return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str) -> Candidate | None:
         """

@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
@@ -62,6 +62,9 @@ class Resume(Base):
 
     # Parsed content (JSONB for flexible structure)
     parsed_data = Column(JSONB, nullable=True)
+
+    # Active status (only one active resume per candidate)
+    is_active = Column(Boolean, default=True, nullable=False, server_default="true")
 
     # Relationships
     candidate = relationship("Candidate", back_populates="resumes")

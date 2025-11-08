@@ -97,6 +97,7 @@ class ProfileResponse(BaseModel):
     salary_period: str = "annually"
     
     profile_completeness_score: Decimal | None
+    resume_id: UUID | None = None
 
     @model_validator(mode='wrap')
     @classmethod
@@ -110,6 +111,11 @@ class ProfileResponse(BaseModel):
         if hasattr(data, 'job_preferences'):
             job_prefs = data.job_preferences or {}
             
+            # Get active resume ID if available
+            active_resume = None
+            if hasattr(data, 'resumes') and data.resumes:
+                active_resume = next((r.id for r in data.resumes if r.is_active), None)
+            
             # Create dict with all fields
             data_dict = {
                 'id': data.id,
@@ -119,6 +125,7 @@ class ProfileResponse(BaseModel):
                 'skills': data.skills,
                 'experience_years': data.experience_years,
                 'profile_completeness_score': data.profile_completeness_score,
+                'resume_id': active_resume,
                 # Flatten job_preferences
                 'preferred_job_types': job_prefs.get('employment_types', []),
                 'preferred_locations': job_prefs.get('locations', []),

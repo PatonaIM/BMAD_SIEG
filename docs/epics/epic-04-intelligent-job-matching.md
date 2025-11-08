@@ -193,6 +193,22 @@ Admin tooling for seeding embeddings
 
 ---
 
+### Story 4.10: Resume Upload & AI Evaluation
+Full-featured resume upload with instant AI feedback
+
+- PDF file upload with validation (5MB max, Supabase Storage)
+- `pdfplumber` text extraction from uploaded PDFs
+- AI-powered resume analysis (GPT-4o-mini): score, strengths, weaknesses, suggestions, missing keywords
+- FastAPI BackgroundTasks for async analysis (non-blocking)
+- Frontend drag-drop upload UI with progress indicators
+- Analysis results modal with color-coded scores and actionable feedback
+- Resume management: multiple versions, active/inactive, delete with cascade
+- Security: JWT authentication, candidate isolation, private storage bucket
+
+**Story File:** `docs/stories/4.10.resume-upload-ai-evaluation.md`
+
+---
+
 ## Acceptance Criteria (Epic Level)
 
 1. ✅ Candidates can create comprehensive profiles with skills, experience, and job preferences

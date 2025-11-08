@@ -180,6 +180,30 @@ class InterviewMessagesResponse(BaseModel):
     total_count: int
 
 
+class SkillAssessment(BaseModel):
+    """Individual skill assessment result."""
+    
+    skill_area: str = Field(..., description="Skill area assessed")
+    proficiency_level: str = Field(..., description="Proficiency: novice|intermediate|proficient|expert")
+    display_name: str = Field(..., description="Human-readable skill name")
+
+
+class InterviewHighlight(BaseModel):
+    """Positive moment from the interview."""
+    
+    title: str = Field(..., description="Short headline for the highlight")
+    description: str = Field(..., description="Brief description of what went well")
+    skill_area: str | None = Field(None, description="Related skill area")
+
+
+class GrowthArea(BaseModel):
+    """Area for improvement identified during interview."""
+    
+    skill_area: str = Field(..., description="Skill area to develop")
+    suggestion: str = Field(..., description="Specific improvement suggestion")
+    display_name: str = Field(..., description="Human-readable skill name")
+
+
 class InterviewCompleteResponse(BaseModel):
     """Schema for interview completion response."""
 
@@ -207,6 +231,20 @@ class InterviewCompleteResponse(BaseModel):
         default="Interview completed successfully",
         description="Completion confirmation message"
     )
+    
+    # Enhanced feedback fields
+    skill_assessments: list[SkillAssessment] = Field(
+        default_factory=list,
+        description="Detailed breakdown of skills assessed with proficiency levels"
+    )
+    highlights: list[InterviewHighlight] = Field(
+        default_factory=list,
+        description="Positive moments and strengths demonstrated during interview"
+    )
+    growth_areas: list[GrowthArea] = Field(
+        default_factory=list,
+        description="Areas for improvement with specific suggestions"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -217,7 +255,28 @@ class InterviewCompleteResponse(BaseModel):
                     "duration_seconds": 1845,
                     "questions_answered": 15,
                     "skill_boundaries_identified": 3,
-                    "message": "Interview completed successfully"
+                    "message": "Interview completed successfully",
+                    "skill_assessments": [
+                        {
+                            "skill_area": "react_hooks",
+                            "proficiency_level": "proficient",
+                            "display_name": "React Hooks"
+                        }
+                    ],
+                    "highlights": [
+                        {
+                            "title": "Strong React Fundamentals",
+                            "description": "Demonstrated solid understanding of component lifecycle",
+                            "skill_area": "react_fundamentals"
+                        }
+                    ],
+                    "growth_areas": [
+                        {
+                            "skill_area": "performance_optimization",
+                            "suggestion": "Consider learning more about React.memo and useMemo",
+                            "display_name": "Performance Optimization"
+                        }
+                    ]
                 }
             ]
         }

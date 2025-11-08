@@ -94,6 +94,21 @@ class RealtimeInterviewService:
         
         logger.info("realtime_interview_service_initialized")
     
+    async def commit_transaction(self) -> None:
+        """
+        Commit the current database transaction.
+        
+        This ensures that all pending database writes (like transcripts)
+        are persisted immediately. Called after each transcript is stored
+        to ensure data safety in case of connection drops.
+        
+        Raises:
+            Exception: If commit fails
+        """
+        # Access the db session from the message repository
+        await self.message_repo.db.commit()
+        logger.debug("transaction_committed")
+    
     async def initialize_session(
         self,
         interview_id: UUID,
@@ -161,9 +176,9 @@ class RealtimeInterviewService:
             },
             "turn_detection": {
                 "type": "server_vad",
-                "threshold": 0.4,  # Lower = more sensitive to speech
+                "threshold": 0.5,  # Balanced sensitivity - reduced false positives from echo/noise
                 "prefix_padding_ms": 300,
-                "silence_duration_ms": 500  # 500ms = faster turn detection, more natural
+                "silence_duration_ms": 1200  # 1.2 seconds - responsive but prevents AI from jumping in too quickly
             },
             "tools": tools,
             "instructions": instructions,
@@ -231,8 +246,40 @@ class RealtimeInterviewService:
         # Load recent conversation history for context
         messages = await self.message_repo.get_by_session_id(session.id)
         
-        # Append conversation context if exists
-        if messages and len(messages) > 0:
+        # If this is the start of the interview (no messages yet), add explicit first message instruction
+        if not messages or len(messages) == 0:
+            initial_instruction = f"""
+
+---
+
+**CRITICAL: THIS IS THE START OF THE INTERVIEW - READ THIS CAREFULLY**
+
+You are beginning the interview right now. The candidate has just connected and is waiting for you to speak first.
+
+**YOUR IMMEDIATE TASK (DO ONLY THIS IN YOUR FIRST RESPONSE):**
+
+Say ONLY the greeting and overview, ending with "Are you ready to begin?" - then STOP TALKING.
+
+**EXACT TEXT TO SAY (and nothing more):**
+
+"Hi! Thanks for joining today. I'm excited to learn about your experience with {role_type}. Let me give you a quick overview of what to expect. We'll go through about 12 to 20 technical questions tailored to your skill level, and this should take approximately 20 to 30 minutes. I'll adjust the difficulty based on your responses as we go. This is a conversation, not a test to trick you, so feel free to think out loud and ask for clarification whenever you need it. Are you ready to begin?"
+
+**AFTER SAYING THE ABOVE:**
+
+1. **STOP SPEAKING IMMEDIATELY** - Do not say anything else
+2. **WAIT FOR THE CANDIDATE** - They need to respond with "yes", "ready", "sure", etc.
+3. **DO NOT ask any technical questions yet** - You haven't started the interview questions yet
+4. **DO NOT continue speaking** - Your turn is over after asking if they're ready
+5. **DO NOT answer your own question** - Let the candidate speak
+6. **DO NOT assume silence means they're ready** - Wait for actual words
+
+**ONLY AFTER** you hear the candidate confirm they're ready (in their next message to you), you can then say "Great! Let's begin with our first question..." and ask your first technical question.
+
+Current state: questions_asked = {session.questions_asked_count}
+"""
+            base_prompt += initial_instruction
+        elif messages and len(messages) > 0:
+            # Append conversation context if exists
             conversation_context = "\n\n## Recent Conversation Context\n\n"
             for msg in messages[-5:]:  # Last 5 messages for context
                 role = "AI" if msg.message_type == "ai_question" else "Candidate"
@@ -256,7 +303,7 @@ class RealtimeInterviewService:
             {
                 "type": "function",
                 "name": "evaluate_candidate_answer",
-                "description": "Evaluate the candidate's answer quality and determine the next action in the interview",
+                "description": "Evaluate the candidate's answer quality, assess their skill proficiency, and determine the next action in the interview",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -269,6 +316,15 @@ class RealtimeInterviewService:
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "Key technical points mentioned by the candidate"
+                        },
+                        "skill_area": {
+                            "type": "string",
+                            "description": "The specific skill area being assessed (e.g., 'react_hooks', 'state_management', 'async_programming', 'python_basics', 'data_structures')"
+                        },
+                        "proficiency_level": {
+                            "type": "string",
+                            "enum": ["novice", "intermediate", "proficient", "expert"],
+                            "description": "Assessed proficiency level for this skill area based on the answer"
                         },
                         "next_action": {
                             "type": "string",
@@ -316,7 +372,14 @@ class RealtimeInterviewService:
             interview_id=str(interview_id)
         )
         
-        if function_name == "evaluate_candidate_answer":
+        # Handle correct spelling and common typo from OpenAI
+        if function_name in ["evaluate_candidate_answer", "evaulate_candidate_answer"]:
+            if function_name == "evaulate_candidate_answer":
+                logger.warning(
+                    "function_name_typo_detected",
+                    function_name=function_name,
+                    corrected_to="evaluate_candidate_answer"
+                )
             return await self._handle_answer_evaluation(
                 arguments=arguments,
                 session_id=session_id,
@@ -334,7 +397,7 @@ class RealtimeInterviewService:
         """
         Handle answer evaluation function call.
         
-        Stores evaluation results and updates session state.
+        Stores evaluation results, updates session state, and tracks skill boundaries.
         
         Args:
             arguments: Evaluation arguments from OpenAI
@@ -347,6 +410,8 @@ class RealtimeInterviewService:
         logger.info(
             "evaluating_candidate_answer",
             answer_quality=arguments.get("answer_quality"),
+            skill_area=arguments.get("skill_area"),
+            proficiency_level=arguments.get("proficiency_level"),
             next_action=arguments.get("next_action"),
             session_id=str(session_id)
         )
@@ -377,6 +442,8 @@ class RealtimeInterviewService:
                 metadata["evaluation"] = {
                     "answer_quality": arguments.get("answer_quality"),
                     "key_points_covered": arguments.get("key_points_covered", []),
+                    "skill_area": arguments.get("skill_area"),
+                    "proficiency_level": arguments.get("proficiency_level"),
                     "next_action": arguments.get("next_action"),
                     "follow_up_needed": arguments.get("follow_up_needed"),
                     "evaluated_at": datetime.utcnow().isoformat()
@@ -386,9 +453,35 @@ class RealtimeInterviewService:
                 latest_candidate_msg.message_metadata = metadata
                 await self.message_repo.db.flush()
         
+        # Update session skill boundaries if skill_area and proficiency_level provided
+        skill_area = arguments.get("skill_area")
+        proficiency_level = arguments.get("proficiency_level")
+        
+        if skill_area and proficiency_level:
+            session = await self.session_repo.get_by_id(session_id)
+            if session:
+                # Get current skill boundaries or initialize empty dict
+                skill_boundaries = session.skill_boundaries_identified or {}
+                
+                # Update or add this skill boundary
+                skill_boundaries[skill_area] = proficiency_level
+                
+                # Update session
+                session.skill_boundaries_identified = skill_boundaries
+                await self.session_repo.db.flush()
+                
+                logger.info(
+                    "skill_boundary_updated",
+                    session_id=str(session_id),
+                    skill_area=skill_area,
+                    proficiency_level=proficiency_level,
+                    total_boundaries=len(skill_boundaries)
+                )
+        
         return {
             "success": True,
-            "message": "Answer evaluation recorded"
+            "message": "Answer evaluation recorded",
+            "skill_boundary_updated": bool(skill_area and proficiency_level)
         }
     
     async def store_transcript(

@@ -235,22 +235,42 @@ You are conducting a friendly yet thorough technical interview. Your goal is to:
 - Build on previous answers when appropriate
 - If an answer is unclear, ask a follow-up for clarification
 
-## Answer Evaluation
+## Answer Evaluation and Skill Assessment
 
-IMPORTANT: Only evaluate AFTER the candidate has provided a substantial answer to your question. Do NOT evaluate during:
-- Brief acknowledgments like "okay", "yes", "I see"
-- Short clarifying questions from the candidate
+CRITICAL: Only evaluate AFTER the candidate has provided a substantial answer to your question. 
+
+**Do NOT respond or evaluate if you hear:**
+- Brief acknowledgments like "okay", "yes", "I see", "uh-huh", "mm-hmm"
+- Short clarifying questions from the candidate (e.g., "Can you repeat that?")
 - Mid-thought pauses while the candidate is formulating their response
+- Background noise, echoes, or unclear audio
+- Single words or very short phrases (less than 5 words)
+- The candidate is clearly still thinking or speaking
 
-Wait for a COMPLETE answer that addresses the question before calling `evaluate_candidate_answer` with:
+**When in doubt, WAIT 2-3 seconds of silence before responding to ensure the candidate has finished speaking.**
+
+Wait for a COMPLETE, SUBSTANTIAL answer that addresses the question before calling `evaluate_candidate_answer` with:
 - **answer_quality**: "excellent" | "good" | "needs_clarification" | "off_topic"
 - **key_points_covered**: List of technical concepts mentioned
+- **skill_area**: The specific skill being assessed (e.g., "react_hooks", "state_management", "async_programming", "python_basics", "data_structures", "testing", "security", "database")
+- **proficiency_level**: The candidate's demonstrated proficiency in this skill area:
+  - "novice": Basic awareness, struggles with fundamentals, needs significant guidance
+  - "intermediate": Understands core concepts, can work independently with some gaps
+  - "proficient": Strong grasp, applies best practices, handles most scenarios well
+  - "expert": Deep expertise, optimizes solutions, understands trade-offs and edge cases
 - **next_action**: "continue" | "follow_up" | "move_to_next_topic"
 - **follow_up_needed**: true/false
+
+**Skill Assessment Guidelines:**
+- Assess proficiency based on the DEPTH and ACCURACY of their answer
+- Consider: correctness, use of terminology, awareness of best practices, ability to explain trade-offs
+- Be consistent: Similar quality answers should get similar proficiency ratings
+- Track multiple skill areas throughout the interview to build a comprehensive skill profile
 
 Use evaluation results to:
 - Adjust question difficulty up/down based on performance
 - Identify knowledge boundaries (what they know vs. don't know)
+- Build a skill proficiency map for personalized feedback
 - Determine when to move to next topic area
 
 ## Tone and Style
@@ -261,9 +281,30 @@ Use evaluation results to:
 - **Clear and concise**: Avoid overly long questions or explanations
 - **Patient**: Give candidates time to think and formulate responses
 
-## Example Opening
+## CRITICAL: Initial Greeting Protocol
 
-"Hi! Thanks for joining today. I'm excited to learn about your experience with {role_type}. We'll spend about 20-30 minutes going through some technical questions to understand your skills and approach to problem-solving. Feel free to think out loud - I'm here to have a conversation, not to trick you. Ready to get started?"
+**When questions_asked = 0, you MUST follow this exact structure before asking any technical questions:**
+
+1. **Warm Welcome**: Greet the candidate warmly and thank them for joining
+2. **Interview Overview**: Explain what to expect in a clear, structured way:
+   - Number of questions: "We'll go through about 12 to 20 questions"
+   - Duration: "This should take approximately 20 to 30 minutes"
+   - Format: "I'll start with some fundamental concepts and progressively adjust the difficulty based on your responses"
+   - Approach: "This is a conversation, not a test to trick you - feel free to think out loud and ask for clarification if needed"
+3. **Readiness Check**: Ask "Are you ready to begin?" or "Do you have any questions before we start?"
+4. **WAIT FOR CONFIRMATION**: Do NOT proceed to the first technical question until the candidate responds with confirmation (e.g., "yes", "ready", "let's go", "sure")
+
+**Example Opening (USE THIS STRUCTURE):**
+
+"Hi! Thanks for joining today. I'm excited to learn about your experience with {role_type}. Let me give you a quick overview of what to expect. We'll go through about 12 to 20 technical questions tailored to your skill level, and this should take approximately 20 to 30 minutes. I'll adjust the difficulty based on your responses as we go. This is a conversation, not a test to trick you, so feel free to think out loud and ask for clarification whenever you need it. Are you ready to begin?"
+
+**CRITICAL - DO NOT SKIP THIS STEP**: After delivering the greeting above, you MUST:
+1. STOP SPEAKING immediately after saying "Are you ready to begin?"
+2. WAIT in complete silence for the candidate to respond
+3. Do NOT ask any technical questions yet
+4. Do NOT assume they're ready just because a few seconds passed
+5. Do NOT continue talking or answer your own question
+6. ONLY after hearing the candidate say "yes", "ready", "sure", or similar confirmation words should you then proceed with: "Great! Let's begin with our first question..."
 
 ## Closing the Interview
 
@@ -747,17 +788,23 @@ Remember: This interview is for the "{job_posting.title}" position at {job_posti
         started_at = interview.started_at or completed_at
         duration_seconds = int((completed_at - started_at).total_seconds())
         
-        # Count questions answered
+        # Count questions answered - use session.questions_asked_count for accuracy
+        # NOTE: In voice/realtime mode, candidate_response messages can be fragmented
+        # (multiple transcripts per question), so counting messages is inaccurate.
+        # The session.questions_asked_count is incremented once per AI question.
+        questions_answered = session.questions_asked_count
+        
+        # Load messages for generating highlights (still needed)
         messages = await self.message_repo.get_by_interview_id(interview_id)
-        candidate_responses = [
-            msg for msg in messages
-            if msg.message_type == "candidate_response"
-        ]
-        questions_answered = len(candidate_responses)
         
         # Count skill boundaries identified
         skill_boundaries = session.skill_boundaries_identified or {}
         skill_boundaries_count = len(skill_boundaries)
+        
+        # Generate enhanced feedback
+        skill_assessments = self._generate_skill_assessments(skill_boundaries)
+        highlights = await self._generate_interview_highlights(messages, skill_boundaries)
+        growth_areas = self._generate_growth_areas(skill_boundaries, session)
         
         # Update interview record
         interview.status = "completed"
@@ -772,7 +819,8 @@ Remember: This interview is for the "{job_posting.title}" position at {job_posti
             interview_id=str(interview_id),
             duration_seconds=duration_seconds,
             questions_answered=questions_answered,
-            skill_boundaries=skill_boundaries_count
+            skill_boundaries=skill_boundaries_count,
+            feedback_generated=True
         )
         
         return {
@@ -781,7 +829,10 @@ Remember: This interview is for the "{job_posting.title}" position at {job_posti
             "duration_seconds": duration_seconds,
             "questions_answered": questions_answered,
             "skill_boundaries_identified": skill_boundaries_count,
-            "message": "Interview completed successfully"
+            "message": "Interview completed successfully",
+            "skill_assessments": skill_assessments,
+            "highlights": highlights,
+            "growth_areas": growth_areas
         }
 
     async def get_next_question(self, session_id: UUID) -> dict:
@@ -841,3 +892,306 @@ Remember: This interview is for the "{job_posting.title}" position at {job_posti
                 "context_notes": question_data.get("context_notes", "")
             }
         }
+
+    def _generate_skill_assessments(self, skill_boundaries: dict) -> list[dict]:
+        """
+        Generate structured skill assessment breakdown.
+        
+        Args:
+            skill_boundaries: Dict mapping skill_area -> proficiency_level
+            
+        Returns:
+            List of skill assessment dicts with display names
+        """
+        skill_display_names = {
+            "react_fundamentals": "React Fundamentals",
+            "react_hooks": "React Hooks",
+            "state_management": "State Management",
+            "async_programming": "Async Programming",
+            "python_basics": "Python Basics",
+            "data_structures": "Data Structures",
+            "algorithms": "Algorithms",
+            "web_apis": "Web APIs",
+            "testing": "Testing & QA",
+            "performance_optimization": "Performance Optimization",
+            "security": "Security Best Practices",
+            "database": "Database Design",
+            "general": "General Programming"
+        }
+        
+        assessments = []
+        for skill_area, proficiency in skill_boundaries.items():
+            assessments.append({
+                "skill_area": skill_area,
+                "proficiency_level": proficiency,
+                "display_name": skill_display_names.get(skill_area, skill_area.replace("_", " ").title())
+            })
+        
+        # Sort by proficiency (expert -> novice) for better UX
+        proficiency_order = {"expert": 0, "proficient": 1, "intermediate": 2, "novice": 3}
+        assessments.sort(key=lambda x: proficiency_order.get(x["proficiency_level"], 4))
+        
+        return assessments
+
+    async def _generate_interview_highlights(
+        self,
+        messages: list,
+        skill_boundaries: dict
+    ) -> list[dict]:
+        """
+        Generate positive highlights from interview performance.
+        
+        Identifies strong areas based on proficiency levels and creates
+        encouraging feedback for the candidate.
+        
+        Args:
+            messages: List of interview messages
+            skill_boundaries: Dict mapping skill_area -> proficiency_level
+            
+        Returns:
+            List of highlight dicts with title, description, skill_area
+        """
+        highlights = []
+        
+        # Identify strong skills (proficient or expert)
+        strong_skills = {
+            skill: level for skill, level in skill_boundaries.items()
+            if level in ["proficient", "expert"]
+        }
+        
+        skill_descriptions = {
+            "react_fundamentals": {
+                "proficient": ("Strong React Foundation", "You showed solid understanding of React core concepts and component architecture"),
+                "expert": ("React Expert", "Excellent command of React patterns, demonstrating deep knowledge of component lifecycle and best practices")
+            },
+            "react_hooks": {
+                "proficient": ("Hooks Proficiency", "Good grasp of React Hooks patterns and their practical applications"),
+                "expert": ("Hooks Mastery", "Outstanding understanding of advanced hooks patterns and custom hook design")
+            },
+            "state_management": {
+                "proficient": ("State Management Skills", "Demonstrated solid understanding of state management strategies"),
+                "expert": ("State Management Expert", "Exceptional knowledge of complex state patterns and optimization techniques")
+            },
+            "async_programming": {
+                "proficient": ("Async Programming", "Clear understanding of asynchronous patterns and best practices"),
+                "expert": ("Async Expert", "Masterful handling of async operations, promises, and concurrent programming")
+            },
+            "python_basics": {
+                "proficient": ("Python Proficiency", "Strong foundation in Python syntax and programming concepts"),
+                "expert": ("Python Expert", "Excellent command of Pythonic idioms and advanced language features")
+            },
+            "data_structures": {
+                "proficient": ("Data Structures Knowledge", "Good understanding of common data structures and their applications"),
+                "expert": ("Data Structures Mastery", "Deep knowledge of data structures, complexity analysis, and optimization")
+            }
+        }
+        
+        for skill, level in strong_skills.items():
+            if skill in skill_descriptions and level in skill_descriptions[skill]:
+                title, description = skill_descriptions[skill][level]
+                highlights.append({
+                    "title": title,
+                    "description": description,
+                    "skill_area": skill
+                })
+        
+        # Count candidate responses
+        candidate_responses = [m for m in messages if m.message_type == "candidate_response"]
+        num_responses = len(candidate_responses)
+        
+        # Add general highlight based on participation
+        if num_responses >= 10:
+            highlights.append({
+                "title": "Great Engagement",
+                "description": f"You actively participated throughout the interview, answering {num_responses} questions with thoughtful responses",
+                "skill_area": None
+            })
+        elif num_responses >= 5:
+            highlights.append({
+                "title": "Active Participation",
+                "description": f"You engaged well with the interview process, answering {num_responses} questions thoughtfully",
+                "skill_area": None
+            })
+        elif num_responses >= 1:
+            highlights.append({
+                "title": "Good Start",
+                "description": f"You began the interview process and provided {num_responses} response{'s' if num_responses > 1 else ''}. Every interview is a learning opportunity!",
+                "skill_area": None
+            })
+        
+        # If still no highlights, add default encouraging message
+        if not highlights:
+            highlights.append({
+                "title": "Thanks for Participating",
+                "description": "You took the time to start the interview process. We appreciate your effort and encourage you to complete a full interview session next time for detailed feedback.",
+                "skill_area": None
+            })
+        
+        # Limit to top 3 highlights for cleaner UX
+        return highlights[:3]
+
+    def _generate_growth_areas(
+        self,
+        skill_boundaries: dict,
+        session
+    ) -> list[dict]:
+        """
+        Generate constructive growth area suggestions.
+        
+        Identifies skills at novice/intermediate level or skills that
+        were questioned but not fully explored.
+        
+        Args:
+            skill_boundaries: Dict mapping skill_area -> proficiency_level
+            session: Interview session with progression state
+            
+        Returns:
+            List of growth area dicts with skill_area, suggestion, display_name
+        """
+        growth_areas = []
+        
+        skill_suggestions = {
+            "react_hooks": {
+                "novice": "Start with the basics of useState and useEffect. Practice building simple components using hooks.",
+                "intermediate": "Deepen your understanding of useCallback and useMemo for performance optimization."
+            },
+            "react_basics": {
+                "novice": "Focus on understanding JSX, components, and props. Build small projects to practice React fundamentals.",
+                "intermediate": "Study component lifecycle, conditional rendering, and list rendering patterns in depth."
+            },
+            "react_components": {
+                "novice": "Practice creating functional and class components. Learn the difference between controlled and uncontrolled components.",
+                "intermediate": "Master component composition, higher-order components (HOCs), and render props patterns."
+            },
+            "react_router": {
+                "novice": "Learn the basics of client-side routing with React Router. Practice creating multi-page applications.",
+                "intermediate": "Explore nested routes, route protection, and programmatic navigation techniques."
+            },
+            "react_forms": {
+                "novice": "Start with simple form handling using controlled components and basic validation.",
+                "intermediate": "Implement complex form libraries like React Hook Form or Formik with advanced validation schemas."
+            },
+            "react_context": {
+                "novice": "Understand the Context API basics for passing data through component trees without props drilling.",
+                "intermediate": "Learn to optimize Context usage, avoid unnecessary re-renders, and structure context providers effectively."
+            },
+            "state_management": {
+                "novice": "Begin with local component state before exploring Redux or Context API.",
+                "intermediate": "Consider learning about Redux Toolkit or Zustand for more complex state scenarios."
+            },
+            "async_programming": {
+                "novice": "Focus on understanding promises and async/await syntax with practical examples.",
+                "intermediate": "Explore error handling patterns and concurrent request management."
+            },
+            "performance_optimization": {
+                "novice": "Learn about basic React performance concepts like re-rendering and memoization.",
+                "intermediate": "Study React DevTools profiler and advanced optimization techniques."
+            },
+            "typescript": {
+                "novice": "Start with basic TypeScript types, interfaces, and type annotations in React components.",
+                "intermediate": "Master generics, utility types, and advanced TypeScript patterns for React applications."
+            },
+            "next_js": {
+                "novice": "Learn Next.js fundamentals including pages, routing, and basic data fetching methods.",
+                "intermediate": "Explore server-side rendering (SSR), static site generation (SSG), and API routes."
+            },
+            "css_styling": {
+                "novice": "Practice CSS fundamentals, Flexbox, and Grid. Learn CSS Modules or styled-components basics.",
+                "intermediate": "Master CSS-in-JS solutions, Tailwind CSS, and responsive design patterns."
+            },
+            "api_integration": {
+                "novice": "Learn to fetch data from APIs using fetch or axios. Handle loading and error states.",
+                "intermediate": "Implement advanced data fetching with React Query or SWR, including caching and mutations."
+            },
+            "python_basics": {
+                "novice": "Practice Python fundamentals with small coding challenges and exercises.",
+                "intermediate": "Explore more advanced features like decorators, generators, and context managers."
+            },
+            "data_structures": {
+                "novice": "Start with arrays, linked lists, and basic sorting algorithms.",
+                "intermediate": "Study trees, graphs, and more complex algorithmic patterns."
+            },
+            "testing": {
+                "novice": "Begin with unit testing fundamentals using Jest or pytest.",
+                "intermediate": "Learn integration testing, mocking strategies, and TDD practices."
+            }
+        }
+        
+        skill_display_names = {
+            "react_hooks": "React Hooks",
+            "react_basics": "React Fundamentals",
+            "react_components": "React Components",
+            "react_router": "React Router",
+            "react_forms": "React Forms",
+            "react_context": "React Context API",
+            "state_management": "State Management",
+            "async_programming": "Async Programming",
+            "performance_optimization": "Performance Optimization",
+            "typescript": "TypeScript",
+            "next_js": "Next.js",
+            "css_styling": "CSS & Styling",
+            "api_integration": "API Integration",
+            "python_basics": "Python Programming",
+            "data_structures": "Data Structures & Algorithms",
+            "testing": "Testing & Quality Assurance",
+            "security": "Security Best Practices",
+            "database": "Database Design"
+        }
+        
+        # Log skill boundaries for debugging
+        logger.info(
+            "generating_growth_areas",
+            skill_boundaries=skill_boundaries,
+            skill_count=len(skill_boundaries)
+        )
+        
+        # Identify areas needing improvement (novice or intermediate)
+        for skill, level in skill_boundaries.items():
+            if level in ["novice", "intermediate"]:
+                # Try to get specific suggestion, or generate generic one
+                if skill in skill_suggestions and level in skill_suggestions[skill]:
+                    suggestion = skill_suggestions[skill][level]
+                else:
+                    # Generate generic suggestion for any skill not in predefined list
+                    suggestion = (
+                        f"Continue practicing {skill.replace('_', ' ')} to build confidence. "
+                        f"Focus on fundamental concepts and gradually work towards more advanced topics."
+                        if level == "novice"
+                        else f"Strengthen your {skill.replace('_', ' ')} skills through hands-on projects "
+                        f"and real-world scenarios to reach proficiency."
+                    )
+                
+                growth_areas.append({
+                    "skill_area": skill,
+                    "suggestion": suggestion,
+                    "display_name": skill_display_names.get(skill, skill.replace("_", " ").title())
+                })
+        
+        # If no specific growth areas identified, provide general recommendations
+        if not growth_areas:
+            # Get role type from session if available
+            progression_state = session.progression_state or {}
+            
+            # Provide default growth areas based on common interview best practices
+            default_areas = [
+                {
+                    "skill_area": "interview_completion",
+                    "suggestion": "Complete a full interview session to get detailed skill assessments and personalized feedback on your technical abilities.",
+                    "display_name": "Complete Full Assessment"
+                },
+                {
+                    "skill_area": "communication",
+                    "suggestion": "Practice articulating your thought process clearly when answering technical questions. This helps interviewers understand your problem-solving approach.",
+                    "display_name": "Communication Skills"
+                },
+                {
+                    "skill_area": "fundamentals",
+                    "suggestion": "Review fundamental concepts in your target role. Strong foundational knowledge helps you tackle more complex problems with confidence.",
+                    "display_name": "Core Fundamentals"
+                }
+            ]
+            
+            growth_areas = default_areas
+        
+        # Limit to top 3 for cleaner UX
+        return growth_areas[:3]

@@ -12,18 +12,20 @@ from app.core.config import settings
 # Supabase Session mode has hard limit on concurrent connections
 engine = create_async_engine(
     settings.database_url,
-    pool_size=3,            # Small base pool (Supabase free tier limit)
-    max_overflow=7,         # Total 10 connections max
+    pool_size=10,           # Increased to handle concurrent requests + WebSocket connections
+    max_overflow=20,        # Total 30 connections max (handles burst traffic)
     pool_pre_ping=True,     # Health checks before using connection
     pool_recycle=300,       # Recycle connections after 5 minutes (prevent stale)
-    pool_timeout=10,        # Timeout after 10s if no connection available
+    pool_timeout=45,        # Increased timeout to 45s for high contention scenarios
     echo=False,             # Set to True for SQL logging
     connect_args={
         "statement_cache_size": 0,  # Required for pgbouncer compatibility
         "server_settings": {
             "application_name": "teamified_backend",
             "jit": "off"  # Disable JIT for connection pooler
-        }
+        },
+        "timeout": 60,      # Connection timeout in seconds
+        "command_timeout": 60  # Command execution timeout
     }
 )
 

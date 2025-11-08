@@ -67,43 +67,6 @@ export default function TechCheckPage() {
     setShowVideoConsentModal(true);
   }, []);
 
-  // Handle video consent decision
-  const handleVideoConsent = useCallback(async (consent: boolean) => {
-    setShowVideoConsentModal(false);
-    
-    // Submit consent to backend
-    if (sessionId && sessionId !== 'preview') {
-      try {
-        // Use window.ENV only in client-side callback (not during render)
-        const apiUrl = (window as any).ENV?.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
-        
-        await fetch(`${apiUrl}/api/v1/interviews/${sessionId}/consent`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(localStorage.getItem('auth_token') && {
-              Authorization: `Bearer ${localStorage.getItem('auth_token')}`
-            })
-          },
-          body: JSON.stringify({ video_recording_consent: consent })
-        })
-        
-        console.log(`✅ Video consent ${consent ? 'granted' : 'denied'}`)
-      } catch (error) {
-        console.error('Failed to submit video consent:', error)
-      }
-    }
-    
-    // After consent, proceed to start interview
-    await startInterview();
-  }, [sessionId]);
-
-  // Handle go back to tech check from consent modal
-  const handleGoBackToTechCheck = useCallback(() => {
-    setShowVideoConsentModal(false);
-    // Keep the test results, user can review or re-test
-  }, []);
-
   // Handle start interview
   const startInterview = useCallback(async () => {
     if (!sessionId || sessionId === 'preview') {
@@ -112,7 +75,7 @@ export default function TechCheckPage() {
       return;
     }
 
-    setIsSubmitting(true);
+    // Note: isSubmitting is already set to true by handleVideoConsent
 
     try {
       // Gather tech check metadata
@@ -164,10 +127,43 @@ export default function TechCheckPage() {
     router
   ]);
 
-  // Handle reset
-  const handleReset = useCallback(() => {
-    setAudioTestPassed(false);
-    setCameraTestPassed(false);
+  // Handle video consent decision
+  const handleVideoConsent = useCallback(async (consent: boolean) => {
+    // Set submitting state BEFORE processing to show loading UI
+    setIsSubmitting(true);
+    
+    // Submit consent to backend
+    if (sessionId && sessionId !== 'preview') {
+      try {
+        // Use window.ENV only in client-side callback (not during render)
+        const apiUrl = (window as any).ENV?.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+        
+        await fetch(`${apiUrl}/api/v1/interviews/${sessionId}/consent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(localStorage.getItem('auth_token') && {
+              Authorization: `Bearer ${localStorage.getItem('auth_token')}`
+            })
+          },
+          body: JSON.stringify({ video_recording_consent: consent })
+        })
+        
+        console.log(`✅ Video consent ${consent ? 'granted' : 'denied'}`)
+      } catch (error) {
+        console.error('Failed to submit video consent:', error)
+      }
+    }
+    
+    // After consent, proceed to start interview (which navigates away)
+    await startInterview();
+    // Modal will stay open with loading state until navigation completes
+  }, [sessionId, startInterview]);
+
+  // Handle go back to tech check from consent modal
+  const handleGoBackToTechCheck = useCallback(() => {
+    setShowVideoConsentModal(false);
+    // Keep the test results, user can review or re-test
   }, []);
 
   // Don't render until mounted to avoid hydration mismatch
@@ -188,7 +184,7 @@ export default function TechCheckPage() {
         open={showVideoConsentModal}
         onConsent={handleVideoConsent}
         onGoBack={handleGoBackToTechCheck}
-        isSubmitting={false}
+        isSubmitting={isSubmitting}
       />
       
       <div className="max-w-5xl mx-auto space-y-6">
@@ -198,41 +194,80 @@ export default function TechCheckPage() {
           <p className="text-gray-600 dark:text-gray-400">
             Test your audio and camera to ensure everything works properly
           </p>
+          <Alert className="mt-4 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              <strong>Important:</strong> You must enable and confirm both your microphone and camera before you can proceed to the interview.
+            </AlertDescription>
+          </Alert>
         </div>
 
         {/* Progress Indicator */}
         <Card className="p-4">
-          <div className="flex items-center justify-center gap-4">
-            {/* Audio Step */}
-            <div className="flex items-center gap-2">
-              <div className={`
-                flex items-center justify-center w-8 h-8 rounded-full transition-colors
-                ${audioTestPassed ? 'bg-green-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-600'}
-              `}>
-                {audioTestPassed ? <Check className="h-4 w-4" /> : '1'}
+          <div className="space-y-3">
+            <p className="text-center text-sm font-medium text-gray-700 dark:text-gray-300">
+              Complete both steps to continue:
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              {/* Audio Step */}
+              <div className="flex items-center gap-2">
+                <div className={`
+                  flex items-center justify-center w-8 h-8 rounded-full transition-colors
+                  ${audioTestPassed ? 'bg-green-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-600'}
+                `}>
+                  {audioTestPassed ? <Check className="h-4 w-4" /> : '1'}
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-sm font-medium ${audioTestPassed ? 'text-green-600 dark:text-green-400' : ''}`}>
+                    Microphone
+                  </span>
+                  {!audioTestPassed && (
+                    <span className="text-xs text-gray-500">Confirm audio quality</span>
+                  )}
+                </div>
               </div>
-              <span className={`text-sm font-medium ${audioTestPassed ? 'text-green-600 dark:text-green-400' : ''}`}>
-                Microphone
-              </span>
-            </div>
 
-            {/* Divider */}
-            <div className="h-0.5 w-12 bg-gray-300 dark:bg-gray-700" />
+              {/* Divider */}
+              <div className="h-0.5 w-12 bg-gray-300 dark:bg-gray-700" />
 
-            {/* Camera Step */}
-            <div className="flex items-center gap-2">
-              <div className={`
-                flex items-center justify-center w-8 h-8 rounded-full transition-colors
-                ${cameraTestPassed ? 'bg-green-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-600'}
-              `}>
-                {cameraTestPassed ? <Check className="h-4 w-4" /> : '2'}
+              {/* Camera Step */}
+              <div className="flex items-center gap-2">
+                <div className={`
+                  flex items-center justify-center w-8 h-8 rounded-full transition-colors
+                  ${cameraTestPassed ? 'bg-green-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-600'}
+                `}>
+                  {cameraTestPassed ? <Check className="h-4 w-4" /> : '2'}
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-sm font-medium ${cameraTestPassed ? 'text-green-600 dark:text-green-400' : ''}`}>
+                    Camera
+                  </span>
+                  {!cameraTestPassed && (
+                    <span className="text-xs text-gray-500">Confirm camera quality</span>
+                  )}
+                </div>
               </div>
-              <span className={`text-sm font-medium ${cameraTestPassed ? 'text-green-600 dark:text-green-400' : ''}`}>
-                Camera
-              </span>
             </div>
           </div>
         </Card>
+
+        {/* Instructions when tests incomplete */}
+        {(!audioTestPassed || !cameraTestPassed) && (
+          <Alert className="border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30">
+            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <strong>Next steps:</strong>
+              <ul className="mt-2 space-y-1 text-sm">
+                {!audioTestPassed && (
+                  <li>• Enable your microphone and click "Confirm Audio Quality"</li>
+                )}
+                {!cameraTestPassed && (
+                  <li>• Enable your camera and click "Confirm Camera Quality"</li>
+                )}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Success Message and Continue Button - shown when both tests pass */}
         {audioTestPassed && cameraTestPassed && (
@@ -255,7 +290,7 @@ export default function TechCheckPage() {
                       All Checks Passed!
                     </h3>
                     <p className="text-sm text-green-800 dark:text-green-200 mt-1">
-                      Your audio and camera are working perfectly. You're ready to start the interview.
+                      You have successfully confirmed both your microphone and camera. You're ready to start the interview.
                     </p>
                   </div>
                 </div>

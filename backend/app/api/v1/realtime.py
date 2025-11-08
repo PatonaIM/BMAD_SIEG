@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import time
+from datetime import datetime
 from typing import Dict
 from uuid import UUID
 
@@ -263,6 +264,17 @@ async def realtime_connect(
         # Update interview status to in_progress if needed
         if interview.status == "scheduled":
             await interview_repo.update_status(interview_id, "in_progress")
+            # Set started_at timestamp for duration calculation
+            interview.started_at = datetime.utcnow()
+            await interview_repo.update(interview)
+            await db.commit()
+            
+            logger.info(
+                "interview_started",
+                interview_id=str(interview_id),
+                started_at=interview.started_at.isoformat(),
+                correlation_id=correlation_id
+            )
         
         # Initialize services
         session_repo = InterviewSessionRepository(db)
@@ -453,6 +465,40 @@ async def realtime_connect(
                 pass
         
     finally:
+        # CRITICAL: Commit any pending transcripts before cleanup
+        # This is a safety net to catch any uncommitted transactions
+        # Check if there are actually pending changes before committing
+        try:
+            if db.in_transaction():
+                logger.info(
+                    "committing_pending_transcripts_on_cleanup",
+                    interview_id=str(interview_id),
+                    correlation_id=correlation_id
+                )
+                await db.commit()
+                logger.info(
+                    "committed_pending_transcripts_on_cleanup",
+                    interview_id=str(interview_id),
+                    correlation_id=correlation_id
+                )
+            else:
+                logger.debug(
+                    "no_pending_transactions_on_cleanup",
+                    interview_id=str(interview_id),
+                    correlation_id=correlation_id
+                )
+        except Exception as commit_error:
+            logger.error(
+                "failed_to_commit_on_cleanup",
+                error=str(commit_error),
+                interview_id=str(interview_id),
+                correlation_id=correlation_id
+            )
+            try:
+                await db.rollback()
+            except Exception:
+                pass
+        
         # Cleanup
         if interview_id in active_connections:
             del active_connections[interview_id]
@@ -618,6 +664,23 @@ async def forward_openai_to_client(
                         }
                     )
                     
+                    # CRITICAL: Commit immediately to persist transcript
+                    # This ensures data safety if connection drops unexpectedly
+                    try:
+                        await realtime_service.commit_transaction()
+                        logger.debug(
+                            "ai_transcript_committed",
+                            message_id=str(message_id),
+                            correlation_id=correlation_id
+                        )
+                    except Exception as commit_error:
+                        logger.error(
+                            "failed_to_commit_ai_transcript",
+                            error=str(commit_error),
+                            message_id=str(message_id),
+                            correlation_id=correlation_id
+                        )
+                    
                     await client_ws.send_json({
                         "type": "transcript",
                         "role": "assistant",
@@ -640,6 +703,23 @@ async def forward_openai_to_client(
                             "timestamp": time.time()
                         }
                     )
+                    
+                    # CRITICAL: Commit immediately to persist transcript
+                    # This ensures data safety if connection drops unexpectedly
+                    try:
+                        await realtime_service.commit_transaction()
+                        logger.debug(
+                            "candidate_transcript_committed",
+                            message_id=str(message_id),
+                            correlation_id=correlation_id
+                        )
+                    except Exception as commit_error:
+                        logger.error(
+                            "failed_to_commit_candidate_transcript",
+                            error=str(commit_error),
+                            message_id=str(message_id),
+                            correlation_id=correlation_id
+                        )
                     
                     await client_ws.send_json({
                         "type": "transcript",

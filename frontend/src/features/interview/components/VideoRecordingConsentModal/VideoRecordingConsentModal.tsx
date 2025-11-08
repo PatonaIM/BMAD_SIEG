@@ -5,7 +5,7 @@
  * Displays before interview starts (after tech check)
  */
 
-import { Video, Shield, Clock, Users, ArrowLeft } from 'lucide-react'
+import { Video, Shield, Clock, Users, ArrowLeft, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -50,8 +50,19 @@ export function VideoRecordingConsentModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog open={open} onOpenChange={(open) => !open && !isSubmitting && handleClose()}>
       <DialogContent className="max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
+        {/* Loading overlay - prevents user interaction during processing */}
+        {isSubmitting && (
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md z-50 flex items-center justify-center rounded-lg pointer-events-auto">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-base font-semibold">Starting your interview...</p>
+              <p className="text-xs text-muted-foreground">Please wait, do not close this window</p>
+            </div>
+          </div>
+        )}
+        
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Video className="h-5 w-5 text-blue-600" />
@@ -117,7 +128,14 @@ export function VideoRecordingConsentModal({
             disabled={isSubmitting}
             className="w-full sm:flex-1"
           >
-            {isSubmitting ? 'Starting Interview...' : 'I Consent - Start Interview'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Starting Interview...
+              </>
+            ) : (
+              'I Consent - Start Interview'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

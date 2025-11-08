@@ -8,6 +8,7 @@ import { useInterviewStore } from "@/src/features/interview/store/interviewStore
 import { useSendMessage } from "@/src/features/interview/hooks/useSendMessage"
 import { useInterviewMessages } from "@/src/features/interview/hooks/useInterview"
 import { useAudioUpload } from "@/src/features/interview/hooks/useAudioUpload"
+import { useCompleteInterview } from "@/src/features/interview/hooks/useInterviewCompletion"
 import { InterviewStateIndicator } from "@/src/features/interview/components/InterviewStateIndicator"
 import { MicrophonePermissionDialog } from "@/src/features/interview/components/MicrophonePermissionDialog"
 import { useAudioCapture } from "@/src/features/interview/hooks/useAudioCapture"
@@ -67,6 +68,8 @@ export default function InterviewPage() {
   const [showCaptionHistory, setShowCaptionHistory] = useState(false)
   // Track if minimum speaking duration has been met (for Done Speaking button)
   const [canCompleteSpeaking, setCanCompleteSpeaking] = useState(false)
+  // Track if interview is being completed to show loading overlay
+  const [isCompletingInterview, setIsCompletingInterview] = useState(false)
   const audioPlaybackQueueRef = useRef<AudioPlaybackQueue | null>(null)
   const audioLevelMonitorRef = useRef<AudioLevelMonitor | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
@@ -116,6 +119,9 @@ export default function InterviewPage() {
   const { mutate: uploadAudio, isPending: isAudioUploading } = useAudioUpload()
 
   const { isLoading, isError, error } = useInterviewMessages(sessionId)
+  
+  // Hook for completing interview
+  const { mutate: completeInterviewMutation } = useCompleteInterview()
 
   // Initialize Realtime WebSocket connection
   const realtime = useRealtimeInterview(
@@ -166,8 +172,36 @@ export default function InterviewPage() {
         // This prevents showing "Your Turn to Speak" prematurely
         setInterviewState('ai_speaking')
       },
-      onDisconnected: () => {
+      onDisconnected: async () => {
+        console.log('🔌 Realtime disconnected - triggering interview completion...')
         setConnectionState('disconnected')
+        
+        // Call completion endpoint when realtime session ends
+        if (sessionId) {
+          try {
+            const { completeInterview } = await import('@/src/features/interview/services/interviewService')
+            console.log('📊 Calling completion endpoint for interview:', sessionId)
+            const completionData = await completeInterview(sessionId)
+            console.log('✅ Interview completion data received:', completionData)
+            
+            // Store completion data in Zustand store
+            useInterviewStore.getState().setCompletionData({
+              interview_id: completionData.interview_id,
+              completed_at: completionData.completed_at,
+              duration_seconds: completionData.duration_seconds,
+              questions_answered: completionData.questions_answered,
+              skill_boundaries_identified: completionData.skill_boundaries_identified || 0,
+              message: completionData.message,
+              skill_assessments: completionData.skill_assessments || [],
+              highlights: completionData.highlights || [],
+              growth_areas: completionData.growth_areas || []
+            })
+            
+            console.log('💾 Completion data stored in Zustand')
+          } catch (error) {
+            console.error('❌ Failed to complete interview:', error)
+          }
+        }
       },
     }
   )
@@ -648,7 +682,14 @@ export default function InterviewPage() {
   }
 
   const handleAudioPlaybackEnd = () => {
-    setInterviewState('ai_listening')
+    // Add 2-second delay after AI finishes speaking to prevent false VAD triggers
+    // This gives the audio system time to stabilize and prevents echo detection
+    setInterviewState('processing')
+    setTimeout(() => {
+      setInterviewState('ai_listening')
+      // Store timestamp to track when AI stopped speaking
+      aiLastStoppedSpeakingRef.current = Date.now()
+    }, 2000) // 2 second delay before enabling candidate input
   }
 
   const handleAudioPlaybackError = () => {
@@ -673,9 +714,91 @@ export default function InterviewPage() {
   const handleEndInterview = () => {
     // Show confirmation dialog before ending
     if (window.confirm('Are you sure you want to end the interview?')) {
-      setStatus('completed')
-      // Navigate to completion page or dashboard
-      window.location.href = '/dashboard'
+      console.log('[Interview] User manually ended interview, completing...')
+      
+      // CRITICAL: Show loading overlay immediately to prevent any user interactions
+      setIsCompletingInterview(true)
+      
+      // CRITICAL: Clean up all active connections and audio processing BEFORE calling completion API
+      // This prevents the interview from continuing in the background
+      
+      // 1. Disconnect WebSocket if in realtime mode
+      if (useRealtimeMode) {
+        console.log('[Interview] Disconnecting realtime WebSocket...')
+        realtime.disconnect()
+      }
+      
+      // 2. Stop any active audio recording
+      if (audioCapture.state === 'recording') {
+        console.log('[Interview] Stopping audio recording...')
+        audioCapture.stopRecording()
+      }
+      
+      // 3. Clean up audio level monitoring
+      if (audioLevelMonitorRef.current) {
+        console.log('[Interview] Cleaning up audio level monitor...')
+        audioLevelMonitorRef.current.stop()
+        audioLevelMonitorRef.current = null
+      }
+      
+      // 4. Clean up Web Audio API resources
+      if (audioProcessorRef.current) {
+        audioProcessorRef.current.disconnect()
+        audioProcessorRef.current = null
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close()
+        audioContextRef.current = null
+      }
+      
+      // 5. Clean up audio playback queue
+      if (audioPlaybackQueueRef.current) {
+        console.log('[Interview] Cleaning up audio playback queue...')
+        audioPlaybackQueueRef.current.close()
+        audioPlaybackQueueRef.current = null
+      }
+      
+      // 6. Stop video recording if active
+      if (isVideoRecording && videoRecorder) {
+        console.log('[Interview] Stopping video recording...')
+        videoRecorder.stopRecording()
+      }
+      
+      // 7. Update interview state to prevent further interactions
+      setInterviewState('processing') // Lock the UI
+      
+      // 8. Give WebSocket cleanup a moment to finish (commit pending transcripts)
+      // This prevents database conflicts when calling completion endpoint
+      setTimeout(() => {
+        console.log('[Interview] Calling completion API...')
+        
+        // Set a timeout to force navigation if API hangs
+        const navigationTimeout = setTimeout(() => {
+          console.warn('[Interview] Completion API timeout - forcing navigation to results')
+          window.location.href = `/interview/${sessionId}/results`
+        }, 10000) // 10 second timeout
+        
+        // Now call completion API - store updates will happen in onSuccess callback
+        if (sessionId) {
+          completeInterviewMutation(sessionId, {
+            onError: (error) => {
+              clearTimeout(navigationTimeout)
+              console.error('[Interview] Completion API failed:', error)
+              // Fallback: navigate to results anyway
+              window.location.href = `/interview/${sessionId}/results`
+            },
+            onSuccess: () => {
+              clearTimeout(navigationTimeout)
+            }
+          })
+          // Navigation and status update will happen automatically via the hook's onSuccess callback
+        } else {
+          // Fallback if no sessionId
+          clearTimeout(navigationTimeout)
+          console.error('[Interview] No sessionId available for completion')
+          window.location.href = '/dashboard'
+        }
+      }, 1000) // 1000ms delay to allow WebSocket cleanup to complete
     }
   }
 
@@ -843,6 +966,28 @@ export default function InterviewPage() {
       <div style={{ position: 'fixed', bottom: 100, left: 16, zIndex: 20 }} className="bg-background/95 backdrop-blur-sm rounded-lg shadow-lg">
         <InterviewStateIndicator state={interviewState} />
       </div>
+
+      {/* Completion Loading Overlay - Prevents interaction during interview completion */}
+      {isCompletingInterview && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          style={{ pointerEvents: 'all' }}
+        >
+          <Card className="p-8 max-w-md w-full mx-4">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Completing Interview</h2>
+                <p className="text-muted-foreground">
+                  Please wait while we process your results...
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </>
   )
 }

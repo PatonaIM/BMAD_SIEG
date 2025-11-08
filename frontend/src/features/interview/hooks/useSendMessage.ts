@@ -60,19 +60,45 @@ export function useSendMessage({ sessionId }: UseSendMessageParams) {
 
       // Check completion flag from backend (Story 1.8)
       if (data.interview_complete) {
-        console.log("[Interview] Completion criteria met - navigating to results")
+        console.log("[Interview] Completion criteria met - calling completion endpoint for enhanced feedback")
 
         // Mark interview as completed
         setStatus("completed")
 
-        // Note: Backend already auto-completed the interview when completion criteria met
-        // No need to call completion endpoint again - just navigate to results
-        
-        // Redirect to results page after a short delay
-        setTimeout(() => {
-          console.log("[Interview] Redirecting to results page")
-          router.push(`/interview/${sessionId}/results`)
-        }, 1500)
+        // Import and call the completion endpoint to get enhanced feedback
+        // This is done dynamically to avoid circular dependencies
+        import("../services/interviewService").then(({ completeInterview }) => {
+          return completeInterview(sessionId)
+        }).then((completionData) => {
+          console.log("[Interview] Received enhanced completion data:", completionData)
+          
+          // Store completion data with enhanced feedback
+          const { setCompletionData, setCompleted } = useInterviewStore.getState()
+          setCompleted(true)
+          setCompletionData({
+            interview_id: completionData.interview_id,
+            completed_at: completionData.completed_at,
+            duration_seconds: completionData.duration_seconds,
+            questions_answered: completionData.questions_answered,
+            skill_boundaries_identified: completionData.skill_boundaries_identified,
+            message: completionData.message,
+            skill_assessments: completionData.skill_assessments,
+            highlights: completionData.highlights,
+            growth_areas: completionData.growth_areas,
+          })
+          
+          // Redirect to results page
+          setTimeout(() => {
+            console.log("[Interview] Redirecting to results page")
+            router.push(`/interview/${sessionId}/results`)
+          }, 1500)
+        }).catch((error) => {
+          console.error("[Interview] Failed to call completion endpoint:", error)
+          // Still redirect to results, but without enhanced feedback
+          setTimeout(() => {
+            router.push(`/interview/${sessionId}/results`)
+          }, 1500)
+        })
       }
     },
 

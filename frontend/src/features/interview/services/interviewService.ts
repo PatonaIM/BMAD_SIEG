@@ -103,6 +103,24 @@ export const sendInterviewMessage = async (sessionId: string, messageText: strin
  * Endpoint: POST /api/v1/interviews/{id}/complete
  * Marks the interview as completed and returns completion metrics
  */
+export interface SkillAssessment {
+  skill_area: string
+  proficiency_level: "novice" | "intermediate" | "proficient" | "expert"
+  display_name: string
+}
+
+export interface InterviewHighlight {
+  title: string
+  description: string
+  skill_area: string | null
+}
+
+export interface GrowthArea {
+  skill_area: string
+  suggestion: string
+  display_name: string
+}
+
 export interface InterviewCompleteResponse {
   interview_id: string
   completed_at: string
@@ -110,6 +128,9 @@ export interface InterviewCompleteResponse {
   questions_answered: number
   skill_boundaries_identified: number
   message: string
+  skill_assessments: SkillAssessment[]
+  highlights: InterviewHighlight[]
+  growth_areas: GrowthArea[]
 }
 
 export const completeInterview = async (interviewId: string): Promise<InterviewCompleteResponse> => {

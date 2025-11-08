@@ -221,6 +221,7 @@ async def start_interview(
         role_type=final_role_type,
         job_posting_id=job_posting_id,  # Set FK (Story 3.13 column)
         status="in_progress",
+        started_at=datetime.utcnow(),  # Set start time for accurate duration tracking
         total_tokens_used=0
     )
 
@@ -729,6 +730,12 @@ async def complete_interview(
         )
 
     try:
+        logger.info(
+            "initializing_interview_engine",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        
         # Initialize AI provider and interview engine
         ai_provider = OpenAIProvider()
         interview_engine = InterviewEngine(
@@ -738,9 +745,21 @@ async def complete_interview(
             interview_repo=interview_repo
         )
 
+        logger.info(
+            "calling_complete_interview_method",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        
         # Complete the interview
         result = await interview_engine.complete_interview(interview_id)
 
+        logger.info(
+            "committing_completion_transaction",
+            correlation_id=correlation_id,
+            interview_id=str(interview_id)
+        )
+        
         await db.commit()
 
         logger.info(

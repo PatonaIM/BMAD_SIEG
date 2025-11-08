@@ -19,12 +19,15 @@ export const useCompleteInterview = () => {
   const { setCompleted, setCompletionData } = useInterviewStore()
 
   return useMutation({
-    mutationFn: (interviewId: string) => completeInterview(interviewId),
+    mutationFn: (interviewId: string) => {
+      console.log("[useCompleteInterview] Calling completion API for interview:", interviewId)
+      return completeInterview(interviewId)
+    },
     onSuccess: (data: InterviewCompleteResponse, interviewId: string) => {
-      console.log("Interview completed successfully:", data)
+      console.log("[useCompleteInterview] Interview completed successfully:", data)
 
-      // Update store with completion data
-      setCompleted()
+      // Update store with completion data (including enhanced feedback)
+      setCompleted(true)
       setCompletionData({
         interview_id: data.interview_id,
         completed_at: data.completed_at,
@@ -32,13 +35,23 @@ export const useCompleteInterview = () => {
         questions_answered: data.questions_answered,
         skill_boundaries_identified: data.skill_boundaries_identified,
         message: data.message,
+        skill_assessments: data.skill_assessments,
+        highlights: data.highlights,
+        growth_areas: data.growth_areas,
       })
 
+      console.log("[useCompleteInterview] Navigating to results page...")
+      
       // Navigate to results page
       router.push(`/interview/${interviewId}/results`)
     },
     onError: (error: Error) => {
-      console.error("Failed to complete interview:", error)
+      console.error("[useCompleteInterview] Failed to complete interview:", error)
+      console.error("[useCompleteInterview] Error details:", {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      })
       // TODO: Show error notification to user
     },
   })

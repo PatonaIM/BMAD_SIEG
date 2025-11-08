@@ -126,12 +126,12 @@ export default function JobDetailPage() {
 
   // Format salary range
   const formatSalary = () => {
-    if (!job.salary_range_min && !job.salary_range_max) return 'Not specified';
-    if (job.salary_range_min && job.salary_range_max) {
-      return `$${job.salary_range_min.toLocaleString()} - $${job.salary_range_max.toLocaleString()}`;
+    if (!job.salary_min && !job.salary_max) return 'Not specified';
+    if (job.salary_min && job.salary_max) {
+      return `$${job.salary_min.toLocaleString()} - $${job.salary_max.toLocaleString()}`;
     }
-    if (job.salary_range_min) return `From $${job.salary_range_min.toLocaleString()}`;
-    if (job.salary_range_max) return `Up to $${job.salary_range_max.toLocaleString()}`;
+    if (job.salary_min) return `From $${job.salary_min.toLocaleString()}`;
+    if (job.salary_max) return `Up to $${job.salary_max.toLocaleString()}`;
   };
 
   // Determine button state

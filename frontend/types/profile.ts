@@ -39,6 +39,15 @@ export interface UpdateSkillsRequest {
 }
 
 /**
+ * Basic Info Update Request - for PUT /api/v1/profile/basic-info
+ */
+export interface UpdateBasicInfoRequest {
+  full_name?: string;
+  phone?: string;
+  experience_years?: number;
+}
+
+/**
  * Preferences Update Request - for PUT /api/v1/profile/preferences
  */
 export interface UpdatePreferencesRequest {

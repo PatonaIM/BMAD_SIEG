@@ -10,6 +10,7 @@ import { User, FileText, Briefcase, Mail, Phone, Award, Target, AlertCircle, Che
 import { useProfile } from "@/hooks/use-profile"
 import { calculateProfileCompleteness, formatEnumArray, formatEnumValue } from "@/lib/profile-utils"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { EditBasicInfoDialog } from "@/components/profile/edit-basic-info-dialog"
 
 export default function ProfilePage() {
   const { data: profile, isLoading, isError, error } = useProfile()
@@ -105,9 +106,16 @@ export default function ProfilePage() {
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              <CardTitle>Basic Information</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                <CardTitle>Basic Information</CardTitle>
+              </div>
+              <EditBasicInfoDialog 
+                currentName={profile.full_name} 
+                currentPhone={profile.phone}
+                currentExperience={profile.experience_years}
+              />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -55,6 +55,15 @@ export const UpdateSkillsRequestSchema = z.object({
 });
 
 /**
+ * Update Basic Info Request Schema
+ */
+export const UpdateBasicInfoRequestSchema = z.object({
+  full_name: z.string().min(1).max(255).optional(),
+  phone: z.string().max(50).optional(),
+  experience_years: z.number().int().min(0).max(50).optional(),
+});
+
+/**
  * Update Preferences Request Schema
  */
 export const UpdatePreferencesRequestSchema = z.object({
@@ -88,5 +97,6 @@ export const ResumeParsingStatusSchema = z.object({
 // Export inferred types
 export type ProfileResponseValidated = z.infer<typeof ProfileResponseSchema>;
 export type UpdateSkillsRequest = z.infer<typeof UpdateSkillsRequestSchema>;
+export type UpdateBasicInfoRequest = z.infer<typeof UpdateBasicInfoRequestSchema>;
 export type UpdatePreferencesRequest = z.infer<typeof UpdatePreferencesRequestSchema>;
 export type ResumeParsingStatus = z.infer<typeof ResumeParsingStatusSchema>;

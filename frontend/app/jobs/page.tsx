@@ -15,8 +15,8 @@ import { useJobPostings } from "@/hooks/use-job-postings"
 import type { JobPostingFilters } from "@/lib/api-client"
 
 // Helper function to format posted date
-function formatPostedDate(postedAt: string): string {
-  const date = new Date(postedAt)
+function formatPostedDate(createdAt: string): string {
+  const date = new Date(createdAt)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -316,11 +316,11 @@ export default function JobsPage() {
                       </div>
                       <div className="flex items-center gap-1">
                         <DollarSign className="h-4 w-4" />
-                        {formatSalaryRange(job.salary_range_min, job.salary_range_max)}
+                        {formatSalaryRange(job.salary_min, job.salary_max)}
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        {formatPostedDate(job.posted_at)}
+                        {formatPostedDate(job.created_at)}
                       </div>
                     </div>
 

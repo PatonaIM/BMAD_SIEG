@@ -4,9 +4,11 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends
 
-from app.api.deps import get_current_user, get_profile_service
+from app.api.deps import get_current_user, get_db, get_profile_service
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.candidate import Candidate
 from app.schemas.profile import (
+    BasicInfoUpdateRequest,
     ExperienceUpdateRequest,
     PreferencesUpdateRequest,
     ProfileResponse,
@@ -85,7 +87,8 @@ async def get_profile(
 async def update_skills(
     request: SkillsUpdateRequest,
     current_user: Annotated[Candidate, Depends(get_current_user)],
-    profile_service: Annotated[ProfileService, Depends(get_profile_service)]
+    profile_service: Annotated[ProfileService, Depends(get_profile_service)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ProfileResponse:
     """
     Update candidate skills.
@@ -115,6 +118,53 @@ async def update_skills(
         skills=request.skills
     )
 
+    await db.commit()
+
+    return ProfileResponse.model_validate(candidate)
+
+
+@router.put("/basic-info", response_model=ProfileResponse)
+async def update_basic_info(
+    request: BasicInfoUpdateRequest,
+    current_user: Annotated[Candidate, Depends(get_current_user)],
+    profile_service: Annotated[ProfileService, Depends(get_profile_service)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ProfileResponse:
+    """
+    Update candidate basic information (name, phone, experience).
+
+    Profile completeness score is recalculated after update.
+
+    **Authentication Required:** Bearer token (JWT)
+
+    **Request Body:**
+    ```json
+    {
+      "full_name": "John Doe",
+      "phone": "+1234567890",
+      "experience_years": 5
+    }
+    ```
+
+    **Response:** Updated ProfileResponse with new basic info and completeness score.
+    """
+    logger.info(
+        "update_basic_info_request",
+        candidate_id=str(current_user.id),
+        full_name_provided=request.full_name is not None,
+        phone_provided=request.phone is not None,
+        experience_years_provided=request.experience_years is not None
+    )
+
+    candidate = await profile_service.update_basic_info(
+        candidate_id=current_user.id,
+        full_name=request.full_name,
+        phone=request.phone,
+        experience_years=request.experience_years
+    )
+
+    await db.commit()
+
     return ProfileResponse.model_validate(candidate)
 
 
@@ -122,7 +172,8 @@ async def update_skills(
 async def update_experience(
     request: ExperienceUpdateRequest,
     current_user: Annotated[Candidate, Depends(get_current_user)],
-    profile_service: Annotated[ProfileService, Depends(get_profile_service)]
+    profile_service: Annotated[ProfileService, Depends(get_profile_service)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ProfileResponse:
     """
     Update candidate experience years.
@@ -152,6 +203,8 @@ async def update_experience(
         years=request.experience_years
     )
 
+    await db.commit()
+
     return ProfileResponse.model_validate(candidate)
 
 
@@ -159,7 +212,8 @@ async def update_experience(
 async def update_preferences(
     request: PreferencesUpdateRequest,
     current_user: Annotated[Candidate, Depends(get_current_user)],
-    profile_service: Annotated[ProfileService, Depends(get_profile_service)]
+    profile_service: Annotated[ProfileService, Depends(get_profile_service)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ) -> ProfileResponse:
     """
     Update candidate job preferences.
@@ -196,5 +250,7 @@ async def update_preferences(
         candidate_id=current_user.id,
         preferences=preferences_dict
     )
+
+    await db.commit()
 
     return ProfileResponse.model_validate(candidate)

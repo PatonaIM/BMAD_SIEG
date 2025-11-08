@@ -22,7 +22,7 @@ import { useMutation, useQuery, useQueryClient, type UseMutationResult } from '@
 import { profileApi, resumeApi } from '@/lib/api-client';
 import { profileKeys } from './use-profile';
 import { useToast } from '@/hooks/use-toast';
-import type { ProfileResponse, UpdatePreferencesRequest, ResumeParsingStatus } from '@/types/profile';
+import type { ProfileResponse, UpdatePreferencesRequest, UpdateBasicInfoRequest, ResumeParsingStatus } from '@/types/profile';
 
 /**
  * Hook for updating candidate skills
@@ -87,6 +87,75 @@ export function useUpdateSkills(): UseMutationResult<ProfileResponse, Error, str
       toast({
         title: 'Failed to update skills',
         description: error.message || 'An error occurred while saving your skills. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Hook for updating candidate basic info (name, phone)
+ * 
+ * Automatically:
+ * - Shows success/error toast notifications
+ * - Invalidates profile cache to refetch updated data
+ * - Invalidates dashboard cache (if exists)
+ * - Provides optimistic updates for instant UI feedback
+ * 
+ * @returns React Query mutation result with mutate function and status states
+ */
+export function useUpdateBasicInfo(): UseMutationResult<ProfileResponse, Error, UpdateBasicInfoRequest, unknown> {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (basicInfo: UpdateBasicInfoRequest) => profileApi.updateBasicInfo(basicInfo),
+    
+    // Optimistic update: Update cache immediately before API call
+    onMutate: async (newBasicInfo) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: profileKeys.detail() });
+
+      // Snapshot previous value
+      const previousProfile = queryClient.getQueryData<ProfileResponse>(profileKeys.detail());
+
+      // Optimistically update cache
+      if (previousProfile) {
+        queryClient.setQueryData<ProfileResponse>(profileKeys.detail(), {
+          ...previousProfile,
+          ...(newBasicInfo.full_name !== undefined && { full_name: newBasicInfo.full_name }),
+          ...(newBasicInfo.phone !== undefined && { phone: newBasicInfo.phone }),
+          ...(newBasicInfo.experience_years !== undefined && { experience_years: newBasicInfo.experience_years }),
+        });
+      }
+
+      // Return context with previous value
+      return { previousProfile };
+    },
+    
+    onSuccess: () => {
+      toast({
+        title: 'Profile updated successfully!',
+        description: 'Your basic information has been saved.',
+        variant: 'default',
+      });
+
+      // Invalidate profile cache
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      
+      // Invalidate dashboard cache if it exists
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    
+    onError: (error, _newBasicInfo, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousProfile) {
+        queryClient.setQueryData(profileKeys.detail(), context.previousProfile);
+      }
+
+      toast({
+        title: 'Failed to update profile',
+        description: error.message || 'An error occurred while saving your information. Please try again.',
         variant: 'destructive',
       });
     },

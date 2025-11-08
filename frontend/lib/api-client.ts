@@ -38,14 +38,17 @@ export interface JobPosting {
   work_setup: string;
   experience_level: string;
   location: string;
-  salary_range_min: number | null;
-  salary_range_max: number | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string;
   required_skills: string[] | null;
   preferred_skills: string[] | null;
   benefits: string[] | null;
-  posted_at: string;
-  closing_at: string | null;
+  created_at: string;
+  updated_at: string;
   status: string;
+  is_cancelled: boolean;
+  cancellation_reason: string | null;
 }
 
 /**
@@ -288,6 +291,21 @@ export const profileApi = {
     const rawResponse = await fetchApiAuth<unknown>('/profile/skills', {
       method: 'PUT',
       body: JSON.stringify({ skills }),
+    });
+    // Validate and transform using Zod schema
+    const validated = ProfileResponseSchema.parse(rawResponse);
+    return validated as import('@/types/profile').ProfileResponse;
+  },
+
+  /**
+   * Update candidate basic information (name, phone)
+   * @param basicInfo - Basic info data (full_name, phone)
+   * @returns Promise resolving to updated profile
+   */
+  async updateBasicInfo(basicInfo: import('@/types/profile').UpdateBasicInfoRequest): Promise<import('@/types/profile').ProfileResponse> {
+    const rawResponse = await fetchApiAuth<unknown>('/profile/basic-info', {
+      method: 'PUT',
+      body: JSON.stringify(basicInfo),
     });
     // Validate and transform using Zod schema
     const validated = ProfileResponseSchema.parse(rawResponse);

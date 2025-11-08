@@ -155,6 +155,99 @@ class ProfileService:
 
         return candidate
 
+    async def update_basic_info(
+        self, 
+        candidate_id: UUID, 
+        full_name: str | None = None, 
+        phone: str | None = None,
+        experience_years: int | None = None
+    ) -> Candidate:
+        """
+        Update candidate basic information (name, phone, experience).
+
+        Args:
+            candidate_id: UUID of the candidate
+            full_name: Optional new full name
+            phone: Optional new phone number
+            experience_years: Optional years of experience (0-50)
+
+        Returns:
+            Updated candidate with new basic info and completeness score
+
+        Raises:
+            HTTPException: If candidate not found (404)
+        """
+        candidate = await self.get_profile(candidate_id)
+
+        old_score = candidate.profile_completeness_score
+        old_name = candidate.full_name
+        old_phone = candidate.phone
+        old_experience = candidate.experience_years
+
+        # Update fields if provided
+        if full_name is not None:
+            candidate.full_name = full_name
+        if phone is not None:
+            candidate.phone = phone
+        if experience_years is not None:
+            candidate.experience_years = experience_years
+
+        # Recalculate completeness (phone and experience affect score)
+        candidate.profile_completeness_score = self.calculate_completeness(candidate)
+
+        # Commit changes
+        await self.candidate_repo.update(candidate)
+
+        self.logger.info(
+            "profile_updated",
+            candidate_id=str(candidate_id),
+            field="basic_info",
+            full_name_changed=full_name is not None and full_name != old_name,
+            phone_changed=phone is not None and phone != old_phone,
+            experience_changed=experience_years is not None and experience_years != old_experience,
+            old_completeness=str(old_score) if old_score else None,
+            new_completeness=str(candidate.profile_completeness_score)
+        )
+
+        # Regenerate embedding if experience changed (affects matching)
+        if experience_years is not None and experience_years != old_experience:
+            if self.embedding_service:
+                try:
+                    await self.embedding_service.generate_candidate_embedding(candidate_id)
+                    self.logger.info(
+                        "profile_embedding_regenerated",
+                        candidate_id=str(candidate_id),
+                        trigger="experience_update"
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        "embedding_regeneration_failed",
+                        candidate_id=str(candidate_id),
+                        error=str(e)
+                    )
+
+            # Invalidate explanation cache
+            if self.explanation_cache:
+                try:
+                    invalidated_count = await self.explanation_cache.invalidate(
+                        candidate_id=candidate_id
+                    )
+                    if invalidated_count > 0:
+                        self.logger.info(
+                            "explanation_cache_invalidated",
+                            candidate_id=str(candidate_id),
+                            trigger="experience_update",
+                            invalidated_count=invalidated_count
+                        )
+                except Exception as e:
+                    self.logger.error(
+                        "cache_invalidation_failed",
+                        candidate_id=str(candidate_id),
+                        error=str(e)
+                    )
+
+        return candidate
+
     async def update_experience(self, candidate_id: UUID, years: int) -> Candidate:
         """
         Update candidate experience years.

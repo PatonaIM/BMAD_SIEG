@@ -291,7 +291,7 @@ export default function ApplicationsPage() {
                       <CardDescription className="text-base">{app.job_posting.company}</CardDescription>
                     </div>
                     <Button variant="outline" asChild>
-                      <Link href={`/applications/${app.id}`}>View Details</Link>
+                      <Link href={`/jobs/${app.job_posting_id}`}>View Details</Link>
                     </Button>
                   </div>
                 </CardHeader>

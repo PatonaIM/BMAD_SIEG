@@ -193,6 +193,32 @@ class ExperienceUpdateRequest(BaseModel):
     )
 
 
+class BasicInfoUpdateRequest(BaseModel):
+    """
+    Request schema for updating basic profile information.
+
+    Allows updating full_name, phone number, and experience_years.
+    """
+
+    full_name: str | None = Field(
+        None,
+        min_length=1,
+        max_length=255,
+        description="Full name of the candidate"
+    )
+    phone: str | None = Field(
+        None,
+        max_length=50,
+        description="Phone number (optional)"
+    )
+    experience_years: int | None = Field(
+        None,
+        ge=0,
+        le=50,
+        description="Years of professional experience (0-50)"
+    )
+
+
 class PreferencesUpdateRequest(BaseModel):
     """
     Request schema for updating job preferences.

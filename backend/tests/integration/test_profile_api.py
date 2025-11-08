@@ -134,6 +134,71 @@ async def test_update_skills_invalid_data(test_client: AsyncClient, test_candida
 
 
 @pytest.mark.asyncio
+async def test_update_basic_info_success(test_client: AsyncClient, test_candidate):
+    """Test PUT /api/v1/profile/basic-info with valid data."""
+    # Arrange
+    token = create_access_token(test_candidate.id)
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "full_name": "Jane Smith",
+        "phone": "+1234567890"
+    }
+
+    # Act
+    response = await test_client.put(
+        "/api/v1/profile/basic-info",
+        headers=headers,
+        json=payload
+    )
+
+    # Assert
+    assert response.status_code == 200
+    data = response.json()
+    assert data["full_name"] == "Jane Smith"
+    assert data["phone"] == "+1234567890"
+    assert data["profile_completeness_score"] is not None
+
+
+@pytest.mark.asyncio
+async def test_update_basic_info_phone_only(test_client: AsyncClient, test_candidate):
+    """Test PUT /api/v1/profile/basic-info updating only phone."""
+    # Arrange
+    token = create_access_token(test_candidate.id)
+    headers = {"Authorization": f"Bearer {token}"}
+    original_name = test_candidate.full_name
+    payload = {"phone": "+9876543210"}
+
+    # Act
+    response = await test_client.put(
+        "/api/v1/profile/basic-info",
+        headers=headers,
+        json=payload
+    )
+
+    # Assert
+    assert response.status_code == 200
+    data = response.json()
+    assert data["full_name"] == original_name  # Name unchanged
+    assert data["phone"] == "+9876543210"
+
+
+@pytest.mark.asyncio
+async def test_update_basic_info_unauthorized(test_client: AsyncClient):
+    """Test PUT /api/v1/profile/basic-info without auth returns 401."""
+    # Arrange
+    payload = {"full_name": "Test", "phone": "123"}
+
+    # Act
+    response = await test_client.put(
+        "/api/v1/profile/basic-info",
+        json=payload
+    )
+
+    # Assert
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_update_experience_success(test_client: AsyncClient, test_candidate):
     """Test PUT /api/v1/profile/experience with valid years."""
     # Arrange

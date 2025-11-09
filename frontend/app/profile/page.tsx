@@ -148,15 +148,15 @@ export default function ProfilePage() {
         </Card>
 
         {/* Skills */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Award className="h-5 w-5" />
               <CardTitle>Skills</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
+          <CardContent className="flex flex-col flex-1 space-y-4">
+            <div className="flex-1">
               <div className="text-sm font-medium text-muted-foreground mb-2">
                 {profile.skills.length} {profile.skills.length === 1 ? 'skill' : 'skills'}
               </div>
@@ -172,75 +172,79 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">No skills added yet</p>
               )}
             </div>
-            <Button variant="outline" size="sm" asChild className="w-full">
+            <Button variant="outline" size="sm" asChild className="w-full mt-auto">
               <Link href="/profile/skills">Manage Skills</Link>
             </Button>
           </CardContent>
         </Card>
 
         {/* Job Preferences */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5" />
               <CardTitle>Job Preferences</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Job Types</div>
-              <div className="text-base">
-                {profile.preferred_job_types.length > 0 
-                  ? formatEnumArray(profile.preferred_job_types)
-                  : "Not set"}
+          <CardContent className="flex flex-col flex-1 space-y-4">
+            <div className="flex-1 space-y-4">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Job Types</div>
+                <div className="text-base">
+                  {profile.preferred_job_types.length > 0 
+                    ? formatEnumArray(profile.preferred_job_types)
+                    : "Not set"}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Work Setup</div>
+                <div className="text-base">{formatEnumValue(profile.preferred_work_setup)}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Salary Range (Annual)</div>
+                <div className="text-base">
+                  {profile.salary_expectation_min && profile.salary_expectation_max
+                    ? `${profile.salary_currency} ${profile.salary_expectation_min.toLocaleString()} - ${profile.salary_expectation_max.toLocaleString()}`
+                    : "Not set"}
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Work Setup</div>
-              <div className="text-base">{formatEnumValue(profile.preferred_work_setup)}</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Salary Range (Annual)</div>
-              <div className="text-base">
-                {profile.salary_expectation_min && profile.salary_expectation_max
-                  ? `${profile.salary_currency} ${profile.salary_expectation_min.toLocaleString()} - ${profile.salary_expectation_max.toLocaleString()}`
-                  : "Not set"}
-              </div>
-            </div>
-            <Button variant="outline" size="sm" asChild className="w-full">
+            <Button variant="outline" size="sm" asChild className="w-full mt-auto">
               <Link href="/profile/preferences">Update Preferences</Link>
             </Button>
           </CardContent>
         </Card>
 
         {/* Resume */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               <CardTitle>Resume</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {profile.resume_id ? (
-              <div className="p-4 rounded-lg border bg-muted/50">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <span className="font-medium">Resume uploaded</span>
+          <CardContent className="flex flex-col flex-1 space-y-4">
+            <div className="flex-1">
+              {profile.resume_id ? (
+                <div className="p-4 rounded-lg border bg-muted/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Resume uploaded</span>
+                    </div>
+                    <Badge variant="secondary">
+                      <Award className="h-3 w-3 mr-1" />
+                      On File
+                    </Badge>
                   </div>
-                  <Badge variant="secondary">
-                    <Award className="h-3 w-3 mr-1" />
-                    On File
-                  </Badge>
                 </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-lg border border-dashed">
-                <p className="text-sm text-muted-foreground text-center">No resume uploaded yet</p>
-              </div>
-            )}
-            <Button variant="outline" size="sm" asChild className="w-full">
+              ) : (
+                <div className="p-4 rounded-lg border border-dashed">
+                  <p className="text-sm text-muted-foreground text-center">No resume uploaded yet</p>
+                </div>
+              )}
+            </div>
+            <Button variant="outline" size="sm" asChild className="w-full mt-auto">
               <Link href="/profile/resume">
                 {profile.resume_id ? "View Resume Details" : "Upload Resume"}
               </Link>

@@ -123,8 +123,8 @@ export function AudioTestStep({ onPass, onStop }: AudioTestStepProps) {
   }
 
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
+    <Card className="p-6 flex flex-col h-full">
+      <div className="flex flex-col flex-1 space-y-6">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -150,11 +150,11 @@ export function AudioTestStep({ onPass, onStop }: AudioTestStepProps) {
 
         {/* Request permission */}
         {microphoneStatus === 'idle' && (
-          <div className="space-y-4">
-            <p className="text-sm">
+          <div className="flex flex-col flex-1 space-y-4">
+            <p className="text-sm flex-1">
               Click the button below to grant microphone access.
             </p>
-            <Button onClick={handleRequestPermission} size="lg">
+            <Button onClick={handleRequestPermission} size="lg" className="mt-auto">
               <Mic className="h-4 w-4 mr-2" />
               Enable Microphone
             </Button>
@@ -163,18 +163,20 @@ export function AudioTestStep({ onPass, onStop }: AudioTestStepProps) {
 
         {/* Show audio level meter when permission granted */}
         {microphoneStatus === 'granted' && microphoneStream && testState === 'initial' && (
-          <div className="space-y-4">
-            <AudioLevelMeter
-              stream={microphoneStream}
-              onPassThreshold={setIsLevelPassing}
-            />
+          <div className="flex flex-col flex-1 space-y-4">
+            <div className="flex-1">
+              <AudioLevelMeter
+                stream={microphoneStream}
+                onPassThreshold={setIsLevelPassing}
+              />
+            </div>
             
             {/* Primary action: Confirm audio quality */}
             <Button
               onClick={handleConfirm}
               size="lg"
               disabled={!isLevelPassing}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 mt-auto"
             >
               <Check className="h-4 w-4 mr-2" />
               {isLevelPassing ? 'Confirm Audio Quality' : 'Speak to enable confirmation'}
@@ -213,38 +215,40 @@ export function AudioTestStep({ onPass, onStop }: AudioTestStepProps) {
 
         {/* Recorded - show playback and confirm */}
         {(testState === 'recorded' || testState === 'playing') && (
-          <div className="space-y-4">
-            <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
-              <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
-                <Check className="h-4 w-4" />
-                Recording complete!
-              </p>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button
-                onClick={handlePlayback}
-                variant="outline"
-                disabled={testState === 'playing'}
-                className="flex-1"
-              >
-                <Play className="h-4 w-4 mr-2" />
-                {testState === 'playing' ? 'Playing...' : 'Play Back'}
-              </Button>
-              <Button
-                onClick={handleRecord}
-                variant="outline"
-                className="flex-1"
-              >
-                <Mic className="h-4 w-4 mr-2" />
-                Record Again
-              </Button>
+          <div className="flex flex-col flex-1 space-y-4">
+            <div className="flex-1 space-y-4">
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+                <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                  <Check className="h-4 w-4" />
+                  Recording complete!
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  onClick={handlePlayback}
+                  variant="outline"
+                  disabled={testState === 'playing'}
+                  className="flex-1"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {testState === 'playing' ? 'Playing...' : 'Play Back'}
+                </Button>
+                <Button
+                  onClick={handleRecord}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Mic className="h-4 w-4 mr-2" />
+                  Record Again
+                </Button>
+              </div>
             </div>
 
             <Button
               onClick={handleConfirm}
               size="lg"
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full bg-green-600 hover:bg-green-700 mt-auto"
             >
               <Check className="h-4 w-4 mr-2" />
               Confirm Audio Quality

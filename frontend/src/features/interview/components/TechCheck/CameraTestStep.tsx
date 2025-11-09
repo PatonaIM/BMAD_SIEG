@@ -118,8 +118,8 @@ export function CameraTestStep({ onPass, onStop }: CameraTestStepProps) {
   const meetsRequirements = videoResolution && videoResolution.width >= 640 && videoResolution.height >= 480;
 
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
+    <Card className="p-6 flex flex-col h-full">
+      <div className="flex flex-col flex-1 space-y-6">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -145,11 +145,11 @@ export function CameraTestStep({ onPass, onStop }: CameraTestStepProps) {
 
         {/* Request permission */}
         {cameraStatus === 'idle' && (
-          <div className="space-y-4">
-            <p className="text-sm">
+          <div className="flex flex-col flex-1 space-y-4">
+            <p className="text-sm flex-1">
               Click the button below to grant camera access.
             </p>
-            <Button onClick={handleRequestPermission} size="lg">
+            <Button onClick={handleRequestPermission} size="lg" className="mt-auto">
               <Video className="h-4 w-4 mr-2" />
               Enable Camera
             </Button>
@@ -158,101 +158,99 @@ export function CameraTestStep({ onPass, onStop }: CameraTestStepProps) {
 
         {/* Show video preview when permission granted */}
         {cameraStatus === 'granted' && cameraStream && (
-          <div className="space-y-4">
-            {/* Video Preview */}
-            <div className="relative bg-black rounded-lg overflow-hidden">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className={cn(
-                  'w-full max-w-md mx-auto',
-                  isMirrored && 'scale-x-[-1]'
-                )}
-              />
-              
-              {/* Mirror Toggle Button */}
-              <Button
-                onClick={handleToggleMirror}
-                variant="secondary"
-                size="sm"
-                className="absolute top-2 right-2"
-              >
-                <FlipHorizontal className="h-4 w-4 mr-1" />
-                {isMirrored ? 'Unflip' : 'Mirror'}
-              </Button>
-            </div>
-
-            {/* Resolution Info */}
-            {videoResolution && (
-              <div className={cn(
-                'p-4 rounded-lg border',
-                meetsRequirements 
-                  ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900'
-                  : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900'
-              )}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">
-                      Resolution: {videoResolution.width}x{videoResolution.height}
-                    </p>
-                    <p className="text-xs mt-1">
-                      Quality: {resolutionQuality}
-                    </p>
-                  </div>
-                  {meetsRequirements && (
-                    <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="flex flex-col flex-1 space-y-4">
+            <div className="flex-1 space-y-4">
+              {/* Video Preview */}
+              <div className="relative bg-black rounded-lg overflow-hidden">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={cn(
+                    'w-full max-w-md mx-auto',
+                    isMirrored && 'scale-x-[-1]'
                   )}
-                </div>
+                />
+                
+                {/* Mirror Toggle Button */}
+                <Button
+                  onClick={handleToggleMirror}
+                  variant="secondary"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                >
+                  <FlipHorizontal className="h-4 w-4 mr-1" />
+                  {isMirrored ? 'Unflip' : 'Mirror'}
+                </Button>
               </div>
-            )}
 
-            {/* Pass/Fail Message */}
-            {videoResolution && (
-              <>
-                {meetsRequirements ? (
-                  <>
-                    <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
-                      <p className="text-green-800 dark:text-green-200 flex items-center gap-2 font-medium">
-                        <Check className="h-5 w-5" />
-                        Camera test passed! Your video quality meets the requirements.
+              {/* Resolution Info */}
+              {videoResolution && (
+                <div className={cn(
+                  'p-4 rounded-lg border',
+                  meetsRequirements 
+                    ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900'
+                    : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900'
+                )}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">
+                        Resolution: {videoResolution.width}x{videoResolution.height}
+                      </p>
+                      <p className="text-xs mt-1">
+                        Quality: {resolutionQuality}
                       </p>
                     </div>
-                    
-                    {/* Confirmation button - shown when camera meets requirements but not yet confirmed */}
-                    {canConfirm && !isValidated && (
-                      <Button
-                        onClick={handleConfirm}
-                        size="lg"
-                        className="w-full bg-green-600 hover:bg-green-700"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Confirm Camera Quality
-                      </Button>
+                    {meetsRequirements && (
+                      <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
                     )}
-
-                    {/* Confirmed state */}
-                    {isValidated && (
-                      <div className="p-4 bg-green-600 border border-green-700 rounded-lg">
-                        <p className="text-white flex items-center gap-2 font-medium">
-                          <Check className="h-5 w-5" />
-                          Camera confirmed!
-                        </p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
-                    <p className="text-red-800 dark:text-red-200 font-medium">
-                      Camera resolution too low
-                    </p>
-                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                      Minimum 640x480 (480p) required. Please use a different camera or check your camera settings.
-                    </p>
                   </div>
-                )}
-              </>
+                </div>
+              )}
+
+              {/* Pass/Fail Message */}
+              {videoResolution && meetsRequirements && (
+                <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg">
+                  <p className="text-green-800 dark:text-green-200 flex items-center gap-2 font-medium">
+                    <Check className="h-5 w-5" />
+                    Camera test passed! Your video quality meets the requirements.
+                  </p>
+                </div>
+              )}
+
+              {videoResolution && !meetsRequirements && (
+                <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
+                  <p className="text-red-800 dark:text-red-200 font-medium">
+                    Camera resolution too low
+                  </p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                    Minimum 640x480 (480p) required. Please use a different camera or check your camera settings.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Confirmation button - shown when camera meets requirements but not yet confirmed */}
+            {canConfirm && !isValidated && (
+              <Button
+                onClick={handleConfirm}
+                size="lg"
+                className="w-full bg-green-600 hover:bg-green-700 mt-auto"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Confirm Camera Quality
+              </Button>
+            )}
+
+            {/* Confirmed state */}
+            {isValidated && (
+              <div className="p-4 bg-green-600 border border-green-700 rounded-lg mt-auto">
+                <p className="text-white flex items-center gap-2 font-medium">
+                  <Check className="h-5 w-5" />
+                  Camera confirmed!
+                </p>
+              </div>
             )}
           </div>
         )}

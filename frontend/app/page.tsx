@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { TeamifiedLogo } from "@/components/teamified/logo"
 import { Sparkles, BrainCircuit, Target, Zap, Users, TrendingUp, ArrowRight, CheckCircle2 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -14,7 +15,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <BrainCircuit className="h-6 w-6 text-primary" />
+            <TeamifiedLogo size={32} />
             <span className="text-xl font-bold">Teamified</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
@@ -266,7 +267,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <BrainCircuit className="h-5 w-5 text-primary" />
+                <TeamifiedLogo size={24} />
                 <span className="font-bold">Teamified</span>
               </div>
               <p className="text-sm text-muted-foreground">

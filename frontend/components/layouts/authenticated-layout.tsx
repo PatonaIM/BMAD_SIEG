@@ -6,6 +6,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { TeamifiedLogo } from "@/components/teamified/logo"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/src/features/auth/store/authStore"
 import {
@@ -54,7 +55,7 @@ export function AuthenticatedLayout({ children }: { children: React.ReactNode })
           </Button>
 
           <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <BrainCircuit className="h-6 w-6 text-primary" />
+            <TeamifiedLogo size={32} />
             <span className="text-xl font-bold hidden sm:inline">Teamified</span>
           </Link>
 

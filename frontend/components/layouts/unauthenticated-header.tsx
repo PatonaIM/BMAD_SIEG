@@ -3,14 +3,14 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { BrainCircuit } from "lucide-react"
+import { TeamifiedLogo } from "@/components/teamified/logo"
 
 export function UnauthenticatedHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center gap-4 px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <BrainCircuit className="h-6 w-6 text-primary" />
+          <TeamifiedLogo size={32} />
           <span className="text-xl font-bold">Teamified</span>
         </Link>
 

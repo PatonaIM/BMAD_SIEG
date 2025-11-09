@@ -11,6 +11,18 @@ export const metadata: Metadata = {
   title: "Teamified - AI-Powered Recruitment Platform",
   description: "Transform your hiring with AI-powered interviews, job matching, and candidate management",
   generator: "v0.app",
+  icons: {
+    icon: [
+      {
+        url: "/teamified-icon-light.svg",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/teamified-icon-dark.svg",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
 }
 
 export default function RootLayout({

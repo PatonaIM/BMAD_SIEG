@@ -28,6 +28,7 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function JobDetailPage() {
@@ -187,20 +188,31 @@ export default function JobDetailPage() {
 
       {/* Success message */}
       {(applicationSuccess || (alreadyApplied && existingApplication)) && (
-        <Alert className="mb-6 border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-950/30">
-          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
-          <AlertTitle className="text-green-800 dark:text-green-300">Application Submitted</AlertTitle>
-          <AlertDescription className="text-green-700 dark:text-green-400">
-            Your application has been received. You can start the AI interview now.
-            <Button
-              onClick={handleStartInterview}
-              variant="link"
-              className="ml-2 p-0 h-auto text-green-800 dark:text-green-300 underline"
-            >
-              Start Interview Now →
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <>
+          <Alert className="mb-4 border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-950/30">
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+            <AlertTitle className="text-green-800 dark:text-green-300">Application Submitted</AlertTitle>
+            <AlertDescription className="text-green-700 dark:text-green-400">
+              Your application has been received. You can start the AI interview now.
+              <Button
+                onClick={handleStartInterview}
+                variant="link"
+                className="ml-2 p-0 h-auto text-green-800 dark:text-green-300 underline"
+              >
+                Start Interview Now →
+              </Button>
+            </AlertDescription>
+          </Alert>
+          
+          {/* Interview stability warning */}
+          <Alert className="mb-6 border-amber-600 dark:border-amber-500 bg-amber-50 dark:bg-amber-950/30">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertTitle className="text-amber-800 dark:text-amber-300">Beta Feature</AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-400">
+              The interview feature is currently in beta and may be unstable. You might encounter some bugs during the process.
+            </AlertDescription>
+          </Alert>
+        </>
       )}
 
       {/* Job details card */}

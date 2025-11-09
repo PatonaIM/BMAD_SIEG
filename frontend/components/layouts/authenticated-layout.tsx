@@ -32,7 +32,7 @@ export function AuthenticatedLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     clearAuth()
-    router.push("/login")
+    router.push("/")
   }
 
   const navigation = [

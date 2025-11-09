@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,17 +8,25 @@ import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { TeamifiedLogo } from "@/components/teamified/logo"
 import { Sparkles, BrainCircuit, Target, Zap, Users, TrendingUp, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { useAuthStore } from "@/src/features/auth/store/authStore"
 
 export default function LandingPage() {
+  const [mounted, setMounted] = useState(false)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated())
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <TeamifiedLogo size={32} />
             <span className="text-xl font-bold">Teamified</span>
-          </div>
+          </Link>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
               Features
@@ -31,12 +40,20 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">Get Started</Link>
-            </Button>
+            {mounted && isAuthenticated ? (
+              <Button asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Sign In</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -46,15 +63,15 @@ export default function LandingPage() {
         <div className="mx-auto max-w-4xl text-center">
           <Badge variant="secondary" className="mb-4">
             <Sparkles className="mr-1 h-3 w-3" />
-            AI-Powered Recruitment
+            AI-Powered Job Search
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-balance">
-            Transform Your Hiring with{" "}
+            Land Your Dream Job with{" "}
             <span className="text-primary">AI Intelligence</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 text-pretty">
-            Experience the future of recruitment with AI-powered interviews, intelligent job matching, 
-            and automated candidate screening. Find your perfect role or hire top talent faster than ever.
+            Practice with AI interviews, discover personalized job matches, and showcase your skills 
+            with intelligent assessments. Your next career opportunity is waiting.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
@@ -71,16 +88,17 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container mx-auto py-20 bg-muted/50">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Powered by Advanced AI
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Our platform leverages cutting-edge AI technology to revolutionize the recruitment process
-          </p>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section id="features" className="py-20 bg-muted/50">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Powered by Advanced AI
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Accelerate your job search with intelligent tools designed for modern professionals
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
               <BrainCircuit className="h-10 w-10 text-accent mb-2" />
@@ -187,7 +205,10 @@ export default function LandingPage() {
 
           <Card>
             <CardHeader>
-              <Users className="h-10 w-10 text-accent mb-2" />
+              <div className="flex items-center justify-between mb-2">
+                <Users className="h-10 w-10 text-accent" />
+                <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+              </div>
               <CardTitle>AI Career Counseling</CardTitle>
               <CardDescription>
                 Get personalized career advice from our AI assistant
@@ -237,6 +258,7 @@ export default function LandingPage() {
             </CardContent>
           </Card>
         </div>
+        </div>
       </section>
 
       {/* CTA Section */}
@@ -264,38 +286,22 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t py-12">
         <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <TeamifiedLogo size={24} />
                 <span className="font-bold">Teamified</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered recruitment platform transforming the way companies hire and candidates find jobs.
+                AI-powered career platform helping you discover opportunities, practice interviews, and land your dream job.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">For Candidates</h3>
+              <h3 className="font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/jobs" className="hover:text-foreground">Browse Jobs</Link></li>
                 <li><Link href="/register" className="hover:text-foreground">Create Profile</Link></li>
                 <li><Link href="/dashboard" className="hover:text-foreground">Dashboard</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">Help Center</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Blog</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Career Tips</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">About Us</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Contact</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>

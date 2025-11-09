@@ -242,7 +242,7 @@ export default function DashboardPage() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <Button variant="outline" className="h-auto flex-col items-start p-4 gap-2 bg-card hover:bg-accent/10 transition-colors" asChild>
-              <Link href="/interview/practice">
+              <Link href="/interview/start">
                 <BrainCircuit className="h-5 w-5 text-accent group-hover:text-accent" />
                 <div className="text-left">
                   <div className="font-semibold text-foreground">Mock Interview</div>

@@ -1,20 +1,21 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bell, Lock, User, Palette, Mail, Shield, Trash2, Save } from "lucide-react"
+import { Bell, Lock, User, Palette, Shield } from "lucide-react"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 export default function SettingsPage() {
-  const [emailNotifications, setEmailNotifications] = useState(true)
-  const [jobAlerts, setJobAlerts] = useState(true)
-  const [interviewReminders, setInterviewReminders] = useState(true)
-  const [marketingEmails, setMarketingEmails] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Wait until mounted to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -24,151 +25,7 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage your account settings and preferences</p>
       </div>
 
-      {/* Account Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            <CardTitle>Account Settings</CardTitle>
-          </div>
-          <CardDescription>Update your account information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue="John Doe" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" defaultValue="john.doe@example.com" />
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" defaultValue="San Francisco, CA" />
-            </div>
-          </div>
-          <Button>
-            <Save className="mr-2 h-4 w-4" />
-            Save Changes
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Password & Security */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            <CardTitle>Password & Security</CardTitle>
-          </div>
-          <CardDescription>Manage your password and security settings</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current-password">Current Password</Label>
-            <Input id="current-password" type="password" />
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input id="new-password" type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <Input id="confirm-password" type="password" />
-            </div>
-          </div>
-          <Button>Update Password</Button>
-
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Two-Factor Authentication</Label>
-                <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
-              </div>
-              <Button variant="outline">
-                <Shield className="mr-2 h-4 w-4" />
-                Enable
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            <CardTitle>Notifications</CardTitle>
-          </div>
-          <CardDescription>Configure how you receive notifications</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email-notifications">Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-            </div>
-            <Switch id="email-notifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="job-alerts">Job Alerts</Label>
-              <p className="text-sm text-muted-foreground">Get notified about new job matches</p>
-            </div>
-            <Switch id="job-alerts" checked={jobAlerts} onCheckedChange={setJobAlerts} />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="interview-reminders">Interview Reminders</Label>
-              <p className="text-sm text-muted-foreground">Reminders for upcoming interviews</p>
-            </div>
-            <Switch id="interview-reminders" checked={interviewReminders} onCheckedChange={setInterviewReminders} />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="marketing-emails">Marketing Emails</Label>
-              <p className="text-sm text-muted-foreground">Receive updates about new features and tips</p>
-            </div>
-            <Switch id="marketing-emails" checked={marketingEmails} onCheckedChange={setMarketingEmails} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notification-frequency">Notification Frequency</Label>
-            <Select defaultValue="daily">
-              <SelectTrigger id="notification-frequency">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="realtime">Real-time</SelectItem>
-                <SelectItem value="daily">Daily Digest</SelectItem>
-                <SelectItem value="weekly">Weekly Summary</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Appearance */}
+      {/* Appearance - WORKING */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -180,70 +37,115 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="theme">Theme</Label>
-            <Select defaultValue="system">
-              <SelectTrigger id="theme">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
+            {mounted ? (
+              <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger id="theme">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select defaultValue="system" disabled>
+                <SelectTrigger id="theme">
+                  <SelectValue />
+                </SelectTrigger>
+              </Select>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Privacy */}
-      <Card>
+      {/* Account Settings - COMING SOON */}
+      <Card className="opacity-60">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            <CardTitle>Privacy</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              <CardTitle>Account Information</CardTitle>
+            </div>
+            <Badge variant="secondary">Coming Soon</Badge>
           </div>
-          <CardDescription>Control your privacy settings</CardDescription>
+          <CardDescription>Update your profile information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="profile-visibility">Profile Visibility</Label>
-            <Select defaultValue="public">
-              <SelectTrigger id="profile-visibility">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Public</SelectItem>
-                <SelectItem value="private">Private</SelectItem>
-                <SelectItem value="connections">Connections Only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Show Profile to Recruiters</Label>
-              <p className="text-sm text-muted-foreground">Allow recruiters to find and contact you</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Edit your full name, phone number, and experience level. Profile updates will be available in the next release.
+          </p>
         </CardContent>
       </Card>
 
-      {/* Danger Zone */}
-      <Card className="border-destructive">
+      {/* Password & Security - COMING SOON */}
+      <Card className="opacity-60">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-destructive" />
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              <CardTitle>Password & Security</CardTitle>
+            </div>
+            <Badge variant="secondary">Coming Soon</Badge>
           </div>
-          <CardDescription>Irreversible actions for your account</CardDescription>
+          <CardDescription>Manage your password and security settings</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Delete Account</Label>
-              <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data</p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Change Password</span>
             </div>
-            <Button variant="destructive">Delete Account</Button>
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Two-Factor Authentication</span>
+            </div>
           </div>
+          <p className="text-sm text-muted-foreground pt-2">
+            Password management and enhanced security features will be available in the next release.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Notifications - COMING SOON */}
+      <Card className="opacity-60">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              <CardTitle>Notifications</CardTitle>
+            </div>
+            <Badge variant="secondary">Coming Soon</Badge>
+          </div>
+          <CardDescription>Configure how you receive notifications</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Email Notifications</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Job Match Alerts</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Interview Reminders</span>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground pt-2">
+            Notification preferences and alerts will be available in the next release.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Future Features Info */}
+      <Card className="border-dashed">
+        <CardContent className="pt-6">
+          <p className="text-sm text-muted-foreground text-center">
+            Additional settings including privacy controls and account management will be added in future updates.
+          </p>
         </CardContent>
       </Card>
     </div>

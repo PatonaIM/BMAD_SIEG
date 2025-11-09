@@ -204,6 +204,14 @@ WARNING: Storage usage exceeded threshold
 
 ## Row Level Security (RLS)
 
+> **⚠️ IMPORTANT: RLS Policies Not Currently Used**
+>
+> This section documents RLS policy templates for reference, but they are **NOT IMPLEMENTED** in the current architecture.
+>
+> **Reason**: Backend uses Supabase `service_role` key which automatically bypasses all RLS policies. All storage operations are performed server-side through the backend API, which handles authorization at the application layer.
+>
+> **When to implement**: Only if architecture changes to allow direct frontend-to-Supabase uploads/downloads using `anon` or `authenticated` keys.
+
 Supabase Storage uses Row Level Security policies to enforce access control. These policies must be configured manually in the Supabase dashboard.
 
 ### Configuration Steps

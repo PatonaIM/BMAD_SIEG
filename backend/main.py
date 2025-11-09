@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app.core.database import init_db, close_db, engine
+from app.core.database import init_db, close_db, engine, get_pool_status
 from app.core.config import settings
 from app.core.exceptions import (
     InterviewNotFoundException,
@@ -70,7 +70,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS
+# Configure Middleware
+# Database monitoring (checks pool status and logs warnings)
+from app.middleware.db_monitor import DatabaseMonitorMiddleware
+app.add_middleware(DatabaseMonitorMiddleware, check_interval=10)
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins.split(","),  # From environment
@@ -194,11 +199,17 @@ async def health_check() -> dict[str, Any]:
     Returns application status, version, and database connectivity
     """
     database_status = "disconnected"
+    pool_info = {}
+    
     try:
         # Test database connection
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         database_status = "connected"
+        
+        # Get pool statistics
+        pool_info = await get_pool_status()
+        
     except Exception as e:
         logger.error("health_check_database_error", error=str(e))
         database_status = "disconnected"
@@ -207,8 +218,48 @@ async def health_check() -> dict[str, Any]:
         "status": "healthy" if database_status == "connected" else "degraded",
         "version": "1.0.0",
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "database_status": database_status,
+        "database": {
+            "status": database_status,
+            "pool": pool_info if database_status == "connected" else None
+        }
     }
+
+
+@app.get("/debug/db-pool", response_model=dict[str, Any])
+async def debug_pool_status() -> dict[str, Any]:
+    """
+    Debug endpoint to monitor database connection pool status.
+    
+    Useful for diagnosing connection exhaustion issues.
+    Only available in development mode.
+    """
+    if settings.environment == "production":
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Endpoint not available in production"}
+        )
+    
+    try:
+        pool_stats = await get_pool_status()
+        pool_stats["max_connections"] = engine.pool.size() + engine.pool.overflow()
+        pool_stats["warning"] = None
+        
+        # Warn if pool is near capacity
+        utilization = pool_stats["checked_out"] / pool_stats["max_connections"]
+        if utilization > 0.8:
+            pool_stats["warning"] = f"Pool at {utilization*100:.0f}% capacity - consider increasing limits or investigating leaks"
+        
+        return {
+            "status": "ok",
+            "pool": pool_stats,
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+    except Exception as e:
+        logger.error("pool_status_error", error=str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
 
 
 if __name__ == "__main__":

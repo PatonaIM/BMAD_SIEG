@@ -40,8 +40,8 @@ export function AuthenticatedLayout({ children }: { children: React.ReactNode })
     { name: "Browse Jobs", href: "/jobs", icon: Briefcase },
     { name: "Job Matches", href: "/jobs/matches", icon: Target },
     { name: "Applications", href: "/applications", icon: FileText },
-    { name: "Resume", href: "/profile/resume", icon: FileCheck },
-    { name: "AI Interview", href: "/interview/start", icon: BrainCircuit },
+    { name: "Resume Analysis", href: "/profile/resume", icon: FileCheck },
+    { name: "Mock AI Interview", href: "/interview/start", icon: BrainCircuit },
     { name: "Profile", href: "/profile", icon: User },
   ]
 

@@ -150,8 +150,17 @@ export default function DashboardPage() {
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.applications}</div>
-            <p className="text-xs text-muted-foreground">Active applications</p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-8 w-12 mb-1" />
+                <Skeleton className="h-3 w-32" />
+              </>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats.applications}</div>
+                <p className="text-xs text-muted-foreground">Active applications</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -161,8 +170,17 @@ export default function DashboardPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.interviews}</div>
-            <p className="text-xs text-muted-foreground">Scheduled this month</p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-8 w-12 mb-1" />
+                <Skeleton className="h-3 w-36" />
+              </>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats.interviews}</div>
+                <p className="text-xs text-muted-foreground">Scheduled this month</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -172,8 +190,17 @@ export default function DashboardPage() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.matches}</div>
-            <p className="text-xs text-muted-foreground">New matches this week</p>
+            {matchesLoading ? (
+              <>
+                <Skeleton className="h-8 w-12 mb-1" />
+                <Skeleton className="h-3 w-36" />
+              </>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats.matches}</div>
+                <p className="text-xs text-muted-foreground">New matches this week</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -183,12 +210,21 @@ export default function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.profileCompletion}%</div>
-            <p className="text-xs text-muted-foreground mb-2">Profile completion</p>
-            {stats.profileCompletion < 100 && (
-              <Button variant="ghost" size="sm" className="h-auto p-0 text-xs" asChild>
-                <Link href="/profile">Complete Profile →</Link>
-              </Button>
+            {!profile ? (
+              <>
+                <Skeleton className="h-8 w-16 mb-1" />
+                <Skeleton className="h-3 w-32 mb-2" />
+              </>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats.profileCompletion}%</div>
+                <p className="text-xs text-muted-foreground mb-2">Profile completion</p>
+                {stats.profileCompletion < 100 && (
+                  <Button variant="ghost" size="sm" className="h-auto p-0 text-xs" asChild>
+                    <Link href="/profile">Complete Profile →</Link>
+                  </Button>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
